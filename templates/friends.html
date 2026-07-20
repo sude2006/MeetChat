@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arkadaşlar — MeetChat</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/friends.css') }}">
+</head>
+
+<body>
+    <div class="friends-shell">
+        <header class="friends-header">
+            <a href="{{ url_for('home') }}" class="back-btn" aria-label="Ana sayfa">
+                <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </a>
+            <div>
+                <h1>Arkadaşlar</h1>
+                <p>Merhaba, {{ user.name }}</p>
+            </div>
+        </header>
+
+        <section class="friends-section">
+            <h2>Gelen İstekler</h2>
+            {% if incoming_requests %}
+            <ul class="user-list">
+                {% for item in incoming_requests %}
+                <li class="user-row">
+                    <div class="user-info">
+                        <span class="user-avatar">{{ item.user.full_name[0] }}</span>
+                        <span class="user-name">{{ item.user.full_name }}</span>
+                    </div>
+                    <div class="user-actions">
+                        <form action="{{ url_for('friends_accept', friendship_id=item.friendship_id) }}" method="post">
+                            <button type="submit" class="btn btn-primary">Kabul Et</button>
+                        </form>
+                        <form action="{{ url_for('friends_reject', friendship_id=item.friendship_id) }}" method="post">
+                            <button type="submit" class="btn btn-outline">Reddet</button>
+                        </form>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="empty-text">Gelen istek yok.</p>
+            {% endif %}
+        </section>
+
+        <section class="friends-section">
+            <h2>Arkadaşlarım</h2>
+            {% if friends %}
+            <ul class="user-list">
+                {% for item in friends %}
+                <li class="user-row">
+                    <div class="user-info">
+                        <span class="user-avatar">{{ item.user.full_name[0] }}</span>
+                        <span class="user-name">{{ item.user.full_name }}</span>
+                    </div>
+                    <div class="user-actions">
+                        <span class="status-pill">Arkadaş</span>
+                        <form action="{{ url_for('friends_remove', friendship_id=item.friendship_id) }}" method="post">
+                            <button type="submit" class="btn btn-muted">Çıkar</button>
+                        </form>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="empty-text">Henüz arkadaşın yok.</p>
+            {% endif %}
+        </section>
+
+        <section class="friends-section">
+            <h2>Kullanıcılar</h2>
+            {% if users %}
+            <ul class="user-list">
+                {% for item in users %}
+                <li class="user-row">
+                    <div class="user-info">
+                        <span class="user-avatar">{{ item.user.full_name[0] }}</span>
+                        <span class="user-name">{{ item.user.full_name }}</span>
+                    </div>
+                    <div class="user-actions">
+                        {% if item.state == 'add' %}
+                        <form action="{{ url_for('friends_request', user_id=item.user.id) }}" method="post">
+                            <button type="submit" class="btn btn-primary">Arkadaş Ekle</button>
+                        </form>
+                        {% elif item.state == 'sent' %}
+                        <span class="status-pill status-sent">İstek Gönderildi</span>
+                        {% elif item.state == 'incoming' %}
+                        <form action="{{ url_for('friends_accept', friendship_id=item.friendship_id) }}" method="post">
+                            <button type="submit" class="btn btn-primary">Kabul Et</button>
+                        </form>
+                        <form action="{{ url_for('friends_reject', friendship_id=item.friendship_id) }}" method="post">
+                            <button type="submit" class="btn btn-outline">Reddet</button>
+                        </form>
+                        {% elif item.state == 'friends' %}
+                        <span class="status-pill">Arkadaş</span>
+                        <form action="{{ url_for('friends_remove', friendship_id=item.friendship_id) }}" method="post">
+                            <button type="submit" class="btn btn-muted">Çıkar</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="empty-text">Başka kullanıcı yok.</p>
+            {% endif %}
+        </section>
+    </div>
+</body>
+
+</html>

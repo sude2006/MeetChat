@@ -1,0 +1,245 @@
+/* =========================
+   MeetChat — Plan Oluştur
+========================= */
+
+:root {
+    --primary: #FF465B;
+    --secondary: #61EAD5;
+    --text: #2E2E2E;
+    --text-muted: #9A9A9A;
+    --text-soft: #6B6B6B;
+    --border: #E8E8E8;
+    --surface: #F7F7F7;
+    --white: #FFFFFF;
+    --app-max: 430px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    min-height: 100vh;
+    background: #EDEDED;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--text);
+}
+
+.create-shell {
+    max-width: var(--app-max);
+    min-height: 100vh;
+    margin: 0 auto;
+    background: var(--white);
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.06);
+    padding: 20px 20px 40px;
+}
+
+.create-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.back-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text);
+    text-decoration: none;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.create-header-text h1 {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.create-header-text p {
+    margin-top: 4px;
+    font-size: 13px;
+    color: var(--text-soft);
+}
+
+.create-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.form-error {
+    margin: 0;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: rgba(255, 70, 91, 0.1);
+    color: var(--primary);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4;
+    text-align: center;
+}
+
+.field-block {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.field-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.required {
+    color: var(--primary);
+}
+
+.field-control {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    min-height: 52px;
+    padding: 0 14px 0 44px;
+}
+
+.field-control:focus-within {
+    border-color: var(--primary);
+    background: var(--white);
+}
+
+.field-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--primary);
+    display: flex;
+}
+
+.field-control input,
+.field-control textarea {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 15px;
+    color: var(--text);
+    outline: none;
+}
+
+.field-control input::placeholder,
+.field-control textarea::placeholder {
+    color: var(--text-muted);
+}
+
+.field-textarea {
+    align-items: flex-start;
+    min-height: 120px;
+    padding-top: 14px;
+    padding-bottom: 14px;
+}
+
+.field-textarea .field-icon {
+    top: 18px;
+    transform: none;
+}
+
+.field-textarea textarea {
+    resize: vertical;
+    min-height: 90px;
+    line-height: 1.45;
+}
+
+.field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.visibility-block {
+    border: none;
+}
+
+.visibility-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.visibility-card {
+    display: block;
+    cursor: pointer;
+}
+
+.visibility-card input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.visibility-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.visibility-card input:checked + .visibility-content {
+    border-color: var(--primary);
+    background: rgba(255, 70, 91, 0.06);
+}
+
+.visibility-title {
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.visibility-desc {
+    font-size: 12px;
+    color: var(--text-soft);
+}
+
+.submit-btn {
+    width: 100%;
+    height: 54px;
+    margin-top: 8px;
+    border: none;
+    border-radius: 16px;
+    background: var(--primary);
+    color: var(--white);
+    font-size: 16px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.submit-btn:hover {
+    background: #e53950;
+}
+
+@media (max-width: 360px) {
+    .create-shell {
+        padding: 16px 16px 32px;
+    }
+
+    .field-row {
+        grid-template-columns: 1fr;
+    }
+}

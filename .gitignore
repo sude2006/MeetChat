@@ -1,0 +1,32 @@
+# Python'un otomatik oluşturduğu geçici dosyalar
+__pycache__/
+*.py[cod]
+
+# Python sanal ortamı
+venv/
+.venv/
+
+# Gizli bilgiler ve ortam değişkenleri
+.env
+.env.*
+
+# SQLite veritabanı dosyaları
+instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# Mac'in otomatik oluşturduğu dosyalar
+.DS_Store
+
+# Editörlerin oluşturabileceği kişisel ayarlar
+.idea/
+.vscode/
+
+# Test araçlarının geçici dosyaları
+.pytest_cache/
+.mypy_cache/
+.coverage
+
+# Mac klasör simgesi dosyası
+Icon?

@@ -1,0 +1,324 @@
+/* =========================
+   MeetChat — Giriş Ekranı
+========================= */
+
+:root {
+    --primary: #FF465B;
+    --secondary: #61EAD5;
+    --accent: #FFA3A2;
+    --text: #2E2E2E;
+    --text-muted: #9A9A9A;
+    --text-soft: #6B6B6B;
+    --border: #E4E4E4;
+    --white: #FFFFFF;
+    --mint: #C8F0E8;
+    --cream: #F8E9B8;
+    --app-max: 430px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    min-height: 100vh;
+    background: #EDEDED;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--text);
+}
+
+a {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.login-shell {
+    position: relative;
+    max-width: var(--app-max);
+    min-height: 100vh;
+    margin: 0 auto;
+    background: var(--white);
+    overflow: hidden;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.06);
+}
+
+/* Dekoratif pastel şekiller */
+.decor {
+    position: absolute;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.decor-tl {
+    top: -40px;
+    left: -50px;
+    width: 180px;
+    height: 160px;
+    background: var(--mint);
+    border-radius: 60% 40% 55% 45%;
+    opacity: 0.85;
+}
+
+.decor-tr {
+    top: -30px;
+    right: -40px;
+    width: 140px;
+    height: 140px;
+    background: var(--cream);
+    border-radius: 50%;
+    opacity: 0.9;
+}
+
+.decor-bl {
+    bottom: -50px;
+    left: -40px;
+    width: 160px;
+    height: 160px;
+    background: var(--cream);
+    border-radius: 50%;
+    opacity: 0.85;
+}
+
+.decor-bl::after {
+    content: "";
+    position: absolute;
+    top: 30px;
+    right: 20px;
+    width: 70px;
+    height: 90px;
+    background:
+        radial-gradient(ellipse 18px 28px at 30% 40%, #7BC9A8 0 70%, transparent 71%),
+        radial-gradient(ellipse 16px 26px at 60% 55%, #61EAD5 0 70%, transparent 71%),
+        radial-gradient(ellipse 14px 22px at 45% 70%, #8FD4B8 0 70%, transparent 71%);
+    opacity: 0.7;
+}
+
+.decor-br {
+    bottom: -30px;
+    right: -50px;
+    width: 190px;
+    height: 170px;
+    background: var(--mint);
+    border-radius: 45% 55% 40% 60%;
+    opacity: 0.85;
+}
+
+.decor-br::before {
+    content: "";
+    position: absolute;
+    top: 36px;
+    left: 40px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--secondary);
+    box-shadow:
+        14px 8px 0 var(--secondary),
+        7px 18px 0 var(--secondary),
+        22px 20px 0 var(--secondary),
+        28px 6px 0 var(--secondary);
+    opacity: 0.7;
+}
+
+.decor-br::after {
+    content: "";
+    position: absolute;
+    top: 50px;
+    left: 55px;
+    width: 60px;
+    height: 70px;
+    background:
+        radial-gradient(ellipse 16px 24px at 40% 35%, #5FCFB8 0 70%, transparent 71%),
+        radial-gradient(ellipse 14px 22px at 65% 55%, #61EAD5 0 70%, transparent 71%);
+    opacity: 0.65;
+}
+
+.login-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding: 56px 28px 48px;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 48px;
+}
+
+.brand-logo {
+    flex-shrink: 0;
+}
+
+.brand-name {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+}
+
+.brand-meet {
+    color: var(--secondary);
+}
+
+.brand-chat {
+    color: var(--text);
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 36px;
+}
+
+.login-header h1 {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 10px;
+}
+
+.login-header p {
+    font-size: 14px;
+    color: var(--text-soft);
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+}
+
+.field {
+    position: relative;
+    display: block;
+}
+
+.field-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    display: flex;
+    pointer-events: none;
+}
+
+.field input {
+    width: 100%;
+    height: 54px;
+    padding: 0 48px 0 48px;
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
+    background: var(--white);
+    font-size: 15px;
+    font-family: inherit;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.field input::placeholder {
+    color: var(--text-muted);
+}
+
+.field input:focus {
+    border-color: var(--secondary);
+}
+
+.toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.form-meta {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 2px;
+    margin-bottom: 8px;
+}
+
+.forgot-link {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.form-error {
+    margin: 0 0 4px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: rgba(255, 70, 91, 0.1);
+    color: var(--primary);
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4;
+    text-align: center;
+}
+
+.password-hint {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 2px 0 4px;
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+.password-hint svg {
+    flex-shrink: 0;
+}
+
+.login-btn {
+    width: 100%;
+    height: 54px;
+    margin-top: 8px;
+    border: none;
+    border-radius: 16px;
+    background: var(--primary);
+    color: var(--white);
+    font-size: 16px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.login-btn:hover {
+    background: #e53950;
+}
+
+@media (max-width: 360px) {
+    .login-content {
+        padding: 48px 20px 40px;
+    }
+
+    .login-header h1 {
+        font-size: 28px;
+    }
+
+    .brand-name {
+        font-size: 24px;
+    }
+}

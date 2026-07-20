@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MeetChat</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <div class="app-shell">
+        <header class="topbar">
+            <div class="welcome-area">
+                <h1>Merhaba, <span>{{ user.name }}</span> 👋</h1>
+                <p>Bugün ne yapmak istersin?</p>
+            </div>
+            <img
+                class="profile-avatar"
+                src="{{ url_for('static', filename=user.avatar) }}"
+                alt="{{ user.name }}"
+            >
+        </header>
+
+        <main>
+            <div class="section-header">
+                <h2>Arkadaşlarının Planları</h2>
+                <button type="button" class="filter-btn" aria-label="Tarihe göre filtrele">
+                    Yakın Tarih
+                    <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
+                        <path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="plans-list">
+                {% if activities %}
+                {% for plan in activities %}
+                <article class="plan-card">
+                    <div class="plan-media">
+                        <img
+                            class="plan-cover"
+                            src="{{ url_for('static', filename=plan.cover_image) }}"
+                            alt=""
+                        >
+                        <img
+                            class="creator-avatar"
+                            src="{{ url_for('static', filename=plan.creator_avatar) }}"
+                            alt="{{ plan.creator_name }}"
+                        >
+                    </div>
+
+                    <div class="plan-body">
+                        <p class="creator-name">{{ plan.creator_name }}</p>
+                        <h3 class="plan-title">{{ plan.title }}</h3>
+                        <p class="plan-description">{{ plan.description }}</p>
+                        <span class="visibility-badge">{{ plan.visibility_label }}</span>
+
+                        <div class="plan-meta">
+                            <div class="meta-row">
+                                <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+                                    <rect x="3" y="5" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                                    <path d="M3 10h18M8 3v4M16 3v4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                </svg>
+                                <span>{{ plan.datetime }}</span>
+                            </div>
+                            <div class="meta-row">
+                                <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                                    <circle cx="12" cy="10" r="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                                </svg>
+                                <span>{{ plan.location }}</span>
+                            </div>
+                        </div>
+
+                        <div class="participants">
+                            <span>{{ plan.joined_count }} kişi katılıyor</span>
+                            <span class="maybe-count">{{ plan.maybe_count }} belki</span>
+                        </div>
+
+                        <div class="plan-actions">
+                            <form action="{{ url_for('respond_activity', activity_id=plan.id) }}" method="post" class="respond-form">
+                                <input type="hidden" name="status" value="joined">
+                                <button
+                                    type="submit"
+                                    class="join-btn{% if plan.user_status == 'joined' %} active{% endif %}"
+                                >Katıl</button>
+                            </form>
+                            <form action="{{ url_for('respond_activity', activity_id=plan.id) }}" method="post" class="respond-form">
+                                <input type="hidden" name="status" value="maybe">
+                                <button
+                                    type="submit"
+                                    class="maybe-btn{% if plan.user_status == 'maybe' %} active{% endif %}"
+                                >Belki</button>
+                            </form>
+                            <button type="button" class="comment-btn" aria-label="{{ plan.comment_count }} yorum">
+                                <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M4 5h16a2 2 0 012 2v8a2 2 0 01-2 2H9l-5 4v-4H4a2 2 0 01-2-2V7a2 2 0 012-2z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                                </svg>
+                                <span>{{ plan.comment_count }}</span>
+                            </button>
+                        </div>
+                    </div>
+                </article>
+                {% endfor %}
+                {% else %}
+                <p class="empty-plans">Henüz plan yok. İlk planı sen oluştur!</p>
+                {% endif %}
+            </div>
+        </main>
+
+        <nav class="bottom-nav" aria-label="Ana navigasyon">
+            <a href="{{ url_for('home') }}" class="nav-item active" aria-current="page">
+                <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                </svg>
+                <span>Ana Sayfa</span>
+            </a>
+            <a href="{{ url_for('friends') }}" class="nav-item">
+                <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M20 20l-3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+                <span>Keşfet</span>
+            </a>
+            <a href="{{ url_for('create_activity') }}" class="nav-item nav-create" aria-label="Plan Oluştur">
+                <span class="create-btn">
+                    <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">
+                        <rect x="4" y="5" width="16" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                        <path d="M4 10h16M8 3v4M16 3v4M12 13v5M9.5 15.5h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                </span>
+            </a>
+            <a href="#" class="nav-item">
+                <span class="nav-icon-wrap">
+                    <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M6 8a6 6 0 1112 0c0 7 3 7 3 9H3c0-2 3-2 3-9z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                        <path d="M10 20a2 2 0 004 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                    <span class="badge">3</span>
+                </span>
+                <span>Bildirimler</span>
+            </a>
+            <a href="{{ url_for('logout') }}" class="nav-item">
+                <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M4 20c1.5-3.5 4-5 8-5s6.5 1.5 8 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+                <span>Profil</span>
+            </a>
+        </nav>
+    </div>
+</body>
+
+</html>
