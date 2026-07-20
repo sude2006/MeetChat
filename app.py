@@ -214,6 +214,46 @@ def get_viewable_activity(activity_id, user, friend_ids=None):
     return activity
 
 
+def is_activity_owner(user, activity):
+    return activity.creator_id == user.id
+
+
+def get_editable_activity(activity_id, user):
+    activity = db.session.get(Activity, activity_id)
+    if activity is None or not is_activity_owner(user, activity):
+        return None
+    return activity
+
+
+def parse_activity_form():
+    return {
+        "title": request.form.get("title", "").strip(),
+        "description": request.form.get("description", "").strip(),
+        "date": request.form.get("date", "").strip(),
+        "time": request.form.get("time", "").strip(),
+        "location": request.form.get("location", "").strip(),
+        "visibility": request.form.get("visibility", "public").strip() or "public",
+    }
+
+
+def validate_activity_form(form_data):
+    if (
+        not form_data["title"]
+        or not form_data["description"]
+        or not form_data["date"]
+        or not form_data["time"]
+        or not form_data["location"]
+    ):
+        return "Lütfen tüm zorunlu alanları doldurun."
+    try:
+        datetime.strptime(form_data["time"], "%H:%M")
+    except ValueError:
+        return "Saati 14:30 formatında girin."
+    if form_data["visibility"] not in VALID_ACTIVITY_VISIBILITIES:
+        return "Lütfen geçerli bir görünürlük seçin."
+    return None
+
+
 def format_activity_datetime(date_str, time_str):
     try:
         dt = datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M")
@@ -244,7 +284,7 @@ def format_comment_datetime(dt):
     )
 
 
-def render_activity_detail(activity, error=None, form_body=""):
+def render_activity_detail(activity, current_user=None, error=None, form_body=""):
     joined_count = sum(1 for p in activity.participants if p.status == "joined")
     maybe_count = sum(1 for p in activity.participants if p.status == "maybe")
     comments = (
@@ -260,6 +300,9 @@ def render_activity_detail(activity, error=None, form_body=""):
         }
         for comment in comments
     ]
+    is_owner = (
+        current_user is not None and is_activity_owner(current_user, activity)
+    )
 
     return render_template(
         "activity_detail.html",
@@ -270,6 +313,7 @@ def render_activity_detail(activity, error=None, form_body=""):
         visibility_label=VISIBILITY_LABELS.get(activity.visibility, "Herkese açık"),
         joined_count=joined_count,
         maybe_count=maybe_count,
+        is_owner=is_owner,
         error=error,
         form_body=form_body,
         comment_max_length=COMMENT_MAX_LENGTH,
@@ -335,60 +379,31 @@ def create_activity():
     if request.method == "GET":
         return render_template("create_activity.html")
 
-    title = request.form.get("title", "").strip()
-    description = request.form.get("description", "").strip()
-    date = request.form.get("date", "").strip()
-    time = request.form.get("time", "").strip()
-    location = request.form.get("location", "").strip()
-    visibility = request.form.get("visibility", "public").strip() or "public"
+    form_data = parse_activity_form()
 
     print("FORM DATA:", request.form)
-    print("title:", repr(title))
-    print("description:", repr(description))
-    print("date:", repr(date))
-    print("time:", repr(time))
-    print("location:", repr(location))
-    print("visibility:", repr(visibility))
+    print("title:", repr(form_data["title"]))
+    print("description:", repr(form_data["description"]))
+    print("date:", repr(form_data["date"]))
+    print("time:", repr(form_data["time"]))
+    print("location:", repr(form_data["location"]))
+    print("visibility:", repr(form_data["visibility"]))
 
-    form_data = {
-        "title": title,
-        "description": description,
-        "date": date,
-        "time": time,
-        "location": location,
-        "visibility": visibility,
-    }
-
-    if not title or not description or not date or not time or not location:
+    error = validate_activity_form(form_data)
+    if error:
         return render_template(
             "create_activity.html",
-            error="Lütfen tüm zorunlu alanları doldurun.",
-            form_data=form_data,
-        )
-
-    try:
-        datetime.strptime(time, "%H:%M")
-    except ValueError:
-        return render_template(
-            "create_activity.html",
-            error="Saati 14:30 formatında girin.",
-            form_data=form_data,
-        )
-
-    if visibility not in VALID_ACTIVITY_VISIBILITIES:
-        return render_template(
-            "create_activity.html",
-            error="Lütfen geçerli bir görünürlük seçin.",
+            error=error,
             form_data=form_data,
         )
 
     activity = Activity(
-        title=title,
-        description=description,
-        date=date,
-        time=time,
-        location=location,
-        visibility=visibility,
+        title=form_data["title"],
+        description=form_data["description"],
+        date=form_data["date"],
+        time=form_data["time"],
+        location=form_data["location"],
+        visibility=form_data["visibility"],
         creator_id=current_user.id,
     )
     db.session.add(activity)
@@ -447,7 +462,80 @@ def activity_detail(activity_id):
     if activity is None:
         return redirect(url_for("home"))
 
-    return render_activity_detail(activity)
+    return render_activity_detail(activity, current_user=current_user)
+
+
+@app.route("/activity/<int:activity_id>/edit", methods=["GET", "POST"])
+def edit_activity(activity_id):
+    current_user = get_current_user()
+    if current_user is None:
+        return redirect(url_for("login"))
+
+    activity = get_editable_activity(activity_id, current_user)
+    if activity is None:
+        return redirect(url_for("home"))
+
+    if request.method == "GET":
+        form_data = {
+            "title": activity.title,
+            "description": activity.description,
+            "date": activity.date,
+            "time": activity.time,
+            "location": activity.location,
+            "visibility": activity.visibility,
+        }
+        return render_template(
+            "edit_activity.html",
+            activity=activity,
+            form_data=form_data,
+        )
+
+    form_data = parse_activity_form()
+    error = validate_activity_form(form_data)
+    if error:
+        return render_template(
+            "edit_activity.html",
+            activity=activity,
+            form_data=form_data,
+            error=error,
+        )
+
+    activity.title = form_data["title"]
+    activity.description = form_data["description"]
+    activity.date = form_data["date"]
+    activity.time = form_data["time"]
+    activity.location = form_data["location"]
+    activity.visibility = form_data["visibility"]
+    db.session.commit()
+
+    return redirect(url_for("activity_detail", activity_id=activity_id))
+
+
+@app.route("/activity/<int:activity_id>/delete", methods=["POST"])
+def delete_activity(activity_id):
+    current_user = get_current_user()
+    if current_user is None:
+        return redirect(url_for("login"))
+
+    activity = get_editable_activity(activity_id, current_user)
+    if activity is None:
+        return redirect(url_for("home"))
+
+    try:
+        Comment.query.filter_by(activity_id=activity.id).delete()
+        ActivityParticipant.query.filter_by(activity_id=activity.id).delete()
+        db.session.delete(activity)
+        db.session.commit()
+    except Exception:
+        app.logger.exception(
+            "Etkinlik silinirken hata oluştu (activity_id=%s, user_id=%s).",
+            activity_id,
+            current_user.id,
+        )
+        db.session.rollback()
+        return redirect(url_for("home"))
+
+    return redirect(url_for("home"))
 
 
 @app.route("/activity/<int:activity_id>/comments", methods=["POST"])
@@ -466,6 +554,7 @@ def add_comment(activity_id):
     if not body:
         return render_activity_detail(
             activity,
+            current_user=current_user,
             error="Lütfen bir yorum yazın.",
             form_body="",
         )
@@ -473,6 +562,7 @@ def add_comment(activity_id):
     if len(body) > COMMENT_MAX_LENGTH:
         return render_activity_detail(
             activity,
+            current_user=current_user,
             error=f"Yorum en fazla {COMMENT_MAX_LENGTH} karakter olabilir.",
             form_body=body[:COMMENT_MAX_LENGTH],
         )

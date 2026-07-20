@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plan Oluştur — MeetChat</title>
+    <title>Planı Düzenle — MeetChat</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/create_activity.css') }}">
     <style>
         .field-hint {
@@ -19,20 +19,20 @@
 <body>
     <div class="create-shell">
         <header class="create-header">
-            <a href="{{ url_for('home') }}" class="back-btn" aria-label="Geri">
+            <a href="{{ url_for('activity_detail', activity_id=activity.id) }}" class="back-btn" aria-label="Geri">
                 <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
             </a>
             <div class="create-header-text">
-                <h1>Plan Oluştur</h1>
-                <p>Harika bir plan paylaş, arkadaşlarını bul!</p>
+                <h1>Planı Düzenle</h1>
+                <p>{{ activity.title }}</p>
             </div>
         </header>
 
-        <form class="create-form" action="{{ url_for('create_activity') }}" method="post">
+        <form class="create-form" action="{{ url_for('edit_activity', activity_id=activity.id) }}" method="post">
             {% include "partials/activity_form.html" %}
-            <button type="submit" class="submit-btn">Planı Paylaş</button>
+            <button type="submit" class="submit-btn">Değişiklikleri Kaydet</button>
         </form>
     </div>
 </body>
