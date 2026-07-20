@@ -1,8 +1,11 @@
 from flask import Flask, redirect, render_template, request, session, url_for
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash, generate_password_hash
-from datetime import datetime
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 import os
+
+TURKEY_TZ = ZoneInfo("Europe/Istanbul")
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get(
@@ -108,6 +111,24 @@ class Friendship(db.Model):
     )
 
 
+COMMENT_MAX_LENGTH = 500
+
+
+class Comment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    activity_id = db.Column(db.Integer, db.ForeignKey("activity.id"), nullable=False)
+    body = db.Column(db.String(COMMENT_MAX_LENGTH), nullable=False)
+    created_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc).replace(tzinfo=None),
+        nullable=False,
+    )
+
+    user = db.relationship("User", backref="comments")
+    activity = db.relationship("Activity", backref="comments")
+
+
 with app.app_context():
     db.create_all()
 
@@ -184,6 +205,15 @@ def can_view_activity(user, activity, friend_ids=None):
     return False
 
 
+def get_viewable_activity(activity_id, user, friend_ids=None):
+    activity = db.session.get(Activity, activity_id)
+    if activity is None:
+        return None
+    if not can_view_activity(user, activity, friend_ids=friend_ids):
+        return None
+    return activity
+
+
 def format_activity_datetime(date_str, time_str):
     try:
         dt = datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M")
@@ -195,6 +225,55 @@ def format_activity_datetime(date_str, time_str):
         return f"{days[dt.weekday()]}, {dt.day} {months[dt.month]} {dt.strftime('%H:%M')}"
     except ValueError:
         return f"{date_str} {time_str}"
+
+
+def format_comment_datetime(dt):
+    if dt is None:
+        return ""
+    # SQLite naive datetime olarak saklar; bu değerler UTC kabul edilir.
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    local_dt = dt.astimezone(TURKEY_TZ)
+    months = [
+        "", "Oca", "Şub", "Mar", "Nis", "May", "Haz",
+        "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara",
+    ]
+    return (
+        f"{local_dt.day} {months[local_dt.month]} {local_dt.year}, "
+        f"{local_dt.strftime('%H:%M')}"
+    )
+
+
+def render_activity_detail(activity, error=None, form_body=""):
+    joined_count = sum(1 for p in activity.participants if p.status == "joined")
+    maybe_count = sum(1 for p in activity.participants if p.status == "maybe")
+    comments = (
+        Comment.query.filter_by(activity_id=activity.id)
+        .order_by(Comment.created_at.asc())
+        .all()
+    )
+    comment_items = [
+        {
+            "author_name": comment.user.full_name,
+            "body": comment.body,
+            "created_at": format_comment_datetime(comment.created_at),
+        }
+        for comment in comments
+    ]
+
+    return render_template(
+        "activity_detail.html",
+        activity=activity,
+        comments=comment_items,
+        cover_image=COVER_IMAGES[activity.id % len(COVER_IMAGES)],
+        datetime=format_activity_datetime(activity.date, activity.time),
+        visibility_label=VISIBILITY_LABELS.get(activity.visibility, "Herkese açık"),
+        joined_count=joined_count,
+        maybe_count=maybe_count,
+        error=error,
+        form_body=form_body,
+        comment_max_length=COMMENT_MAX_LENGTH,
+    )
 
 
 @app.route("/")
@@ -230,7 +309,7 @@ def home():
                 "joined_count": joined_count,
                 "maybe_count": maybe_count,
                 "user_status": user_participation.status if user_participation else None,
-                "comment_count": 0,
+                "comment_count": len(activity.comments),
                 "visibility": activity.visibility,
                 "visibility_label": VISIBILITY_LABELS.get(
                     activity.visibility, "Herkese açık"
@@ -355,6 +434,58 @@ def respond_activity(activity_id):
 
     db.session.commit()
     return redirect(url_for("home"))
+
+
+@app.route("/activity/<int:activity_id>")
+def activity_detail(activity_id):
+    current_user = get_current_user()
+    if current_user is None:
+        return redirect(url_for("login"))
+
+    friend_ids = get_accepted_friend_ids(current_user.id)
+    activity = get_viewable_activity(activity_id, current_user, friend_ids=friend_ids)
+    if activity is None:
+        return redirect(url_for("home"))
+
+    return render_activity_detail(activity)
+
+
+@app.route("/activity/<int:activity_id>/comments", methods=["POST"])
+def add_comment(activity_id):
+    current_user = get_current_user()
+    if current_user is None:
+        return redirect(url_for("login"))
+
+    friend_ids = get_accepted_friend_ids(current_user.id)
+    activity = get_viewable_activity(activity_id, current_user, friend_ids=friend_ids)
+    if activity is None:
+        return redirect(url_for("home"))
+
+    body = request.form.get("body", "").strip()
+
+    if not body:
+        return render_activity_detail(
+            activity,
+            error="Lütfen bir yorum yazın.",
+            form_body="",
+        )
+
+    if len(body) > COMMENT_MAX_LENGTH:
+        return render_activity_detail(
+            activity,
+            error=f"Yorum en fazla {COMMENT_MAX_LENGTH} karakter olabilir.",
+            form_body=body[:COMMENT_MAX_LENGTH],
+        )
+
+    db.session.add(
+        Comment(
+            user_id=current_user.id,
+            activity_id=activity_id,
+            body=body,
+        )
+    )
+    db.session.commit()
+    return redirect(url_for("activity_detail", activity_id=activity_id))
 
 
 @app.route("/friends")

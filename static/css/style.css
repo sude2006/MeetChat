@@ -328,6 +328,11 @@ main {
     font-size: 13px;
     cursor: pointer;
     padding: 4px;
+    text-decoration: none;
+}
+
+.comment-btn:hover {
+    color: var(--primary);
 }
 
 /* =========================
