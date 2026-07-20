@@ -1,0 +1,130 @@
+{% if error %}
+<p class="form-error" role="alert">{{ error }}</p>
+{% endif %}
+
+<label class="field-block">
+    <span class="field-label">Etkinlik başlığı <span class="required">*</span></span>
+    <span class="field-control">
+        <span class="field-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24">
+                <rect x="4" y="5" width="16" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                <path d="M4 10h16M8 3v4M16 3v4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+        </span>
+        <input
+            type="text"
+            name="title"
+            maxlength="60"
+            placeholder="Örn. Kahve Buluşması"
+            value="{{ form_data.title if form_data is defined else '' }}"
+        >
+    </span>
+</label>
+
+<label class="field-block">
+    <span class="field-label">Açıklama <span class="required">*</span></span>
+    <span class="field-control field-textarea">
+        <span class="field-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24">
+                <path d="M4 20h4L18.5 9.5a2.1 2.1 0 00-3-3L5 17v3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            </svg>
+        </span>
+        <textarea
+            name="description"
+            maxlength="300"
+            rows="4"
+            placeholder="Planın hakkında kısa bir açıklama yaz..."
+        >{{ form_data.description if form_data is defined else '' }}</textarea>
+    </span>
+</label>
+
+<div class="field-row">
+    <label class="field-block">
+        <span class="field-label">Tarih <span class="required">*</span></span>
+        <span class="field-control">
+            <span class="field-icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24">
+                    <rect x="3" y="5" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M3 10h18M8 3v4M16 3v4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+            </span>
+            <input
+                type="date"
+                name="date"
+                required
+                value="{{ form_data.date if form_data is defined else '' }}"
+            >
+        </span>
+    </label>
+
+    <label class="field-block">
+        <span class="field-label">Saat <span class="required">*</span></span>
+        <span class="field-control">
+            <span class="field-icon" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M12 8v5l3 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+            </span>
+            <input
+                type="text"
+                name="time"
+                placeholder="14:30"
+                inputmode="numeric"
+                maxlength="5"
+                required
+                value="{{ form_data.time if form_data is defined else '' }}"
+            >
+        </span>
+    </label>
+</div>
+
+<p class="field-hint">Saati 14:30 formatında yazın.</p>
+
+<label class="field-block">
+    <span class="field-label">Konum <span class="required">*</span></span>
+    <span class="field-control">
+        <span class="field-icon" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24">
+                <path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                <circle cx="12" cy="10" r="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
+            </svg>
+        </span>
+        <input
+            type="text"
+            name="location"
+            placeholder="Konum ara veya seç"
+            value="{{ form_data.location if form_data is defined else '' }}"
+        >
+    </span>
+</label>
+
+<fieldset class="visibility-block">
+    <legend class="field-label">Görünürlük <span class="required">*</span></legend>
+    <div class="visibility-options">
+        <label class="visibility-card">
+            <input
+                type="radio"
+                name="visibility"
+                value="public"
+                {% if form_data is not defined or form_data.visibility == 'public' or not form_data.visibility %}checked{% endif %}
+            >
+            <span class="visibility-content">
+                <span class="visibility-title">Herkese Açık</span>
+                <span class="visibility-desc">Uygulamadaki herkes görebilir</span>
+            </span>
+        </label>
+        <label class="visibility-card">
+            <input
+                type="radio"
+                name="visibility"
+                value="friends"
+                {% if form_data is defined and form_data.visibility == 'friends' %}checked{% endif %}
+            >
+            <span class="visibility-content">
+                <span class="visibility-title">Sadece arkadaşlar</span>
+                <span class="visibility-desc">Sadece arkadaşların görebilir</span>
+            </span>
+        </label>
+    </div>
+</fieldset>
