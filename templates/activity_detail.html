@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ activity.title }} — MeetChat</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/activity_detail.css') }}">
+</head>
+
+<body>
+    <div class="detail-shell">
+        <header class="detail-header">
+            <a href="{{ url_for('home') }}" class="back-btn" aria-label="Geri">
+                <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </a>
+            <div class="detail-header-text">
+                <h1>Etkinlik Detayı</h1>
+                <p>{{ activity.creator.full_name }} tarafından oluşturuldu</p>
+            </div>
+        </header>
+
+        <article class="activity-card">
+            <div class="activity-media">
+                <img
+                    class="activity-cover"
+                    src="{{ url_for('static', filename=cover_image) }}"
+                    alt=""
+                >
+            </div>
+            <div class="activity-body">
+                <h2 class="activity-title">{{ activity.title }}</h2>
+                <p class="activity-description">{{ activity.description }}</p>
+                <span class="visibility-badge">{{ visibility_label }}</span>
+
+                <div class="activity-meta">
+                    <div class="meta-row">
+                        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+                            <rect x="3" y="5" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                            <path d="M3 10h18M8 3v4M16 3v4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                        <span>{{ datetime }}</span>
+                    </div>
+                    <div class="meta-row">
+                        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                            <circle cx="12" cy="10" r="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                        </svg>
+                        <span>{{ activity.location }}</span>
+                    </div>
+                </div>
+
+                <div class="participants">
+                    <span>{{ joined_count }} kişi katılıyor</span>
+                    <span class="maybe-count">{{ maybe_count }} belki</span>
+                </div>
+            </div>
+        </article>
+
+        <section class="comments-section">
+            <h2 class="comments-heading">
+                Yorumlar
+                <span class="comments-count">({{ comments|length }})</span>
+            </h2>
+
+            {% if comments %}
+            <ul class="comments-list">
+                {% for comment in comments %}
+                <li class="comment-item">
+                    <div class="comment-header">
+                        <span class="comment-author">{{ comment.author_name }}</span>
+                        <time class="comment-date">{{ comment.created_at }}</time>
+                    </div>
+                    <p class="comment-body">{{ comment.body }}</p>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="comments-empty">Henüz yorum yok. İlk yorumu sen yaz!</p>
+            {% endif %}
+
+            <form
+                class="comment-form"
+                action="{{ url_for('add_comment', activity_id=activity.id) }}"
+                method="post"
+            >
+                {% if error %}
+                <p class="form-error" role="alert">{{ error }}</p>
+                {% endif %}
+
+                <label class="comment-field">
+                    <span class="comment-label">Yorum yaz</span>
+                    <textarea
+                        name="body"
+                        maxlength="{{ comment_max_length }}"
+                        required
+                        placeholder="Düşüncelerini paylaş..."
+                        rows="3"
+                    >{{ form_body }}</textarea>
+                </label>
+                <p class="field-hint">En fazla {{ comment_max_length }} karakter</p>
+                <button type="submit" class="submit-btn">Yorumu Gönder</button>
+            </form>
+        </section>
+    </div>
+</body>
+
+</html>
