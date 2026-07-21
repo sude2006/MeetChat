@@ -82,7 +82,7 @@
 <p class="field-hint">Saati 14:30 formatında yazın.</p>
 
 <label class="field-block">
-    <span class="field-label">Konum <span class="required">*</span></span>
+    <span class="field-label">Konum</span>
     <span class="field-control">
         <span class="field-icon" aria-hidden="true">
             <svg width="18" height="18" viewBox="0 0 24 24">
@@ -93,11 +93,14 @@
         <input
             type="text"
             name="location"
+            maxlength="200"
             placeholder="Konum ara veya seç"
             value="{{ form_data.location if form_data is defined else '' }}"
         >
     </span>
 </label>
+
+<p class="field-hint">İsteğe bağlı</p>
 
 <fieldset class="visibility-block">
     <legend class="field-label">Görünürlük <span class="required">*</span></legend>

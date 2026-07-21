@@ -64,6 +64,7 @@
                                 </svg>
                                 <span>{{ plan.datetime }}</span>
                             </div>
+                            {% if plan.location %}
                             <div class="meta-row">
                                 <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
                                     <path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z" fill="none" stroke="currentColor" stroke-width="1.8"/>
@@ -71,6 +72,7 @@
                                 </svg>
                                 <span>{{ plan.location }}</span>
                             </div>
+                            {% endif %}
                         </div>
 
                         <div class="participants">
