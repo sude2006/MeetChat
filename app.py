@@ -242,7 +242,6 @@ def validate_activity_form(form_data):
         or not form_data["description"]
         or not form_data["date"]
         or not form_data["time"]
-        or not form_data["location"]
     ):
         return "Lütfen tüm zorunlu alanları doldurun."
     try:
