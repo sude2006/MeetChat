@@ -25,13 +25,50 @@
         <main>
             <div class="section-header">
                 <h2>Arkadaşlarının Planları</h2>
-                <button type="button" class="filter-btn" aria-label="Tarihe göre filtrele">
-                    Yakın Tarih
-                    <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true">
-                        <path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </button>
             </div>
+
+            <form class="activity-search-form" method="GET" action="{{ url_for('home') }}">
+                <div class="search-row">
+                    <input
+                        type="search"
+                        name="q"
+                        class="search-input"
+                        value="{{ q }}"
+                        placeholder="Etkinlik ara..."
+                        aria-label="Etkinlik ara"
+                    >
+                    <button type="submit" class="search-submit">Ara</button>
+                </div>
+                <div class="filter-row" role="group" aria-label="Etkinlik filtresi">
+                    <label class="filter-option">
+                        <input
+                            type="radio"
+                            name="filter"
+                            value="all"
+                            {% if activity_filter == 'all' %}checked{% endif %}
+                        >
+                        <span>Tüm etkinlikler</span>
+                    </label>
+                    <label class="filter-option">
+                        <input
+                            type="radio"
+                            name="filter"
+                            value="mine"
+                            {% if activity_filter == 'mine' %}checked{% endif %}
+                        >
+                        <span>Oluşturduklarım</span>
+                    </label>
+                    <label class="filter-option">
+                        <input
+                            type="radio"
+                            name="filter"
+                            value="joined"
+                            {% if activity_filter == 'joined' %}checked{% endif %}
+                        >
+                        <span>Katıldıklarım</span>
+                    </label>
+                </div>
+            </form>
 
             <div class="plans-list">
                 {% if activities %}
@@ -110,7 +147,17 @@
                 </article>
                 {% endfor %}
                 {% else %}
+                {% if has_active_search %}
+                    {% if q and activity_filter != 'all' %}
+                <p class="empty-plans">Seçtiğiniz filtre ve arama ile eşleşen etkinlik bulunamadı.</p>
+                    {% elif q %}
+                <p class="empty-plans">Aramanızla eşleşen etkinlik bulunamadı.</p>
+                    {% else %}
+                <p class="empty-plans">Bu filtrede görüntülenecek etkinlik yok.</p>
+                    {% endif %}
+                {% else %}
                 <p class="empty-plans">Henüz plan yok. İlk planı sen oluştur!</p>
+                {% endif %}
                 {% endif %}
             </div>
         </main>

@@ -114,17 +114,75 @@ main {
     font-weight: 700;
 }
 
-.filter-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
+.activity-search-form {
+    margin-bottom: 16px;
+}
+
+.search-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.search-input {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--surface);
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.search-submit {
+    padding: 10px 16px;
     border: none;
-    background: transparent;
-    color: var(--primary);
-    font-size: 13px;
+    border-radius: 12px;
+    background: var(--primary);
+    color: var(--white);
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    padding: 4px 0;
+    flex-shrink: 0;
+}
+
+.filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.filter-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-soft);
+    cursor: pointer;
+    background: var(--surface);
+}
+
+.filter-option input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.filter-option:has(input:checked) {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: rgba(255, 70, 91, 0.08);
 }
 
 /* =========================

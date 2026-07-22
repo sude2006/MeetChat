@@ -85,7 +85,13 @@ class ActivityParticipant(db.Model):
 
 
 VALID_PARTICIPANT_STATUSES = ("joined", "maybe")
+VALID_HOME_FILTERS = ("all", "mine", "joined")
 VALID_FRIENDSHIP_STATUSES = ("pending", "accepted", "rejected")
+
+
+def parse_home_filter(raw):
+    value = (raw or "all").strip()
+    return value if value in VALID_HOME_FILTERS else "all"
 
 
 class Friendship(db.Model):
@@ -353,9 +359,22 @@ def home():
         return redirect(url_for("login"))
 
     friend_ids = get_accepted_friend_ids(current_user.id)
-    activities_db = (
-        Activity.query.order_by(Activity.created_at.desc()).all()
-    )
+    search_q = request.args.get("q", "").strip()
+    activity_filter = parse_home_filter(request.args.get("filter"))
+
+    query = Activity.query
+    if activity_filter == "mine":
+        query = query.filter(Activity.creator_id == current_user.id)
+    elif activity_filter == "joined":
+        query = query.join(ActivityParticipant).filter(
+            ActivityParticipant.user_id == current_user.id,
+            ActivityParticipant.status == "joined",
+        )
+
+    if search_q:
+        query = query.filter(Activity.title.ilike(f"%{search_q}%"))
+
+    activities_db = query.order_by(Activity.date.asc(), Activity.time.asc()).all()
     activities = []
     for activity in activities_db:
         if not can_view_activity(current_user, activity, friend_ids=friend_ids):
@@ -393,7 +412,16 @@ def home():
         "avatar": "img/avatar-user.jpg",
     }
 
-    return render_template("index.html", activities=activities, user=user)
+    has_active_search = bool(search_q) or activity_filter != "all"
+
+    return render_template(
+        "index.html",
+        activities=activities,
+        user=user,
+        q=search_q,
+        activity_filter=activity_filter,
+        has_active_search=has_active_search,
+    )
 
 
 @app.route("/create-activity", methods=["GET", "POST"])
