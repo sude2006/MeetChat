@@ -236,7 +236,20 @@ def parse_activity_form():
     }
 
 
-def validate_activity_form(form_data):
+def get_now_turkey():
+    return datetime.now(TURKEY_TZ).replace(second=0, microsecond=0)
+
+
+def parse_activity_datetime_local(date_str, time_str):
+    dt = datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M")
+    return dt.replace(tzinfo=TURKEY_TZ)
+
+
+def is_activity_datetime_in_past(date_str, time_str):
+    return parse_activity_datetime_local(date_str, time_str) < get_now_turkey()
+
+
+def validate_activity_form(form_data, original_date=None, original_time=None):
     if (
         not form_data["title"]
         or not form_data["description"]
@@ -245,11 +258,25 @@ def validate_activity_form(form_data):
     ):
         return "Lütfen tüm zorunlu alanları doldurun."
     try:
+        datetime.strptime(form_data["date"], "%Y-%m-%d")
+    except ValueError:
+        return "Geçerli bir tarih girin."
+    try:
         datetime.strptime(form_data["time"], "%H:%M")
     except ValueError:
         return "Saati 14:30 formatında girin."
     if form_data["visibility"] not in VALID_ACTIVITY_VISIBILITIES:
         return "Lütfen geçerli bir görünürlük seçin."
+    datetime_unchanged = (
+        original_date is not None
+        and original_time is not None
+        and form_data["date"] == original_date
+        and form_data["time"] == original_time
+    )
+    if not datetime_unchanged and is_activity_datetime_in_past(
+        form_data["date"], form_data["time"]
+    ):
+        return "Etkinlik tarihi ve saati geçmiş olamaz."
     return None
 
 
@@ -376,9 +403,11 @@ def create_activity():
         return redirect(url_for("login"))
 
     if request.method == "GET":
-        return render_template("create_activity.html")
+        min_date = datetime.now(TURKEY_TZ).strftime("%Y-%m-%d")
+        return render_template("create_activity.html", min_date=min_date)
 
     form_data = parse_activity_form()
+    min_date = datetime.now(TURKEY_TZ).strftime("%Y-%m-%d")
 
     print("FORM DATA:", request.form)
     print("title:", repr(form_data["title"]))
@@ -394,6 +423,7 @@ def create_activity():
             "create_activity.html",
             error=error,
             form_data=form_data,
+            min_date=min_date,
         )
 
     activity = Activity(
@@ -490,7 +520,11 @@ def edit_activity(activity_id):
         )
 
     form_data = parse_activity_form()
-    error = validate_activity_form(form_data)
+    error = validate_activity_form(
+        form_data,
+        original_date=activity.date,
+        original_time=activity.time,
+    )
     if error:
         return render_template(
             "edit_activity.html",
