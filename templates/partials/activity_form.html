@@ -52,6 +52,7 @@
                 type="date"
                 name="date"
                 required
+                {% if min_date is defined and min_date %}min="{{ min_date }}"{% endif %}
                 value="{{ form_data.date if form_data is defined else '' }}"
             >
         </span>
@@ -79,7 +80,7 @@
     </label>
 </div>
 
-<p class="field-hint">Saati 14:30 formatında yazın.</p>
+<p class="field-hint">Saati 14:30 formatında yazın. Geçmiş tarih veya saat seçilemez.</p>
 
 <label class="field-block">
     <span class="field-label">Konum</span>
