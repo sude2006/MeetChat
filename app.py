@@ -638,7 +638,11 @@ def add_comment(activity_id):
     db.session.commit()
     return redirect(url_for("activity_detail", activity_id=activity_id))
 
+@app.route("/discover")
+def discover():
+    return render_template("discover.html")
 
+    
 @app.route("/friends")
 def friends():
     current_user = get_current_user()

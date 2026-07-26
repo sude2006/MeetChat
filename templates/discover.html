@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keşfet - MeetChat</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/discover.css') }}">
+</head>
+
+<body>
+
+    <main class="discover-page">
+
+        <header class="discover-header">
+            <div>
+                <p class="discover-subtitle">Yeni planlar bul</p>
+                <h1>Keşfet</h1>
+            </div>
+
+            <button class="filter-button" type="button">
+                Filtrele
+            </button>
+        </header>
+
+        <section class="search-section">
+            <input
+                type="search"
+                class="search-input"
+                placeholder="Etkinlik, kategori veya konum ara..."
+                aria-label="Etkinlik ara"
+            >
+        </section>
+
+    </main>
+
+</body>
+
+</html>

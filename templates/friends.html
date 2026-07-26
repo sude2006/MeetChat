@@ -72,15 +72,33 @@
             {% endif %}
         </section>
 
-        <section class="friends-section">
-            <h2>Kullanıcılar</h2>
+        <section class="friends-section discover-section">
+            <div class="section-heading">
+                <div>
+                    <h2>Arkadaş Olabilir</h2>
+                    <p>Ortak ilgi alanlarına göre önerilen kişiler.</p>
+                </div>
+            </div>
             {% if users %}
             <ul class="user-list">
                 {% for item in users %}
                 <li class="user-row">
                     <div class="user-info">
                         <span class="user-avatar">{{ item.user.full_name[0] }}</span>
-                        <span class="user-name">{{ item.user.full_name }}</span>
+                    
+                        <div class="user-details">
+                            <span class="user-name">{{ item.user.full_name }}</span>
+                    
+                            <div class="interest-list">
+                                <span class="interest-pill">Kahve</span>
+                                <span class="interest-pill">Sinema</span>
+                                <span class="interest-pill">Seyahat</span>
+                            </div>
+                    
+                            <span class="common-interest-text">
+                                2 ortak ilgi alanınız var
+                            </span>
+                        </div>
                     </div>
                     <div class="user-actions">
                         {% if item.state == 'add' %}
