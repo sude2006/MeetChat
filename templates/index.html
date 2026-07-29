@@ -45,6 +45,7 @@
                             type="radio"
                             name="filter"
                             value="all"
+                            onchange="this.form.submit()"
                             {% if activity_filter == 'all' %}checked{% endif %}
                         >
                         <span>Tüm etkinlikler</span>
@@ -54,6 +55,7 @@
                             type="radio"
                             name="filter"
                             value="mine"
+                            onchange="this.form.submit()"
                             {% if activity_filter == 'mine' %}checked{% endif %}
                         >
                         <span>Oluşturduklarım</span>
@@ -63,6 +65,7 @@
                             type="radio"
                             name="filter"
                             value="joined"
+                            onchange="this.form.submit()"
                             {% if activity_filter == 'joined' %}checked{% endif %}
                         >
                         <span>Katıldıklarım</span>
@@ -194,7 +197,7 @@
                 </span>
                 <span>Bildirimler</span>
             </a>
-            <a href="{{ url_for('logout') }}" class="nav-item">
+            <a href="#" class="nav-item">
                 <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
                     <circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/>
                     <path d="M4 20c1.5-3.5 4-5 8-5s6.5 1.5 8 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
@@ -203,6 +206,25 @@
             </a>
         </nav>
     </div>
+    <script>
+        const searchInput = document.querySelector(".search-input");
+        let searchTimer;
+    
+        searchInput.addEventListener("input", function () {
+            clearTimeout(searchTimer);
+    
+            searchTimer = setTimeout(function () {
+                searchInput.form.requestSubmit();
+            }, 500);
+        });
+    
+        if (searchInput.value.trim() !== "") {
+            searchInput.focus();
+    
+            const textLength = searchInput.value.length;
+            searchInput.setSelectionRange(textLength, textLength);
+        }
+    </script>
 </body>
 
 </html>
