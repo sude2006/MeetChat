@@ -1,3 +1,23 @@
+/* =========================
+   MeetChat — Keşfet
+========================= */
+
+:root {
+    --primary: #FF465B;
+    --primary-hover: #e53950;
+    --primary-soft: rgba(255, 70, 91, 0.08);
+    --text: #2E2E2E;
+    --text-muted: #8A8A8A;
+    --text-soft: #666666;
+    --border: #F0F0F0;
+    --surface: #F7F7F7;
+    --white: #FFFFFF;
+    --shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    --shadow-hover: 0 6px 20px rgba(0, 0, 0, 0.09);
+    --app-max: 430px;
+    --nav-height: 78px;
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -6,63 +26,563 @@
 
 body {
     min-height: 100vh;
-    background-color: #f7f8fa;
-    font-family: Arial, sans-serif;
-    color: #222222;
+    background-color: #FAFAFA;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--text);
+    overflow-x: hidden;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+button {
+    font-family: inherit;
+}
+
+/* =========================
+   Sayfa kabuğu
+========================= */
+
+.discover-shell {
+    width: 100%;
+    max-width: var(--app-max);
+    min-height: 100vh;
+    margin: 0 auto;
+    background: var(--white);
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.04);
+    padding-bottom: calc(var(--nav-height) + 24px + env(safe-area-inset-bottom, 0px));
+    overflow-x: hidden;
 }
 
 .discover-page {
     width: 100%;
-    max-width: 720px;
-    min-height: 100vh;
-    margin: 0 auto;
-    padding: 32px 20px;
-    background-color: #ffffff;
+    padding: 24px 18px 0;
 }
+
+/* =========================
+   Üst başlık
+========================= */
 
 .discover-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-}
-
-.discover-subtitle {
-    margin-bottom: 4px;
-    color: #777777;
-    font-size: 14px;
+    margin-bottom: 16px;
 }
 
 .discover-header h1 {
     font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    line-height: 1.15;
 }
 
-.filter-button {
-    border: none;
-    border-radius: 12px;
-    padding: 11px 16px;
-    background-color: #ff6f61;
-    color: #ffffff;
-    font-size: 14px;
-    font-weight: bold;
-    cursor: pointer;
+/* =========================
+   Arama
+========================= */
+
+.discover-search-form {
+    width: 100%;
 }
 
 .search-section {
-    margin-top: 28px;
+    margin-bottom: 14px;
 }
 
 .search-input {
     width: 100%;
-    border: 1px solid #dddddd;
-    border-radius: 14px;
-    padding: 15px 16px;
-    background-color: #f8f8f8;
+    max-width: 100%;
+    height: 50px;
+    padding: 0 16px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background-color: var(--surface);
     font-size: 15px;
+    color: var(--text);
     outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.search-input::placeholder {
+    color: var(--text-muted);
 }
 
 .search-input:focus {
-    border-color: #ff6f61;
-    background-color: #ffffff;
+    border-color: var(--primary);
+    background-color: var(--white);
+    box-shadow: 0 0 0 3px rgba(255, 70, 91, 0.12);
+}
+
+/* =========================
+   Filtre çipleri
+========================= */
+
+.filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.filter-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 9px 18px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+    border: 1px solid var(--border);
+    background: var(--white);
+    color: var(--text);
+    white-space: nowrap;
+    transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.filter-chip.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--white);
+    box-shadow: 0 2px 8px rgba(255, 70, 91, 0.28);
+}
+
+.filter-chip:disabled {
+    background: var(--white);
+    border-color: #E8E8E8;
+    color: var(--text-soft);
+    cursor: not-allowed;
+    opacity: 0.85;
+}
+
+.filter-chip:not(:disabled):not(.active):hover {
+    background: var(--surface);
+}
+
+/* =========================
+   Bölüm başlığı
+========================= */
+
+.activities-intro {
+    margin-top: 24px;
+    margin-bottom: 16px;
+}
+
+.activities-intro h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+}
+
+.activities-intro p {
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--text-soft);
+}
+
+/* =========================
+   Kart listesi
+========================= */
+
+.activities-section {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding-bottom: 8px;
+}
+
+.activity-card {
+    min-width: 0;
+    background: var(--white);
+    border-radius: 20px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.activity-card:hover {
+    box-shadow: var(--shadow-hover);
+}
+
+/* =========================
+   Kapak görseli
+========================= */
+
+.activity-cover-link {
+    display: block;
+    overflow: hidden;
+    border-radius: 20px 20px 0 0;
+}
+
+.activity-cover-link:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: -2px;
+}
+
+.activity-cover {
+    display: block;
+    width: 100%;
+    height: 190px;
+    object-fit: cover;
+}
+
+/* =========================
+   Kart içeriği
+========================= */
+
+.activity-body {
+    padding: 15px 16px 16px;
+    min-width: 0;
+}
+
+.activity-title-link {
+    display: block;
+    margin-bottom: 6px;
+}
+
+.activity-title-link:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+.activity-title {
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--text);
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    transition: color 0.15s ease;
+}
+
+.activity-title-link:hover .activity-title,
+.activity-title-link:focus-visible .activity-title {
+    color: var(--primary);
+}
+
+.activity-description-link {
+    display: block;
+    margin-bottom: 10px;
+}
+
+.activity-description-link:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+.activity-description {
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--text-soft);
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* =========================
+   Meta satırları
+========================= */
+
+.activity-datetime,
+.activity-location,
+.activity-participants {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--text-soft);
+    margin-bottom: 8px;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    flex-wrap: wrap;
+}
+
+.activity-datetime::before,
+.activity-location::before,
+.activity-participants::before {
+    content: "";
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    margin-top: 1px;
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+
+.activity-datetime::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23FF465B' stroke-width='1.8'%3E%3Crect x='3' y='5' width='18' height='16' rx='2'/%3E%3Cpath d='M3 10h18M8 3v4M16 3v4' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+.activity-location::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232E2E2E' stroke-width='1.8'%3E%3Cpath d='M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z'/%3E%3Ccircle cx='12' cy='10' r='2.5'/%3E%3C/svg%3E");
+}
+
+.activity-participants {
+    margin-bottom: 10px;
+}
+
+.activity-participants::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232E2E2E' stroke-width='1.8'%3E%3Ccircle cx='9' cy='8' r='3'/%3E%3Cpath d='M3 19c0-3 2.7-5 6-5s6 2 6 5M16 8a2.5 2.5 0 110 5M21 19c0-2.2-1.5-4-3.5-4.8' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+.activity-maybe-count {
+    color: var(--text-muted);
+}
+
+/* =========================
+   Oluşturan kişi
+========================= */
+
+.activity-creator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 0;
+    margin-bottom: 4px;
+    border-top: 1px solid var(--border);
+    min-width: 0;
+}
+
+.activity-creator-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 2px solid var(--white);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.activity-creator-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    min-width: 0;
+}
+
+/* =========================
+   Aksiyon butonları
+========================= */
+
+.activity-actions {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+    margin-top: 12px;
+    min-width: 0;
+}
+
+.respond-form {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+}
+
+.maybe-btn,
+.join-btn,
+.detail-link {
+    width: 100%;
+    min-height: 44px;
+    padding: 0 8px;
+    border-radius: 13px;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.maybe-btn {
+    border: 1.5px solid var(--primary);
+    background: var(--white);
+    color: var(--primary);
+}
+
+.maybe-btn:hover,
+.maybe-btn:focus-visible {
+    background: var(--primary-soft);
+}
+
+.maybe-btn.active {
+    background: var(--primary);
+    color: var(--white);
+}
+
+.join-btn {
+    border: 1.5px solid var(--primary);
+    background: var(--primary);
+    color: var(--white);
+    box-shadow: 0 2px 8px rgba(255, 70, 91, 0.22);
+}
+
+.join-btn:hover,
+.join-btn:focus-visible {
+    background: var(--primary-hover);
+    border-color: var(--primary-hover);
+}
+
+.join-btn.active {
+    background: #c6283f;
+    border-color: #c6283f;
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.25);
+}
+
+.detail-link {
+    flex: 1;
+    min-width: 0;
+    border: 1px solid #E5E5E5;
+    background: #F5F5F5;
+    color: var(--text);
+}
+
+.detail-link:hover,
+.detail-link:focus-visible {
+    background: #EBEBEB;
+}
+
+.maybe-btn:focus-visible,
+.join-btn:focus-visible,
+.detail-link:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* =========================
+   Boş durum
+========================= */
+
+.empty-activities {
+    padding: 28px 20px;
+    text-align: center;
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--text-soft);
+    background: rgba(255, 70, 91, 0.05);
+    border: 1px dashed rgba(255, 70, 91, 0.25);
+    border-radius: 16px;
+}
+
+/* =========================
+   Alt navigasyon
+========================= */
+
+.bottom-nav {
+    position: fixed;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: var(--app-max);
+    height: var(--nav-height);
+    background: var(--white);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-around;
+    padding: 10px 8px calc(16px + env(safe-area-inset-bottom, 0px));
+    z-index: 100;
+}
+
+.nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    color: #5A5A6E;
+    font-size: 11px;
+    font-weight: 500;
+    min-width: 0;
+    transition: color 0.15s ease;
+}
+
+.nav-item.active {
+    color: var(--primary);
+}
+
+.nav-item:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: 8px;
+}
+
+.nav-item.nav-create {
+    margin-top: -18px;
+}
+
+.create-btn {
+    width: 54px;
+    height: 54px;
+    border-radius: 16px;
+    background: var(--primary);
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 14px rgba(255, 70, 91, 0.35);
+}
+
+.nav-icon-wrap {
+    position: relative;
+    display: inline-flex;
+}
+
+/* =========================
+   Responsive
+========================= */
+
+@media (max-width: 360px) {
+    .discover-page {
+        padding: 20px 14px 0;
+    }
+
+    .activity-body {
+        padding: 12px 13px 14px;
+    }
+
+    .activity-actions {
+        gap: 6px;
+    }
+
+    .maybe-btn,
+    .join-btn,
+    .detail-link {
+        min-height: 42px;
+        font-size: 13px;
+        padding: 0 6px;
+    }
+
+    .discover-header h1 {
+        font-size: 28px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        transition-duration: 0.01ms !important;
+    }
+
+    .activity-card:hover {
+        transform: none;
+    }
 }

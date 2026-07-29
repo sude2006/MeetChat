@@ -640,7 +640,51 @@ def add_comment(activity_id):
 
 @app.route("/discover")
 def discover():
-    return render_template("discover.html")
+    current_user = get_current_user()
+    if current_user is None:
+        return redirect(url_for("login"))
+
+    search_q = request.args.get("q", "").strip()
+    query = Activity.query.filter(Activity.visibility == "public")
+
+    if search_q:
+        query = query.filter(Activity.title.ilike(f"%{search_q}%"))
+
+    activities_db = query.order_by(Activity.date.asc(), Activity.time.asc()).all()
+    activities = []
+    for activity in activities_db:
+        joined_count = sum(1 for p in activity.participants if p.status == "joined")
+        maybe_count = sum(1 for p in activity.participants if p.status == "maybe")
+        user_participation = next(
+            (p for p in activity.participants if p.user_id == current_user.id),
+            None,
+        )
+        activities.append(
+            {
+                "id": activity.id,
+                "creator_name": activity.creator.full_name,
+                "creator_avatar": "img/avatar-user.jpg",
+                "title": activity.title,
+                "description": activity.description,
+                "datetime": format_activity_datetime(activity.date, activity.time),
+                "location": activity.location,
+                "cover_image": COVER_IMAGES[activity.id % len(COVER_IMAGES)],
+                "joined_count": joined_count,
+                "maybe_count": maybe_count,
+                "user_status": user_participation.status if user_participation else None,
+                "comment_count": len(activity.comments),
+                "visibility": activity.visibility,
+                "visibility_label": VISIBILITY_LABELS.get(
+                    activity.visibility, "Herkese açık"
+                ),
+            }
+        )
+
+    return render_template(
+        "discover.html",
+        activities=activities,
+        q=search_q,
+    )
 
     
 @app.route("/friends")

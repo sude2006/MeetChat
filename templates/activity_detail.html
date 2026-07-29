@@ -9,117 +9,176 @@
 </head>
 
 <body>
-    <div class="detail-shell">
-        <header class="detail-header">
-            <a href="{{ url_for('home') }}" class="back-btn" aria-label="Geri">
-                <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </a>
-            <div class="detail-header-text">
-                <h1>Etkinlik Detayı</h1>
-                <p>{{ activity.creator.full_name }} tarafından oluşturuldu</p>
-            </div>
-        </header>
+    {% set ns = namespace(user_status=none) %}
+    {% for participant in activity.participants %}
+        {% if participant.user_id == session.get('user_id') %}
+            {% set ns.user_status = participant.status %}
+        {% endif %}
+    {% endfor %}
 
-        <article class="activity-card">
-            <div class="activity-media">
+    {% set joined_participants = activity.participants | selectattr('status', 'equalto', 'joined') | list %}
+    {% set max_visible_avatars = 4 %}
+    {% set extra_participant_count = joined_participants|length - max_visible_avatars %}
+
+    <div class="detail-shell">
+        <main class="detail-content">
+            <section class="detail-hero">
                 <img
                     class="activity-cover"
                     src="{{ url_for('static', filename=cover_image) }}"
                     alt=""
                 >
-            </div>
-            <div class="activity-body">
-                <h2 class="activity-title">{{ activity.title }}</h2>
-                <p class="activity-description">{{ activity.description }}</p>
-                <span class="visibility-badge">{{ visibility_label }}</span>
+                <a href="{{ url_for('home') }}" class="back-btn" aria-label="Geri">
+                    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </a>
+            </section>
 
-                <div class="activity-meta">
-                    <div class="meta-row">
-                        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
-                            <rect x="3" y="5" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/>
-                            <path d="M3 10h18M8 3v4M16 3v4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                        </svg>
-                        <span>{{ datetime }}</span>
-                    </div>
-                    {% if activity.location %}
-                    <div class="meta-row">
-                        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
-                            <path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z" fill="none" stroke="currentColor" stroke-width="1.8"/>
-                            <circle cx="12" cy="10" r="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
-                        </svg>
-                        <span>{{ activity.location }}</span>
-                    </div>
+            <section class="detail-main">
+                <h1 class="activity-title">{{ activity.title }}</h1>
+
+                {% if activity.description %}
+                    {% if activity.description|length > 180 %}
+                    <p class="activity-description activity-description-lead">{{ activity.description[:180] }}…</p>
+                    <details class="description-details">
+                        <summary class="description-summary">Daha Fazla</summary>
+                        <p class="activity-description">{{ activity.description }}</p>
+                    </details>
+                    {% else %}
+                    <p class="activity-description">{{ activity.description }}</p>
                     {% endif %}
-                </div>
-
-                <div class="participants">
-                    <span>{{ joined_count }} kişi katılıyor</span>
-                    <span class="maybe-count">{{ maybe_count }} belki</span>
-                </div>
-            </div>
-        </article>
-
-        {% if is_owner %}
-        <div class="owner-actions">
-            <a href="{{ url_for('edit_activity', activity_id=activity.id) }}" class="edit-btn">Düzenle</a>
-            <form
-                class="delete-form"
-                action="{{ url_for('delete_activity', activity_id=activity.id) }}"
-                method="post"
-                onsubmit="return confirm('Bu etkinliği silmek istediğinize emin misiniz? Bu işlem geri alınamaz.');"
-            >
-                <button type="submit" class="delete-btn">Sil</button>
-            </form>
-        </div>
-        {% endif %}
-
-        <section class="comments-section">
-            <h2 class="comments-heading">
-                Yorumlar
-                <span class="comments-count">({{ comments|length }})</span>
-            </h2>
-
-            {% if comments %}
-            <ul class="comments-list">
-                {% for comment in comments %}
-                <li class="comment-item">
-                    <div class="comment-header">
-                        <span class="comment-author">{{ comment.author_name }}</span>
-                        <time class="comment-date">{{ comment.created_at }}</time>
-                    </div>
-                    <p class="comment-body">{{ comment.body }}</p>
-                </li>
-                {% endfor %}
-            </ul>
-            {% else %}
-            <p class="comments-empty">Henüz yorum yok. İlk yorumu sen yaz!</p>
-            {% endif %}
-
-            <form
-                class="comment-form"
-                action="{{ url_for('add_comment', activity_id=activity.id) }}"
-                method="post"
-            >
-                {% if error %}
-                <p class="form-error" role="alert">{{ error }}</p>
                 {% endif %}
 
-                <label class="comment-field">
-                    <span class="comment-label">Yorum yaz</span>
-                    <textarea
-                        name="body"
-                        maxlength="{{ comment_max_length }}"
-                        required
-                        placeholder="Düşüncelerini paylaş..."
-                        rows="3"
-                    >{{ form_body }}</textarea>
-                </label>
-                <p class="field-hint">En fazla {{ comment_max_length }} karakter</p>
-                <button type="submit" class="submit-btn">Yorumu Gönder</button>
+                <div class="info-pills">
+                    <span class="info-pill info-pill-datetime">{{ datetime }}</span>
+                    {% if activity.location %}
+                    <span class="info-pill info-pill-location">{{ activity.location }}</span>
+                    {% endif %}
+                    <span class="info-pill info-pill-visibility">{{ visibility_label }}</span>
+                </div>
+            </section>
+
+            <section class="detail-section creator-section">
+                <h2 class="section-heading">Oluşturan</h2>
+                <div class="creator-card creator-card-static" role="group" aria-label="Etkinliği oluşturan kişi">
+                    <img
+                        class="creator-avatar"
+                        src="{{ url_for('static', filename='img/avatar-user.jpg') }}"
+                        alt="{{ activity.creator.full_name }}"
+                    >
+                    <div class="creator-info">
+                        <span class="creator-name">{{ activity.creator.full_name }}</span>
+                        <span class="creator-label">Etkinliği oluşturan kişi</span>
+                    </div>
+                    <span class="creator-chevron" aria-hidden="true">›</span>
+                </div>
+            </section>
+
+            <section class="detail-section participants-section">
+                <div class="section-header-row">
+                    <h2 class="section-heading">Katılımcılar</h2>
+                    <span class="section-action-text">Tümünü Gör ›</span>
+                </div>
+
+                <div class="participants-summary">
+                    <div class="participant-avatars" aria-label="{{ joined_count }} kişi katılıyor">
+                        {% for participant in joined_participants[:max_visible_avatars] %}
+                        <span
+                            class="participant-avatar"
+                            title="{{ participant.user.full_name }}"
+                        >{{ participant.user.full_name[0] }}</span>
+                        {% endfor %}
+                        {% if extra_participant_count > 0 %}
+                        <span class="participant-avatar participant-avatar-more">+{{ extra_participant_count }}</span>
+                        {% endif %}
+                    </div>
+                    <p class="participants-count">
+                        {{ joined_count }} kişi katılıyor
+                        {% if maybe_count %}
+                        <span class="maybe-count">· {{ maybe_count }} belki</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </section>
+
+            {% if is_owner %}
+            <div class="owner-actions">
+                <a href="{{ url_for('edit_activity', activity_id=activity.id) }}" class="edit-btn">Düzenle</a>
+                <form
+                    class="delete-form"
+                    action="{{ url_for('delete_activity', activity_id=activity.id) }}"
+                    method="post"
+                    onsubmit="return confirm('Bu etkinliği silmek istediğinize emin misiniz? Bu işlem geri alınamaz.');"
+                >
+                    <button type="submit" class="delete-btn">Sil</button>
+                </form>
+            </div>
+            {% endif %}
+
+            <section class="detail-section comments-section">
+                <h2 class="section-heading">
+                    Yorumlar
+                    <span class="comments-count">({{ comments|length }})</span>
+                </h2>
+
+                {% if comments %}
+                <ul class="comments-list">
+                    {% for comment in comments %}
+                    <li class="comment-item">
+                        <div class="comment-header">
+                            <span class="comment-author">{{ comment.author_name }}</span>
+                            <time class="comment-date">{{ comment.created_at }}</time>
+                        </div>
+                        <p class="comment-body">{{ comment.body }}</p>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="comments-empty">Henüz yorum yok. İlk yorumu sen yaz!</p>
+                {% endif %}
+
+                <form
+                    class="comment-form"
+                    action="{{ url_for('add_comment', activity_id=activity.id) }}"
+                    method="post"
+                >
+                    {% if error %}
+                    <p class="form-error" role="alert">{{ error }}</p>
+                    {% endif %}
+
+                    <label class="comment-field">
+                        <span class="comment-label">Yorum yaz</span>
+                        <textarea
+                            name="body"
+                            maxlength="{{ comment_max_length }}"
+                            required
+                            placeholder="Düşüncelerini paylaş..."
+                            rows="3"
+                        >{{ form_body }}</textarea>
+                    </label>
+                    <p class="field-hint">En fazla {{ comment_max_length }} karakter</p>
+                    <button type="submit" class="submit-btn">Yorumu Gönder</button>
+                </form>
+            </section>
+        </main>
+
+        <div class="sticky-actions" aria-label="Etkinlik aksiyonları">
+            <form action="{{ url_for('respond_activity', activity_id=activity.id) }}" method="post" class="respond-form">
+                <input type="hidden" name="status" value="maybe">
+                <button
+                    type="submit"
+                    class="maybe-btn{% if ns.user_status == 'maybe' %} active{% endif %}"
+                >Belki</button>
             </form>
-        </section>
+            <form action="{{ url_for('respond_activity', activity_id=activity.id) }}" method="post" class="respond-form">
+                <input type="hidden" name="status" value="joined">
+                <button
+                    type="submit"
+                    class="join-btn{% if ns.user_status == 'joined' %} active{% endif %}"
+                >Katıl</button>
+            </form>
+        </div>
     </div>
 </body>
 
