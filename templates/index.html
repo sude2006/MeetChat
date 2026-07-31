@@ -78,11 +78,17 @@
                 {% for plan in activities %}
                 <article class="plan-card">
                     <div class="plan-media">
-                        <img
-                            class="plan-cover"
-                            src="{{ url_for('static', filename=plan.cover_image) }}"
-                            alt=""
+                        <a
+                            href="{{ url_for('activity_detail', activity_id=plan.id) }}"
+                            class="plan-cover-link"
+                            aria-label="{{ plan.title }} detayına git"
                         >
+                            <img
+                                class="plan-cover"
+                                src="{{ url_for('static', filename=plan.cover_image) }}"
+                                alt=""
+                            >
+                        </a>
                         <img
                             class="creator-avatar"
                             src="{{ url_for('static', filename=plan.creator_avatar) }}"
@@ -92,8 +98,18 @@
 
                     <div class="plan-body">
                         <p class="creator-name">{{ plan.creator_name }}</p>
-                        <h3 class="plan-title">{{ plan.title }}</h3>
-                        <p class="plan-description">{{ plan.description }}</p>
+                        <a
+                            href="{{ url_for('activity_detail', activity_id=plan.id) }}"
+                            class="plan-title-link"
+                        >
+                            <h3 class="plan-title">{{ plan.title }}</h3>
+                        </a>
+                        <a
+                            href="{{ url_for('activity_detail', activity_id=plan.id) }}"
+                            class="plan-description-link"
+                        >
+                            <p class="plan-description">{{ plan.description }}</p>
+                        </a>
                         <span class="visibility-badge">{{ plan.visibility_label }}</span>
 
                         <div class="plan-meta">
@@ -135,6 +151,10 @@
                                     class="maybe-btn{% if plan.user_status == 'maybe' %} active{% endif %}"
                                 >Belki</button>
                             </form>
+                            <a
+                                href="{{ url_for('activity_detail', activity_id=plan.id) }}"
+                                class="detail-link"
+                            >Detay ›</a>
                             <a
                                 href="{{ url_for('activity_detail', activity_id=plan.id) }}"
                                 class="comment-btn"
