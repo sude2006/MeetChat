@@ -186,6 +186,31 @@
             </a>
         </nav>
     </div>
+    <script>
+        const discoverSearchForm = document.querySelector(".discover-search-form");
+        const searchInput = discoverSearchForm
+            ? discoverSearchForm.querySelector(".search-input")
+            : null;
+
+        if (searchInput && searchInput.form) {
+            let searchTimer;
+
+            searchInput.addEventListener("input", function () {
+                clearTimeout(searchTimer);
+
+                searchTimer = setTimeout(function () {
+                    searchInput.form.requestSubmit();
+                }, 500);
+            });
+
+            if (searchInput.value.trim() !== "") {
+                searchInput.focus();
+
+                const textLength = searchInput.value.length;
+                searchInput.setSelectionRange(textLength, textLength);
+            }
+        }
+    </script>
 </body>
 
 </html>
