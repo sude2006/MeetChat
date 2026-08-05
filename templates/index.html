@@ -45,6 +45,7 @@
                             type="radio"
                             name="filter"
                             value="all"
+                            onchange="this.form.submit()"
                             {% if activity_filter == 'all' %}checked{% endif %}
                         >
                         <span>Tüm etkinlikler</span>
@@ -54,6 +55,7 @@
                             type="radio"
                             name="filter"
                             value="mine"
+                            onchange="this.form.submit()"
                             {% if activity_filter == 'mine' %}checked{% endif %}
                         >
                         <span>Oluşturduklarım</span>
@@ -63,6 +65,7 @@
                             type="radio"
                             name="filter"
                             value="joined"
+                            onchange="this.form.submit()"
                             {% if activity_filter == 'joined' %}checked{% endif %}
                         >
                         <span>Katıldıklarım</span>
@@ -75,11 +78,17 @@
                 {% for plan in activities %}
                 <article class="plan-card">
                     <div class="plan-media">
-                        <img
-                            class="plan-cover"
-                            src="{{ url_for('static', filename=plan.cover_image) }}"
-                            alt=""
+                        <a
+                            href="{{ url_for('activity_detail', activity_id=plan.id, source='home', q=q, filter=activity_filter) }}"
+                            class="plan-cover-link"
+                            aria-label="{{ plan.title }} detayına git"
                         >
+                            <img
+                                class="plan-cover"
+                                src="{{ url_for('static', filename=plan.cover_image) }}"
+                                alt=""
+                            >
+                        </a>
                         <img
                             class="creator-avatar"
                             src="{{ url_for('static', filename=plan.creator_avatar) }}"
@@ -89,8 +98,18 @@
 
                     <div class="plan-body">
                         <p class="creator-name">{{ plan.creator_name }}</p>
-                        <h3 class="plan-title">{{ plan.title }}</h3>
-                        <p class="plan-description">{{ plan.description }}</p>
+                        <a
+                            href="{{ url_for('activity_detail', activity_id=plan.id, source='home', q=q, filter=activity_filter) }}"
+                            class="plan-title-link"
+                        >
+                            <h3 class="plan-title">{{ plan.title }}</h3>
+                        </a>
+                        <a
+                            href="{{ url_for('activity_detail', activity_id=plan.id, source='home', q=q, filter=activity_filter) }}"
+                            class="plan-description-link"
+                        >
+                            <p class="plan-description">{{ plan.description }}</p>
+                        </a>
                         <span class="visibility-badge">{{ plan.visibility_label }}</span>
 
                         <div class="plan-meta">
@@ -119,6 +138,11 @@
 
                         <div class="plan-actions">
                             <form action="{{ url_for('respond_activity', activity_id=plan.id) }}" method="post" class="respond-form">
+                                <input type="hidden" name="origin" value="home">
+                                {% if q %}
+                                <input type="hidden" name="return_q" value="{{ q }}">
+                                {% endif %}
+                                <input type="hidden" name="return_filter" value="{{ activity_filter }}">
                                 <input type="hidden" name="status" value="joined">
                                 <button
                                     type="submit"
@@ -126,6 +150,11 @@
                                 >Katıl</button>
                             </form>
                             <form action="{{ url_for('respond_activity', activity_id=plan.id) }}" method="post" class="respond-form">
+                                <input type="hidden" name="origin" value="home">
+                                {% if q %}
+                                <input type="hidden" name="return_q" value="{{ q }}">
+                                {% endif %}
+                                <input type="hidden" name="return_filter" value="{{ activity_filter }}">
                                 <input type="hidden" name="status" value="maybe">
                                 <button
                                     type="submit"
@@ -133,7 +162,11 @@
                                 >Belki</button>
                             </form>
                             <a
-                                href="{{ url_for('activity_detail', activity_id=plan.id) }}"
+                                href="{{ url_for('activity_detail', activity_id=plan.id, source='home', q=q, filter=activity_filter) }}"
+                                class="detail-link"
+                            >Detay ›</a>
+                            <a
+                                href="{{ url_for('activity_detail', activity_id=plan.id, source='home', q=q, filter=activity_filter) }}"
                                 class="comment-btn"
                                 aria-label="{{ plan.comment_count }} yorum"
                             >
@@ -169,7 +202,7 @@
                 </svg>
                 <span>Ana Sayfa</span>
             </a>
-            <a href="{{ url_for('friends') }}" class="nav-item">
+            <a href="{{ url_for('discover') }}" class="nav-item">
                 <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
                     <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/>
                     <path d="M20 20l-3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
@@ -194,7 +227,7 @@
                 </span>
                 <span>Bildirimler</span>
             </a>
-            <a href="{{ url_for('logout') }}" class="nav-item">
+            <a href="#" class="nav-item">
                 <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
                     <circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/>
                     <path d="M4 20c1.5-3.5 4-5 8-5s6.5 1.5 8 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
@@ -203,6 +236,25 @@
             </a>
         </nav>
     </div>
+    <script>
+        const searchInput = document.querySelector(".search-input");
+        let searchTimer;
+    
+        searchInput.addEventListener("input", function () {
+            clearTimeout(searchTimer);
+    
+            searchTimer = setTimeout(function () {
+                searchInput.form.requestSubmit();
+            }, 500);
+        });
+    
+        if (searchInput.value.trim() !== "") {
+            searchInput.focus();
+    
+            const textLength = searchInput.value.length;
+            searchInput.setSelectionRange(textLength, textLength);
+        }
+    </script>
 </body>
 
 </html>

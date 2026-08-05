@@ -94,6 +94,60 @@ def parse_home_filter(raw):
     return value if value in VALID_HOME_FILTERS else "all"
 
 
+ALLOWED_DETAIL_FROM = {"home", "discover"}
+ALLOWED_RESPOND_ORIGINS = {"detail", "home", "discover"}
+
+
+def parse_detail_context(from_raw, q_raw="", filter_raw="all"):
+    from_page = from_raw if from_raw in ALLOWED_DETAIL_FROM else "home"
+    q = (q_raw or "").strip()
+    activity_filter = parse_home_filter(filter_raw)
+    return from_page, q, activity_filter
+
+
+def build_list_back_url(from_page, q="", activity_filter="all"):
+    if from_page == "discover":
+        return url_for("discover", q=q) if q else url_for("discover")
+    if from_page == "home":
+        kwargs = {}
+        if q:
+            kwargs["q"] = q
+        if activity_filter != "all":
+            kwargs["filter"] = activity_filter
+        return url_for("home", **kwargs)
+    return url_for("home")
+
+
+def build_detail_url(activity_id, from_page, q="", activity_filter="all"):
+    kwargs = {"activity_id": activity_id, "source": from_page}
+    if from_page == "discover":
+        kwargs["q"] = q
+    elif from_page == "home":
+        kwargs["q"] = q
+        kwargs["filter"] = activity_filter
+    return url_for("activity_detail", **kwargs)
+
+
+def redirect_after_respond(activity_id, origin, from_page="home", q="", activity_filter="all"):
+    from_page, q, activity_filter = parse_detail_context(from_page, q, activity_filter)
+
+    if origin not in ALLOWED_RESPOND_ORIGINS:
+        return redirect(url_for("home"))
+
+    if origin == "detail":
+        return redirect(build_detail_url(activity_id, from_page, q, activity_filter))
+    if origin == "discover":
+        return redirect(url_for("discover", q=q) if q else url_for("discover"))
+    if origin == "home":
+        kwargs = {}
+        if q:
+            kwargs["q"] = q
+        if activity_filter != "all":
+            kwargs["filter"] = activity_filter
+        return redirect(url_for("home", **kwargs))
+    return redirect(url_for("home"))
+
+
 class Friendship(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     sender_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
@@ -316,7 +370,19 @@ def format_comment_datetime(dt):
     )
 
 
-def render_activity_detail(activity, current_user=None, error=None, form_body=""):
+def render_activity_detail(
+    activity,
+    current_user=None,
+    error=None,
+    form_body="",
+    detail_from="home",
+    detail_q="",
+    detail_filter="all",
+):
+    from_page, q, activity_filter = parse_detail_context(
+        detail_from, detail_q, detail_filter
+    )
+    back_url = build_list_back_url(from_page, q, activity_filter)
     joined_count = sum(1 for p in activity.participants if p.status == "joined")
     maybe_count = sum(1 for p in activity.participants if p.status == "maybe")
     comments = (
@@ -349,6 +415,10 @@ def render_activity_detail(activity, current_user=None, error=None, form_body=""
         error=error,
         form_body=form_body,
         comment_max_length=COMMENT_MAX_LENGTH,
+        back_url=back_url,
+        detail_from=from_page,
+        detail_q=q,
+        detail_filter=activity_filter,
     )
 
 
@@ -476,8 +546,15 @@ def respond_activity(activity_id):
         return redirect(url_for("login"))
 
     status = request.form.get("status", "").strip()
+    origin = request.form.get("origin", "home").strip()
+    return_from = request.form.get("return_from", "home").strip()
+    return_q = request.form.get("return_q", "").strip()
+    return_filter = request.form.get("return_filter", "all").strip()
+
     if status not in VALID_PARTICIPANT_STATUSES:
-        return redirect(url_for("home"))
+        return redirect_after_respond(
+            activity_id, origin, return_from, return_q, return_filter
+        )
 
     activity = db.session.get(Activity, activity_id)
     if activity is None:
@@ -505,7 +582,9 @@ def respond_activity(activity_id):
         participation.status = status
 
     db.session.commit()
-    return redirect(url_for("home"))
+    return redirect_after_respond(
+        activity_id, origin, return_from, return_q, return_filter
+    )
 
 
 @app.route("/activity/<int:activity_id>")
@@ -519,7 +598,13 @@ def activity_detail(activity_id):
     if activity is None:
         return redirect(url_for("home"))
 
-    return render_activity_detail(activity, current_user=current_user)
+    return render_activity_detail(
+        activity,
+        current_user=current_user,
+        detail_from=request.args.get("source", ""),
+        detail_q=request.args.get("q", ""),
+        detail_filter=request.args.get("filter", "all"),
+    )
 
 
 @app.route("/activity/<int:activity_id>/edit", methods=["GET", "POST"])
@@ -638,7 +723,55 @@ def add_comment(activity_id):
     db.session.commit()
     return redirect(url_for("activity_detail", activity_id=activity_id))
 
+@app.route("/discover")
+def discover():
+    current_user = get_current_user()
+    if current_user is None:
+        return redirect(url_for("login"))
 
+    search_q = request.args.get("q", "").strip()
+    query = Activity.query.filter(Activity.visibility == "public")
+
+    if search_q:
+        query = query.filter(Activity.title.ilike(f"%{search_q}%"))
+
+    activities_db = query.order_by(Activity.date.asc(), Activity.time.asc()).all()
+    activities = []
+    for activity in activities_db:
+        joined_count = sum(1 for p in activity.participants if p.status == "joined")
+        maybe_count = sum(1 for p in activity.participants if p.status == "maybe")
+        user_participation = next(
+            (p for p in activity.participants if p.user_id == current_user.id),
+            None,
+        )
+        activities.append(
+            {
+                "id": activity.id,
+                "creator_name": activity.creator.full_name,
+                "creator_avatar": "img/avatar-user.jpg",
+                "title": activity.title,
+                "description": activity.description,
+                "datetime": format_activity_datetime(activity.date, activity.time),
+                "location": activity.location,
+                "cover_image": COVER_IMAGES[activity.id % len(COVER_IMAGES)],
+                "joined_count": joined_count,
+                "maybe_count": maybe_count,
+                "user_status": user_participation.status if user_participation else None,
+                "comment_count": len(activity.comments),
+                "visibility": activity.visibility,
+                "visibility_label": VISIBILITY_LABELS.get(
+                    activity.visibility, "Herkese açık"
+                ),
+            }
+        )
+
+    return render_template(
+        "discover.html",
+        activities=activities,
+        q=search_q,
+    )
+
+    
 @app.route("/friends")
 def friends():
     current_user = get_current_user()

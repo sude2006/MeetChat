@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keşfet - MeetChat</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/discover.css') }}">
+</head>
+
+<body>
+    <div class="discover-shell">
+        <main class="discover-page">
+            <header class="discover-header">
+                <h1>Keşfet</h1>
+            </header>
+
+            <form class="discover-search-form" method="GET" action="{{ url_for('discover') }}">
+                <section class="search-section">
+                    <input
+                        type="search"
+                        name="q"
+                        class="search-input"
+                        value="{{ q }}"
+                        placeholder="Etkinlik, kategori veya konum ara..."
+                        aria-label="Etkinlik ara"
+                    >
+                </section>
+
+                <div class="filter-chips" role="group" aria-label="Zaman filtresi">
+                    <a
+                        href="{{ url_for('discover', q=q) }}"
+                        class="filter-chip active"
+                        aria-current="true"
+                    >Tümü</a>
+                    <button type="button" class="filter-chip" disabled aria-disabled="true">Bugün</button>
+                    <button type="button" class="filter-chip" disabled aria-disabled="true">Bu Hafta</button>
+                </div>
+            </form>
+
+            <section class="activities-intro">
+                <h2>Herkese Açık Etkinlikler</h2>
+                <p>Yeni insanlarla tanışabileceğin herkese açık planları keşfet.</p>
+            </section>
+
+            <section class="activities-section">
+                {% if activities %}
+                {% for plan in activities %}
+                <article class="activity-card">
+                    <div class="activity-media">
+                        <a
+                            href="{{ url_for('activity_detail', activity_id=plan.id, source='discover', q=q) }}"
+                            class="activity-cover-link"
+                            aria-label="{{ plan.title }} detayına git"
+                        >
+                            <img
+                                class="activity-cover"
+                                src="{{ url_for('static', filename=plan.cover_image) }}"
+                                alt=""
+                            >
+                        </a>
+                    </div>
+
+                    <div class="activity-body">
+                        <div class="activity-main-info">
+                            <a
+                                href="{{ url_for('activity_detail', activity_id=plan.id, source='discover', q=q) }}"
+                                class="activity-title-link"
+                            >
+                                <h3 class="activity-title">{{ plan.title }}</h3>
+                            </a>
+                            <a
+                                href="{{ url_for('activity_detail', activity_id=plan.id, source='discover', q=q) }}"
+                                class="activity-description-link"
+                            >
+                                <p class="activity-description">{{ plan.description }}</p>
+                            </a>
+                        </div>
+
+                        <div class="creator-info">
+                            <img
+                                class="activity-creator-avatar"
+                                src="{{ url_for('static', filename=plan.creator_avatar) }}"
+                                alt="{{ plan.creator_name }}"
+                            >
+                            <span class="activity-creator-name">{{ plan.creator_name }}</span>
+                        </div>
+
+                        <p class="activity-datetime">{{ plan.datetime }}</p>
+
+                        {% if plan.location %}
+                        <p class="activity-location">{{ plan.location }}</p>
+                        {% endif %}
+
+                        <div class="participants-row">
+                            <p class="activity-participants">
+                                {{ plan.joined_count }} kişi katılıyor
+                                {% if plan.maybe_count %}
+                                <span class="activity-maybe-count">· {{ plan.maybe_count }} belki</span>
+                                {% endif %}
+                            </p>
+                            <a
+                                href="{{ url_for('activity_detail', activity_id=plan.id, source='discover', q=q) }}"
+                                class="comment-btn"
+                                aria-label="{{ plan.comment_count }} yorum"
+                            >
+                                <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M4 5h16a2 2 0 012 2v8a2 2 0 01-2 2H9l-5 4v-4H4a2 2 0 01-2-2V7a2 2 0 012-2z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                                </svg>
+                                <span>{{ plan.comment_count }}</span>
+                            </a>
+                        </div>
+
+                        <div class="activity-actions">
+                            <form action="{{ url_for('respond_activity', activity_id=plan.id) }}" method="post" class="respond-form">
+                                <input type="hidden" name="origin" value="discover">
+                                {% if q %}
+                                <input type="hidden" name="return_q" value="{{ q }}">
+                                {% endif %}
+                                <input type="hidden" name="status" value="maybe">
+                                <button
+                                    type="submit"
+                                    class="maybe-btn{% if plan.user_status == 'maybe' %} active{% endif %}"
+                                >Belki</button>
+                            </form>
+                            <form action="{{ url_for('respond_activity', activity_id=plan.id) }}" method="post" class="respond-form">
+                                <input type="hidden" name="origin" value="discover">
+                                {% if q %}
+                                <input type="hidden" name="return_q" value="{{ q }}">
+                                {% endif %}
+                                <input type="hidden" name="status" value="joined">
+                                <button
+                                    type="submit"
+                                    class="join-btn{% if plan.user_status == 'joined' %} active{% endif %}"
+                                >Katıl</button>
+                            </form>
+                            <a
+                                href="{{ url_for('activity_detail', activity_id=plan.id, source='discover', q=q) }}"
+                                class="detail-link"
+                            >Detay ›</a>
+                        </div>
+                    </div>
+                </article>
+                {% endfor %}
+                {% else %}
+                {% if q %}
+                <p class="empty-activities">Aramanızla eşleşen etkinlik bulunamadı.</p>
+                {% else %}
+                <p class="empty-activities">Henüz herkese açık etkinlik yok.</p>
+                {% endif %}
+                {% endif %}
+            </section>
+        </main>
+
+        <nav class="bottom-nav" aria-label="Ana navigasyon">
+            <a href="{{ url_for('home') }}" class="nav-item">
+                <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                </svg>
+                <span>Ana Sayfa</span>
+            </a>
+            <a href="{{ url_for('discover') }}" class="nav-item active" aria-current="page">
+                <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M20 20l-3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+                <span>Keşfet</span>
+            </a>
+            <a href="{{ url_for('create_activity') }}" class="nav-item nav-create" aria-label="Plan Oluştur">
+                <span class="create-btn">
+                    <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">
+                        <rect x="4" y="5" width="16" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                        <path d="M4 10h16M8 3v4M16 3v4M12 13v5M9.5 15.5h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                </span>
+            </a>
+            <a href="#" class="nav-item">
+                <span class="nav-icon-wrap">
+                    <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M6 8a6 6 0 1112 0c0 7 3 7 3 9H3c0-2 3-2 3-9z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                        <path d="M10 20a2 2 0 004 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                    <span class="badge">3</span>
+                </span>
+                <span>Bildirimler</span>
+            </a>
+            <a href="#" class="nav-item">
+                <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M4 20c1.5-3.5 4-5 8-5s6.5 1.5 8 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+                <span>Profil</span>
+            </a>
+        </nav>
+    </div>
+    <script>
+        const discoverSearchForm = document.querySelector(".discover-search-form");
+        const searchInput = discoverSearchForm
+            ? discoverSearchForm.querySelector(".search-input")
+            : null;
+
+        if (searchInput && searchInput.form) {
+            let searchTimer;
+
+            searchInput.addEventListener("input", function () {
+                clearTimeout(searchTimer);
+
+                searchTimer = setTimeout(function () {
+                    searchInput.form.requestSubmit();
+                }, 500);
+            });
+
+            if (searchInput.value.trim() !== "") {
+                searchInput.focus();
+
+                const textLength = searchInput.value.length;
+                searchInput.setSelectionRange(textLength, textLength);
+            }
+        }
+    </script>
+</body>
+
+</html>
