@@ -50,7 +50,7 @@
                 <article class="activity-card">
                     <div class="activity-media">
                         <a
-                            href="{{ url_for('activity_detail', activity_id=plan.id) }}"
+                            href="{{ url_for('activity_detail', activity_id=plan.id, source='discover', q=q) }}"
                             class="activity-cover-link"
                             aria-label="{{ plan.title }} detayına git"
                         >
@@ -65,13 +65,13 @@
                     <div class="activity-body">
                         <div class="activity-main-info">
                             <a
-                                href="{{ url_for('activity_detail', activity_id=plan.id) }}"
+                                href="{{ url_for('activity_detail', activity_id=plan.id, source='discover', q=q) }}"
                                 class="activity-title-link"
                             >
                                 <h3 class="activity-title">{{ plan.title }}</h3>
                             </a>
                             <a
-                                href="{{ url_for('activity_detail', activity_id=plan.id) }}"
+                                href="{{ url_for('activity_detail', activity_id=plan.id, source='discover', q=q) }}"
                                 class="activity-description-link"
                             >
                                 <p class="activity-description">{{ plan.description }}</p>
@@ -101,7 +101,7 @@
                                 {% endif %}
                             </p>
                             <a
-                                href="{{ url_for('activity_detail', activity_id=plan.id) }}"
+                                href="{{ url_for('activity_detail', activity_id=plan.id, source='discover', q=q) }}"
                                 class="comment-btn"
                                 aria-label="{{ plan.comment_count }} yorum"
                             >
@@ -114,6 +114,10 @@
 
                         <div class="activity-actions">
                             <form action="{{ url_for('respond_activity', activity_id=plan.id) }}" method="post" class="respond-form">
+                                <input type="hidden" name="origin" value="discover">
+                                {% if q %}
+                                <input type="hidden" name="return_q" value="{{ q }}">
+                                {% endif %}
                                 <input type="hidden" name="status" value="maybe">
                                 <button
                                     type="submit"
@@ -121,6 +125,10 @@
                                 >Belki</button>
                             </form>
                             <form action="{{ url_for('respond_activity', activity_id=plan.id) }}" method="post" class="respond-form">
+                                <input type="hidden" name="origin" value="discover">
+                                {% if q %}
+                                <input type="hidden" name="return_q" value="{{ q }}">
+                                {% endif %}
                                 <input type="hidden" name="status" value="joined">
                                 <button
                                     type="submit"
@@ -128,7 +136,7 @@
                                 >Katıl</button>
                             </form>
                             <a
-                                href="{{ url_for('activity_detail', activity_id=plan.id) }}"
+                                href="{{ url_for('activity_detail', activity_id=plan.id, source='discover', q=q) }}"
                                 class="detail-link"
                             >Detay ›</a>
                         </div>

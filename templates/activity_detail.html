@@ -23,7 +23,7 @@
     <div class="detail-shell">
         <main class="detail-content">
             <section class="detail-header">
-                <a href="{{ url_for('home') }}" class="back-btn" aria-label="Geri">
+                <a href="{{ back_url }}" class="back-btn" aria-label="Geri">
                     <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
@@ -193,6 +193,14 @@
 
         <div class="sticky-actions" aria-label="Etkinlik aksiyonları">
             <form action="{{ url_for('respond_activity', activity_id=activity.id) }}" method="post" class="respond-form">
+                <input type="hidden" name="origin" value="detail">
+                <input type="hidden" name="return_from" value="{{ detail_from }}">
+                {% if detail_q %}
+                <input type="hidden" name="return_q" value="{{ detail_q }}">
+                {% endif %}
+                {% if detail_from == 'home' and detail_filter != 'all' %}
+                <input type="hidden" name="return_filter" value="{{ detail_filter }}">
+                {% endif %}
                 <input type="hidden" name="status" value="maybe">
                 <button
                     type="submit"
@@ -200,6 +208,14 @@
                 >Belki</button>
             </form>
             <form action="{{ url_for('respond_activity', activity_id=activity.id) }}" method="post" class="respond-form">
+                <input type="hidden" name="origin" value="detail">
+                <input type="hidden" name="return_from" value="{{ detail_from }}">
+                {% if detail_q %}
+                <input type="hidden" name="return_q" value="{{ detail_q }}">
+                {% endif %}
+                {% if detail_from == 'home' and detail_filter != 'all' %}
+                <input type="hidden" name="return_filter" value="{{ detail_filter }}">
+                {% endif %}
                 <input type="hidden" name="status" value="joined">
                 <button
                     type="submit"

@@ -79,7 +79,7 @@
                 <article class="plan-card">
                     <div class="plan-media">
                         <a
-                            href="{{ url_for('activity_detail', activity_id=plan.id) }}"
+                            href="{{ url_for('activity_detail', activity_id=plan.id, source='home', q=q, filter=activity_filter) }}"
                             class="plan-cover-link"
                             aria-label="{{ plan.title }} detayına git"
                         >
@@ -99,13 +99,13 @@
                     <div class="plan-body">
                         <p class="creator-name">{{ plan.creator_name }}</p>
                         <a
-                            href="{{ url_for('activity_detail', activity_id=plan.id) }}"
+                            href="{{ url_for('activity_detail', activity_id=plan.id, source='home', q=q, filter=activity_filter) }}"
                             class="plan-title-link"
                         >
                             <h3 class="plan-title">{{ plan.title }}</h3>
                         </a>
                         <a
-                            href="{{ url_for('activity_detail', activity_id=plan.id) }}"
+                            href="{{ url_for('activity_detail', activity_id=plan.id, source='home', q=q, filter=activity_filter) }}"
                             class="plan-description-link"
                         >
                             <p class="plan-description">{{ plan.description }}</p>
@@ -138,6 +138,11 @@
 
                         <div class="plan-actions">
                             <form action="{{ url_for('respond_activity', activity_id=plan.id) }}" method="post" class="respond-form">
+                                <input type="hidden" name="origin" value="home">
+                                {% if q %}
+                                <input type="hidden" name="return_q" value="{{ q }}">
+                                {% endif %}
+                                <input type="hidden" name="return_filter" value="{{ activity_filter }}">
                                 <input type="hidden" name="status" value="joined">
                                 <button
                                     type="submit"
@@ -145,6 +150,11 @@
                                 >Katıl</button>
                             </form>
                             <form action="{{ url_for('respond_activity', activity_id=plan.id) }}" method="post" class="respond-form">
+                                <input type="hidden" name="origin" value="home">
+                                {% if q %}
+                                <input type="hidden" name="return_q" value="{{ q }}">
+                                {% endif %}
+                                <input type="hidden" name="return_filter" value="{{ activity_filter }}">
                                 <input type="hidden" name="status" value="maybe">
                                 <button
                                     type="submit"
@@ -152,11 +162,11 @@
                                 >Belki</button>
                             </form>
                             <a
-                                href="{{ url_for('activity_detail', activity_id=plan.id) }}"
+                                href="{{ url_for('activity_detail', activity_id=plan.id, source='home', q=q, filter=activity_filter) }}"
                                 class="detail-link"
                             >Detay ›</a>
                             <a
-                                href="{{ url_for('activity_detail', activity_id=plan.id) }}"
+                                href="{{ url_for('activity_detail', activity_id=plan.id, source='home', q=q, filter=activity_filter) }}"
                                 class="comment-btn"
                                 aria-label="{{ plan.comment_count }} yorum"
                             >
