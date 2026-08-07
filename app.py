@@ -930,11 +930,14 @@ def friends():
     users = []
     for other in other_users:
         friendship = get_friendship(me, other.id)
+        state = friendship_ui_state(me, other.id, friendship)
+        if state in ("incoming", "friends"):
+            continue
         users.append(
             {
                 "user": other,
                 "friendship_id": friendship.id if friendship else None,
-                "state": friendship_ui_state(me, other.id, friendship),
+                "state": state,
             }
         )
 
