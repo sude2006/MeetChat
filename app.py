@@ -94,7 +94,7 @@ def parse_home_filter(raw):
     return value if value in VALID_HOME_FILTERS else "all"
 
 
-ALLOWED_DETAIL_FROM = {"home", "discover"}
+ALLOWED_DETAIL_FROM = {"home", "discover", "profile"}
 ALLOWED_RESPOND_ORIGINS = {"detail", "home", "discover"}
 
 
@@ -115,6 +115,8 @@ def build_list_back_url(from_page, q="", activity_filter="all"):
         if activity_filter != "all":
             kwargs["filter"] = activity_filter
         return url_for("home", **kwargs)
+    if from_page == "profile":
+        return url_for("profile")
     return url_for("home")
 
 
@@ -351,6 +353,112 @@ def format_activity_datetime(date_str, time_str):
         return f"{days[dt.weekday()]}, {dt.day} {months[dt.month]} {dt.strftime('%H:%M')}"
     except ValueError:
         return f"{date_str} {time_str}"
+
+
+PROFILE_MONTHS = [
+    "", "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
+    "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık",
+]
+
+
+def derive_display_handle(user):
+    local_part = (user.email or "").split("@")[0].lower()
+    safe = "".join(char for char in local_part if char.isalnum() or char == "_")
+    return f"@{safe[:30] or 'user'}"
+
+
+def format_profile_datetime(date_str, time_str):
+    try:
+        dt = datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M")
+        return f"{dt.day} {PROFILE_MONTHS[dt.month]}, {dt.strftime('%H:%M')}"
+    except ValueError:
+        return f"{date_str} {time_str}"
+
+
+def count_joined_participants(activity):
+    return sum(
+        1 for participant in activity.participants if participant.status == "joined"
+    )
+
+
+def serialize_profile_activity(activity, *, is_past):
+    joined_count = count_joined_participants(activity)
+    if is_past:
+        participant_label = f"{joined_count} kişi katıldı"
+    else:
+        participant_label = f"{joined_count} kişi katılıyor"
+    return {
+        "id": activity.id,
+        "title": activity.title,
+        "datetime": format_profile_datetime(activity.date, activity.time),
+        "cover_image": COVER_IMAGES[activity.id % len(COVER_IMAGES)],
+        "joined_count": joined_count,
+        "participant_label": participant_label,
+        "visibility": activity.visibility,
+        "visibility_label": VISIBILITY_LABELS.get(activity.visibility, "Herkese açık"),
+        "is_past": is_past,
+        "detail_url": url_for(
+            "activity_detail",
+            activity_id=activity.id,
+            source="profile",
+        ),
+    }
+
+
+def activity_sort_key(activity):
+    return parse_activity_datetime_local(activity.date, activity.time)
+
+
+def partition_profile_activities(activities):
+    upcoming_raw = []
+    past_raw = []
+    for activity in activities:
+        if is_activity_datetime_in_past(activity.date, activity.time):
+            past_raw.append(activity)
+        else:
+            upcoming_raw.append(activity)
+    upcoming_raw.sort(key=activity_sort_key)
+    past_raw.sort(key=activity_sort_key, reverse=True)
+    return {
+        "upcoming": [
+            serialize_profile_activity(activity, is_past=False)
+            for activity in upcoming_raw
+        ],
+        "past": [
+            serialize_profile_activity(activity, is_past=True)
+            for activity in past_raw
+        ],
+    }
+
+
+def get_profile_context(user):
+    first_name = user.full_name.split()[0] if user.full_name else "Kullanıcı"
+    created_activities = Activity.query.filter_by(creator_id=user.id).all()
+    joined_activities = (
+        Activity.query.join(ActivityParticipant)
+        .filter(
+            ActivityParticipant.user_id == user.id,
+            ActivityParticipant.status == "joined",
+            Activity.creator_id != user.id,
+        )
+        .all()
+    )
+    friend_ids = get_accepted_friend_ids(user.id)
+    return {
+        "profile_user": {
+            "first_name": first_name,
+            "handle": derive_display_handle(user),
+            "bio": "Henüz biyografi eklenmedi.",
+            "avatar_initial": user.full_name[0].upper() if user.full_name else "?",
+        },
+        "stats": {
+            "created_count": len(created_activities),
+            "joined_count": len(joined_activities),
+            "friends_count": len(friend_ids),
+        },
+        "created": partition_profile_activities(created_activities),
+        "joined": partition_profile_activities(joined_activities),
+    }
 
 
 def format_comment_datetime(dt):
@@ -771,7 +879,17 @@ def discover():
         q=search_q,
     )
 
-    
+
+@app.route("/profile")
+def profile():
+    current_user = get_current_user()
+    if current_user is None:
+        return redirect(url_for("login"))
+
+    context = get_profile_context(current_user)
+    return render_template("profile.html", **context)
+
+
 @app.route("/friends")
 def friends():
     current_user = get_current_user()
