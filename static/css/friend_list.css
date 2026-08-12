@@ -1,0 +1,89 @@
+/* =========================
+   MeetChat — Arkadaşlar (liste)
+   friends.css'i temel alır; burada sadece
+   friends.css'te karşılığı olmayan veya bu
+   sayfaya özgü override'lar var. friends.css'e
+   dokunulmadı, /friends sayfası etkilenmez.
+========================= */
+
+.user-handle {
+    margin-top: 2px;
+    font-size: 12px;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.remove-btn {
+    width: 32px;
+    height: 32px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background .15s ease, border-color .15s ease, color .15s ease;
+}
+
+.remove-btn:hover {
+    color: var(--primary);
+    border-color: var(--primary);
+}
+
+/* --- Geri butonu: bu sayfada friends.css'teki sade back-btn yerine
+   profildeki icon-button görünümü kullanılıyor (B seçeneği) --- */
+.back-btn {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--white);
+}
+
+/* --- Kart: premium gölge + hover, sadece kartın kendisinde --- */
+.friend-card {
+    background: var(--white);
+    border-radius: 18px;
+    border-color: #F0F0F0;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+    cursor: pointer;
+    transition: box-shadow .15s ease, transform .15s ease, border-color .15s ease, background .15s ease;
+}
+
+.friend-card:hover:not(:has(.remove-btn:hover)) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.09);
+    border-color: #CDEFE7;
+    background: #FAFFFE;
+}
+
+.friend-card .user-name {
+    font-size: 16px;
+}
+
+/* --- Boş durum: mevcut .empty-text ve .friends-section boşluk ritmine uyar --- */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 48px 0;
+}
+
+.empty-state-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: #F4FDFB;
+    color: var(--secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.empty-state .empty-text {
+    padding: 0;
+}

@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Arkadaşlar — MeetChat</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/friends.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/friend_list.css') }}">
+</head>
+<body>
+    <div class="friends-shell">
+        <header class="friends-header">
+            <a href="{{ url_for('profile') }}" class="back-btn" aria-label="Geri">
+                <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </a>
+            <h1>Arkadaşlar</h1>
+        </header>
+
+        {% if friends %}
+            <ul class="user-list">
+                {% for friend in friends %}
+                    <li class="user-row friend-card">
+                        <div class="user-info">
+                            <div class="user-avatar" aria-hidden="true">
+                                {{ friend.user.full_name[0].upper() if friend.user.full_name else "?" }}
+                            </div>
+                            <div>
+                                <div class="user-name">{{ friend.user.full_name }}</div>
+                                <div class="user-handle">@{{ friend.user.email.split('@')[0].lower() }}</div>
+                            </div>
+                        </div>
+                        <div class="user-actions">
+                            <form
+                                method="POST"
+                                action="{{ url_for('friends_remove', friendship_id=friend.friendship_id) }}"
+                                onsubmit="return confirm('Bu kişiyi arkadaşlarından çıkarmak istiyor musun?');"
+                            >
+                                <input type="hidden" name="next" value="friend_list">
+                                <button type="submit" class="remove-btn" aria-label="{{ friend.user.full_name }} adlı kişiyi arkadaşlıktan çıkar">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="M5 5l14 14M19 5L5 19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    </svg>
+                                </button>
+                            </form>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon" aria-hidden="true">
+                    <svg width="24" height="24" viewBox="0 0 24 24">
+                        <circle cx="8.5" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                        <circle cx="16" cy="9" r="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                        <path d="M2.5 19c.6-3.6 2.7-5.2 6-5.2s5.4 1.6 6 5.2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        <path d="M14.2 14.3c2.6.4 4.6 2 5.3 4.7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <p class="empty-text">Henüz arkadaşın yok.</p>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>
