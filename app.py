@@ -889,6 +889,37 @@ def profile():
     context = get_profile_context(current_user)
     return render_template("profile.html", **context)
 
+@app.route("/friend-list")
+def friend_list():
+    current_user = get_current_user()
+    if current_user is None:
+        return redirect(url_for("login"))
+
+    me = current_user.id
+
+    accepted = Friendship.query.filter(
+        Friendship.status == "accepted",
+        db.or_(Friendship.sender_id == me, Friendship.receiver_id == me),
+    ).order_by(Friendship.updated_at.desc()).all()
+
+    friends = []
+    for friendship in accepted:
+        other = (
+            friendship.receiver
+            if friendship.sender_id == me
+            else friendship.sender
+        )
+        friends.append(
+            {
+                "user": other,
+                "friendship_id": friendship.id,
+            }
+        )
+
+    return render_template(
+        "friend_list.html",
+        friends=friends,
+    )
 
 @app.route("/friends")
 def friends():
@@ -1022,9 +1053,8 @@ def friends_reject(friendship_id):
     db.session.commit()
     return redirect(url_for("friends"))
 
-
-@app.route("/friends/remove/<int:friendship_id>", methods=["POST"])
-def friends_remove(friendship_id):
+@app.route("/friends/cancel/<int:friendship_id>", methods=["POST"])
+def friends_cancel(friendship_id):
     current_user = get_current_user()
     if current_user is None:
         return redirect(url_for("login"))
@@ -1032,8 +1062,8 @@ def friends_remove(friendship_id):
     friendship = db.session.get(Friendship, friendship_id)
     if (
         friendship is None
-        or friendship.status != "accepted"
-        or current_user.id not in (friendship.sender_id, friendship.receiver_id)
+        or friendship.status != "pending"
+        or friendship.sender_id != current_user.id
     ):
         return redirect(url_for("friends"))
 
@@ -1041,6 +1071,26 @@ def friends_remove(friendship_id):
     db.session.commit()
     return redirect(url_for("friends"))
 
+@app.route("/friends/remove/<int:friendship_id>", methods=["POST"])
+def friends_remove(friendship_id):
+    current_user = get_current_user()
+    if current_user is None:
+        return redirect(url_for("login"))
+
+    next_page = request.form.get("next", "friends")
+    return_endpoint = "friend_list" if next_page == "friend_list" else "friends"
+
+    friendship = db.session.get(Friendship, friendship_id)
+    if (
+        friendship is None
+        or friendship.status != "accepted"
+        or current_user.id not in (friendship.sender_id, friendship.receiver_id)
+    ):
+        return redirect(url_for(return_endpoint))
+
+    db.session.delete(friendship)
+    db.session.commit()
+    return redirect(url_for(return_endpoint))
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
