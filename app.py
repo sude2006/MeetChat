@@ -1032,12 +1032,41 @@ def edit_activity(activity_id):
             error=error,
         )
 
+    old_date = activity.date
+    old_time = activity.time
+
     activity.title = form_data["title"]
     activity.description = form_data["description"]
     activity.date = form_data["date"]
     activity.time = form_data["time"]
     activity.location = form_data["location"]
     activity.visibility = form_data["visibility"]
+
+    date_changed = form_data["date"] != old_date
+    time_changed = form_data["time"] != old_time
+    if date_changed or time_changed:
+        time_change_fields = {}
+        if time_changed:
+            time_change_fields["old_time"] = old_time
+            time_change_fields["new_time"] = form_data["time"]
+        if date_changed:
+            time_change_fields["old_date"] = old_date
+            time_change_fields["new_date"] = form_data["date"]
+
+        participants = ActivityParticipant.query.filter(
+            ActivityParticipant.activity_id == activity.id,
+            ActivityParticipant.status.in_(("joined", "maybe")),
+            ActivityParticipant.user_id != activity.creator_id,
+        ).all()
+        for participant in participants:
+            create_or_update_notification(
+                recipient_id=participant.user_id,
+                type="activity_time_change",
+                actor_id=activity.creator_id,
+                activity_id=activity.id,
+                **time_change_fields,
+            )
+
     db.session.commit()
 
     return redirect(url_for("activity_detail", activity_id=activity_id))
