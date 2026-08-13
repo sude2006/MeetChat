@@ -1099,13 +1099,23 @@ def add_comment(activity_id):
             form_body=body[:COMMENT_MAX_LENGTH],
         )
 
-    db.session.add(
-        Comment(
-            user_id=current_user.id,
-            activity_id=activity_id,
-            body=body,
-        )
+    comment = Comment(
+        user_id=current_user.id,
+        activity_id=activity_id,
+        body=body,
     )
+    db.session.add(comment)
+
+    if current_user.id != activity.creator_id:
+        db.session.flush()
+        create_or_update_notification(
+            recipient_id=activity.creator_id,
+            type="activity_comment",
+            actor_id=current_user.id,
+            activity_id=activity.id,
+            comment_id=comment.id,
+        )
+
     db.session.commit()
     return redirect(url_for("activity_detail", activity_id=activity_id))
 
