@@ -1305,6 +1305,15 @@ def friends_accept(friendship_id):
 
     friendship.status = "accepted"
     friendship.updated_at = datetime.utcnow()
+
+    notification = Notification.query.filter_by(
+        recipient_id=current_user.id,
+        friendship_id=friendship_id,
+        type="friend_request",
+    ).first()
+    if notification is not None:
+        notification.is_read = True
+
     db.session.commit()
     return redirect(url_for("friends"))
 
@@ -1325,6 +1334,15 @@ def friends_reject(friendship_id):
 
     friendship.status = "rejected"
     friendship.updated_at = datetime.utcnow()
+
+    notification = Notification.query.filter_by(
+        recipient_id=current_user.id,
+        friendship_id=friendship_id,
+        type="friend_request",
+    ).first()
+    if notification is not None:
+        notification.is_read = True
+
     db.session.commit()
     return redirect(url_for("friends"))
 
@@ -1341,6 +1359,17 @@ def friends_cancel(friendship_id):
         or friendship.sender_id != current_user.id
     ):
         return redirect(url_for("friends"))
+
+    notification = Notification.query.filter_by(
+        recipient_id=friendship.receiver_id,
+        friendship_id=friendship.id,
+        type="friend_request",
+    ).first()
+    if notification is not None:
+        now = _utc_now_naive()
+        notification.is_dismissed = True
+        notification.dismissed_at = now
+        notification.is_read = True
 
     db.session.delete(friendship)
     db.session.commit()
