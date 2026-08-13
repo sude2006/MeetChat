@@ -1,5 +1,6 @@
 from flask import Flask, redirect, render_template, request, session, url_for
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import joinedload
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
@@ -1205,6 +1206,34 @@ def profile():
 
     context = get_profile_context(current_user)
     return render_template("profile.html", **context)
+
+
+@app.route("/notifications")
+def notifications():
+    current_user = get_current_user()
+    if current_user is None:
+        return redirect(url_for("login"))
+
+    notification_rows = (
+        Notification.query.filter_by(
+            recipient_id=current_user.id,
+            is_dismissed=False,
+        )
+        .options(
+            joinedload(Notification.actor),
+            joinedload(Notification.activity),
+            joinedload(Notification.friendship),
+            joinedload(Notification.comment),
+        )
+        .order_by(Notification.created_at.desc())
+        .all()
+    )
+    notifications = []
+    for notification in notification_rows:
+        notification.relative_time = format_relative_time(notification.created_at)
+        notifications.append(notification)
+
+    return render_template("notifications.html", notifications=notifications)
 
 @app.route("/friend-list")
 def friend_list():
