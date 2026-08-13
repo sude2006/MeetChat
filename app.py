@@ -1,7 +1,7 @@
 from flask import Flask, redirect, render_template, request, session, url_for
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash, generate_password_hash
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 import os
 
@@ -260,6 +260,203 @@ class Notification(db.Model):
 
 with app.app_context():
     db.create_all()
+
+
+NOTIFICATION_FIELD_UNSET = object()
+
+
+def _utc_now_naive():
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
+def _resolve_field(value):
+    return None if value is NOTIFICATION_FIELD_UNSET else value
+
+
+def _is_missing_notification_field(value):
+    return value is NOTIFICATION_FIELD_UNSET or value is None
+
+
+def create_or_update_notification(
+    *,
+    recipient_id,
+    type,
+    actor_id=NOTIFICATION_FIELD_UNSET,
+    activity_id=NOTIFICATION_FIELD_UNSET,
+    friendship_id=NOTIFICATION_FIELD_UNSET,
+    comment_id=NOTIFICATION_FIELD_UNSET,
+    old_time=NOTIFICATION_FIELD_UNSET,
+    new_time=NOTIFICATION_FIELD_UNSET,
+    old_date=NOTIFICATION_FIELD_UNSET,
+    new_date=NOTIFICATION_FIELD_UNSET,
+):
+    if type not in VALID_NOTIFICATION_TYPES:
+        return None
+    if not recipient_id:
+        return None
+    if (
+        actor_id is not NOTIFICATION_FIELD_UNSET
+        and actor_id is not None
+        and recipient_id == actor_id
+    ):
+        return None
+
+    if type == "friend_request":
+        if _is_missing_notification_field(friendship_id) or _is_missing_notification_field(
+            actor_id
+        ):
+            return None
+        existing = Notification.query.filter_by(
+            recipient_id=recipient_id,
+            type=type,
+            friendship_id=friendship_id,
+        ).first()
+    elif type == "activity_join":
+        if _is_missing_notification_field(activity_id) or _is_missing_notification_field(
+            actor_id
+        ):
+            return None
+        existing = Notification.query.filter_by(
+            recipient_id=recipient_id,
+            type=type,
+            activity_id=activity_id,
+            actor_id=actor_id,
+        ).first()
+    elif type == "activity_comment":
+        if (
+            _is_missing_notification_field(comment_id)
+            or _is_missing_notification_field(activity_id)
+            or _is_missing_notification_field(actor_id)
+        ):
+            return None
+        existing = Notification.query.filter_by(
+            recipient_id=recipient_id,
+            type=type,
+            comment_id=comment_id,
+        ).first()
+    elif type == "activity_time_change":
+        if _is_missing_notification_field(activity_id) or _is_missing_notification_field(
+            actor_id
+        ):
+            return None
+
+        time_old_provided = old_time is not NOTIFICATION_FIELD_UNSET
+        time_new_provided = new_time is not NOTIFICATION_FIELD_UNSET
+        if time_old_provided != time_new_provided:
+            return None
+
+        date_old_provided = old_date is not NOTIFICATION_FIELD_UNSET
+        date_new_provided = new_date is not NOTIFICATION_FIELD_UNSET
+        if date_old_provided != date_new_provided:
+            return None
+
+        time_pair_complete = (
+            time_old_provided
+            and time_new_provided
+            and old_time is not None
+            and new_time is not None
+        )
+        date_pair_complete = (
+            date_old_provided
+            and date_new_provided
+            and old_date is not None
+            and new_date is not None
+        )
+        if not time_pair_complete and not date_pair_complete:
+            return None
+
+        existing = Notification.query.filter_by(
+            recipient_id=recipient_id,
+            type=type,
+            activity_id=activity_id,
+        ).first()
+    else:
+        return None
+
+    field_values = {
+        "actor_id": actor_id,
+        "activity_id": activity_id,
+        "friendship_id": friendship_id,
+        "comment_id": comment_id,
+        "old_time": old_time,
+        "new_time": new_time,
+        "old_date": old_date,
+        "new_date": new_date,
+    }
+    now = _utc_now_naive()
+
+    if existing is None:
+        notification = Notification(
+            recipient_id=recipient_id,
+            type=type,
+            actor_id=_resolve_field(actor_id),
+            activity_id=_resolve_field(activity_id),
+            friendship_id=_resolve_field(friendship_id),
+            comment_id=_resolve_field(comment_id),
+            old_time=_resolve_field(old_time),
+            new_time=_resolve_field(new_time),
+            old_date=_resolve_field(old_date),
+            new_date=_resolve_field(new_date),
+            is_read=False,
+            is_dismissed=False,
+            dismissed_at=None,
+            created_at=now,
+            updated_at=now,
+        )
+        db.session.add(notification)
+        return notification
+
+    for name, value in field_values.items():
+        if value is not NOTIFICATION_FIELD_UNSET:
+            setattr(existing, name, value)
+    existing.is_read = False
+    existing.is_dismissed = False
+    existing.dismissed_at = None
+    existing.created_at = now
+    existing.updated_at = now
+    return existing
+
+
+def get_unread_notification_count(user_id):
+    if not user_id:
+        return 0
+    return Notification.query.filter_by(
+        recipient_id=user_id,
+        is_read=False,
+        is_dismissed=False,
+    ).count()
+
+
+def format_relative_time(dt):
+    if dt is None:
+        return ""
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    local_dt = dt.astimezone(TURKEY_TZ)
+    now_local = datetime.now(TURKEY_TZ)
+    delta_seconds = (now_local - local_dt).total_seconds()
+    if delta_seconds < 60:
+        return "Az önce"
+
+    minutes = int(delta_seconds // 60)
+    if minutes <= 59:
+        return f"{minutes} dk önce"
+
+    hours = int(delta_seconds // 3600)
+    local_date = local_dt.date()
+    today = now_local.date()
+    if local_date == today and 1 <= hours <= 23:
+        return f"{hours} sa önce"
+
+    yesterday = today - timedelta(days=1)
+    if local_date == yesterday:
+        return "Dün"
+
+    days = (today - local_date).days
+    if 2 <= days <= 29:
+        return f"{days} gün önce"
+
+    return f"{local_dt.day} {PROFILE_MONTHS[local_dt.month]} {local_dt.year}"
 
 
 def get_current_user():
@@ -1062,20 +1259,31 @@ def friends_request(user_id):
         return redirect(url_for("friends"))
 
     friendship = get_friendship(current_user.id, user_id)
+    should_notify = False
     if friendship is None:
-        db.session.add(
-            Friendship(
-                sender_id=current_user.id,
-                receiver_id=user_id,
-                status="pending",
-            )
+        friendship = Friendship(
+            sender_id=current_user.id,
+            receiver_id=user_id,
+            status="pending",
         )
+        db.session.add(friendship)
+        db.session.flush()
+        should_notify = True
     elif friendship.status == "rejected":
         friendship.sender_id = current_user.id
         friendship.receiver_id = user_id
         friendship.status = "pending"
         friendship.updated_at = datetime.utcnow()
+        should_notify = True
     # pending or accepted -> no-op
+
+    if should_notify:
+        create_or_update_notification(
+            recipient_id=friendship.receiver_id,
+            type="friend_request",
+            actor_id=friendship.sender_id,
+            friendship_id=friendship.id,
+        )
 
     db.session.commit()
     return redirect(url_for("friends"))
