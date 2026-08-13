@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bildirimler — MeetChat</title>
+</head>
+<body>
+    <main class="notifications-page">
+        <header class="notifications-header">
+            <h1>Bildirimler</h1>
+        </header>
+
+        {% if notifications %}
+        <section class="notification-list" aria-label="Bildirimler">
+            {% for notification in notifications %}
+            {% set actor_name = notification.actor.full_name if notification.actor else "Bilinmeyen kullanıcı" %}
+            {% set activity_title = notification.activity.title if notification.activity else "Etkinlik" %}
+            <article class="notification-card{% if not notification.is_read %} is-unread{% endif %}">
+                <header class="notification-card-header">
+                    <p class="notification-actor">{{ actor_name }}</p>
+                    <time class="notification-time" datetime="{{ notification.created_at.isoformat() }}">
+                        {{ notification.relative_time }}
+                    </time>
+                </header>
+
+                {% if notification.type == "friend_request" %}
+                <p class="notification-body">
+                    <strong>{{ actor_name }}</strong> sana arkadaşlık isteği gönderdi.
+                </p>
+                {% if notification.friendship_id %}
+                <div class="notification-actions">
+                    <form action="{{ url_for('friends_accept', friendship_id=notification.friendship_id) }}" method="post">
+                        <button type="submit">Kabul Et</button>
+                    </form>
+                    <form action="{{ url_for('friends_reject', friendship_id=notification.friendship_id) }}" method="post">
+                        <button type="submit">Reddet</button>
+                    </form>
+                </div>
+                {% endif %}
+
+                {% elif notification.type == "activity_join" %}
+                <p class="notification-body">
+                    <strong>{{ actor_name }}</strong>, {{ activity_title }} etkinliğine katıldı.
+                </p>
+
+                {% elif notification.type == "activity_comment" %}
+                <p class="notification-body">
+                    <strong>{{ actor_name }}</strong>, {{ activity_title }} etkinliğine yorum yaptı.
+                </p>
+
+                {% elif notification.type == "activity_time_change" %}
+                <p class="notification-body">
+                    {{ activity_title }} için tarih/saat değişti.
+                </p>
+                {% if notification.old_date or notification.new_date or notification.old_time or notification.new_time %}
+                <p class="notification-change">
+                    {% if notification.old_date or notification.new_date %}
+                    <span class="notification-change-date">
+                        {% if notification.old_date %}<del>{{ notification.old_date }}</del>{% endif %}
+                        {% if notification.old_date and notification.new_date %} → {% endif %}
+                        {% if notification.new_date %}<strong>{{ notification.new_date }}</strong>{% endif %}
+                    </span>
+                    {% endif %}
+                    {% if notification.old_time or notification.new_time %}
+                    <span class="notification-change-time">
+                        {% if notification.old_time %}<del>{{ notification.old_time }}</del>{% endif %}
+                        {% if notification.old_time and notification.new_time %} → {% endif %}
+                        {% if notification.new_time %}<strong>{{ notification.new_time }}</strong>{% endif %}
+                    </span>
+                    {% endif %}
+                </p>
+                {% endif %}
+                {% endif %}
+            </article>
+            {% endfor %}
+        </section>
+        {% else %}
+        <p class="empty-text">Henüz bildirimin yok.</p>
+        {% endif %}
+    </main>
+</body>
+</html>
