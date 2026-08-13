@@ -191,6 +191,73 @@ class Comment(db.Model):
     activity = db.relationship("Activity", backref="comments")
 
 
+VALID_NOTIFICATION_TYPES = (
+    "friend_request",
+    "activity_join",
+    "activity_comment",
+    "activity_time_change",
+)
+
+
+class Notification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    recipient_id = db.Column(
+        db.Integer, db.ForeignKey("user.id"), nullable=False, index=True
+    )
+    actor_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
+    activity_id = db.Column(db.Integer, db.ForeignKey("activity.id"), nullable=True)
+    friendship_id = db.Column(
+        db.Integer, db.ForeignKey("friendship.id"), nullable=True
+    )
+    comment_id = db.Column(db.Integer, db.ForeignKey("comment.id"), nullable=True)
+    type = db.Column(db.String(40), nullable=False)
+    is_read = db.Column(db.Boolean, nullable=False, default=False)
+    is_dismissed = db.Column(db.Boolean, nullable=False, default=False)
+    dismissed_at = db.Column(db.DateTime, nullable=True)
+    old_time = db.Column(db.String(10), nullable=True)
+    new_time = db.Column(db.String(10), nullable=True)
+    old_date = db.Column(db.String(20), nullable=True)
+    new_date = db.Column(db.String(20), nullable=True)
+    created_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc).replace(tzinfo=None),
+        nullable=False,
+    )
+    updated_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc).replace(tzinfo=None),
+        onupdate=lambda: datetime.now(timezone.utc).replace(tzinfo=None),
+        nullable=False,
+    )
+
+    recipient = db.relationship(
+        "User", foreign_keys=[recipient_id], backref="notifications_received"
+    )
+    actor = db.relationship(
+        "User", foreign_keys=[actor_id], backref="notifications_acted"
+    )
+    activity = db.relationship("Activity", backref="notifications")
+    friendship = db.relationship("Friendship", backref="notifications")
+    comment = db.relationship("Comment", backref="notifications")
+
+    __table_args__ = (
+        db.CheckConstraint(
+            "type IN ("
+            "'friend_request', 'activity_join', "
+            "'activity_comment', 'activity_time_change'"
+            ")",
+            name="ck_notification_type",
+        ),
+        db.Index("ix_notification_recipient_created", "recipient_id", "created_at"),
+        db.Index(
+            "ix_notification_recipient_unread",
+            "recipient_id",
+            "is_dismissed",
+            "is_read",
+        ),
+    )
+
+
 with app.app_context():
     db.create_all()
 
