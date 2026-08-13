@@ -940,6 +940,8 @@ def respond_activity(activity_id):
         activity_id=activity_id,
     ).first()
 
+    was_joined = participation is not None and participation.status == "joined"
+
     if participation is None:
         db.session.add(
             ActivityParticipant(
@@ -952,6 +954,18 @@ def respond_activity(activity_id):
         db.session.delete(participation)
     else:
         participation.status = status
+
+    if (
+        status == "joined"
+        and not was_joined
+        and current_user.id != activity.creator_id
+    ):
+        create_or_update_notification(
+            recipient_id=activity.creator_id,
+            type="activity_join",
+            actor_id=current_user.id,
+            activity_id=activity.id,
+        )
 
     db.session.commit()
     return redirect_after_respond(
