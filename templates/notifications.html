@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bildirimler — MeetChat</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/notifications.css') }}">
 </head>
 <body>
     <main class="notifications-page">
@@ -16,62 +18,115 @@
             {% for notification in notifications %}
             {% set actor_name = notification.actor.full_name if notification.actor else "Bilinmeyen kullanıcı" %}
             {% set activity_title = notification.activity.title if notification.activity else "Etkinlik" %}
+            {% set actor_initial = actor_name[0].upper() if actor_name else "?" %}
+            {% if notification.type == "friend_request" %}
+                {% set icon_mod = "friend-request" %}
+            {% elif notification.type == "activity_join" %}
+                {% set icon_mod = "activity-join" %}
+            {% elif notification.type == "activity_comment" %}
+                {% set icon_mod = "activity-comment" %}
+            {% elif notification.type == "activity_time_change" %}
+                {% set icon_mod = "activity-time-change" %}
+            {% else %}
+                {% set icon_mod = "unknown" %}
+            {% endif %}
+            {% set can_open_activity = notification.type in ["activity_join", "activity_comment", "activity_time_change"] and notification.activity_id %}
             <article class="notification-card{% if not notification.is_read %} is-unread{% endif %}">
-                <header class="notification-card-header">
-                    <p class="notification-actor">{{ actor_name }}</p>
-                    <time class="notification-time" datetime="{{ notification.created_at.isoformat() }}">
-                        {{ notification.relative_time }}
-                    </time>
-                </header>
+                <div class="notification-card-inner">
+                    {% if can_open_activity %}
+                    <a
+                        class="notification-main"
+                        href="{{ url_for('activity_detail', activity_id=notification.activity_id, source='notifications') }}"
+                    >
+                    {% else %}
+                    <div class="notification-main">
+                    {% endif %}
+                    <div class="notification-media">
+                        <span class="notification-icon notification-icon--{{ icon_mod }}">
+                            <span class="notification-icon-symbol"></span>
+                        </span>
+                        {% if notification.type == "friend_request" %}
+                        <div class="notification-avatar">{{ actor_initial }}</div>
+                        {% endif %}
+                    </div>
 
-                {% if notification.type == "friend_request" %}
-                <p class="notification-body">
-                    <strong>{{ actor_name }}</strong> sana arkadaşlık isteği gönderdi.
-                </p>
-                {% if notification.friendship_id %}
-                <div class="notification-actions">
-                    <form action="{{ url_for('friends_accept', friendship_id=notification.friendship_id) }}" method="post">
-                        <button type="submit">Kabul Et</button>
-                    </form>
-                    <form action="{{ url_for('friends_reject', friendship_id=notification.friendship_id) }}" method="post">
-                        <button type="submit">Reddet</button>
-                    </form>
+                    <div class="notification-content">
+                        {% if notification.type == "friend_request" %}
+                        <p class="notification-body">
+                            <strong>{{ actor_name }}</strong> sana arkadaşlık isteği gönderdi.
+                        </p>
+                        <time class="notification-time" datetime="{{ notification.created_at.isoformat() }}">
+                            {{ notification.relative_time }}
+                        </time>
+                        {% if notification.friendship_id %}
+                        <div class="notification-actions">
+                            <form action="{{ url_for('friends_accept', friendship_id=notification.friendship_id) }}" method="post">
+                                <button type="submit">Kabul Et</button>
+                            </form>
+                            <form action="{{ url_for('friends_reject', friendship_id=notification.friendship_id) }}" method="post">
+                                <button type="submit">Reddet</button>
+                            </form>
+                        </div>
+                        {% endif %}
+
+                        {% elif notification.type == "activity_join" %}
+                        <p class="notification-body">
+                            <strong>{{ actor_name }}</strong>,
+                            <span class="notification-activity-pill">{{ activity_title }}</span>
+                            etkinliğine katıldı.
+                        </p>
+                        <time class="notification-time" datetime="{{ notification.created_at.isoformat() }}">
+                            {{ notification.relative_time }}
+                        </time>
+
+                        {% elif notification.type == "activity_comment" %}
+                        <p class="notification-body">
+                            <strong>{{ actor_name }}</strong>,
+                            <span class="notification-activity-pill">{{ activity_title }}</span>
+                            etkinliğine yorum yaptı.
+                        </p>
+                        <time class="notification-time" datetime="{{ notification.created_at.isoformat() }}">
+                            {{ notification.relative_time }}
+                        </time>
+
+                        {% elif notification.type == "activity_time_change" %}
+                        <p class="notification-body">
+                            <span class="notification-activity-pill">{{ activity_title }}</span>
+                            için tarih/saat değişti.
+                        </p>
+                        {% if notification.old_date or notification.new_date or notification.old_time or notification.new_time %}
+                        <p class="notification-change">
+                            {% if notification.old_date or notification.new_date %}
+                            <span class="notification-change-date">
+                                {% if notification.old_date %}<del>{{ notification.old_date }}</del>{% endif %}
+                                {% if notification.old_date and notification.new_date %} → {% endif %}
+                                {% if notification.new_date %}<strong>{{ notification.new_date }}</strong>{% endif %}
+                            </span>
+                            {% endif %}
+                            {% if notification.old_time or notification.new_time %}
+                            <span class="notification-change-time">
+                                {% if notification.old_time %}<del>{{ notification.old_time }}</del>{% endif %}
+                                {% if notification.old_time and notification.new_time %} → {% endif %}
+                                {% if notification.new_time %}<strong>{{ notification.new_time }}</strong>{% endif %}
+                            </span>
+                            {% endif %}
+                        </p>
+                        {% endif %}
+                        <time class="notification-time" datetime="{{ notification.created_at.isoformat() }}">
+                            {{ notification.relative_time }}
+                        </time>
+                        {% endif %}
+                    </div>
+                    {% if can_open_activity %}
+                    </a>
+                    {% else %}
+                    </div>
+                    {% endif %}
+
+                    {% if not notification.is_read %}
+                    <div class="notification-dot"></div>
+                    {% endif %}
                 </div>
-                {% endif %}
-
-                {% elif notification.type == "activity_join" %}
-                <p class="notification-body">
-                    <strong>{{ actor_name }}</strong>, {{ activity_title }} etkinliğine katıldı.
-                </p>
-
-                {% elif notification.type == "activity_comment" %}
-                <p class="notification-body">
-                    <strong>{{ actor_name }}</strong>, {{ activity_title }} etkinliğine yorum yaptı.
-                </p>
-
-                {% elif notification.type == "activity_time_change" %}
-                <p class="notification-body">
-                    {{ activity_title }} için tarih/saat değişti.
-                </p>
-                {% if notification.old_date or notification.new_date or notification.old_time or notification.new_time %}
-                <p class="notification-change">
-                    {% if notification.old_date or notification.new_date %}
-                    <span class="notification-change-date">
-                        {% if notification.old_date %}<del>{{ notification.old_date }}</del>{% endif %}
-                        {% if notification.old_date and notification.new_date %} → {% endif %}
-                        {% if notification.new_date %}<strong>{{ notification.new_date }}</strong>{% endif %}
-                    </span>
-                    {% endif %}
-                    {% if notification.old_time or notification.new_time %}
-                    <span class="notification-change-time">
-                        {% if notification.old_time %}<del>{{ notification.old_time }}</del>{% endif %}
-                        {% if notification.old_time and notification.new_time %} → {% endif %}
-                        {% if notification.new_time %}<strong>{{ notification.new_time }}</strong>{% endif %}
-                    </span>
-                    {% endif %}
-                </p>
-                {% endif %}
-                {% endif %}
             </article>
             {% endfor %}
         </section>
@@ -79,5 +134,46 @@
         <p class="empty-text">Henüz bildirimin yok.</p>
         {% endif %}
     </main>
+
+    <nav class="bottom-nav" aria-label="Ana navigasyon">
+        <a href="{{ url_for('home') }}" class="nav-item">
+            <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            </svg>
+            <span>Ana Sayfa</span>
+        </a>
+        <a href="{{ url_for('discover') }}" class="nav-item">
+            <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                <path d="M20 20l-3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <span>Keşfet</span>
+        </a>
+        <a href="{{ url_for('create_activity') }}" class="nav-item nav-create" aria-label="Plan Oluştur">
+            <span class="create-btn">
+                <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">
+                    <rect x="4" y="5" width="16" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M4 10h16M8 3v4M16 3v4M12 13v5M9.5 15.5h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+            </span>
+        </a>
+        <a href="{{ url_for('notifications') }}" class="nav-item active" aria-current="page">
+            <span class="nav-icon-wrap">
+                <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M6 8a6 6 0 1112 0c0 7 3 7 3 9H3c0-2 3-2 3-9z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                    <path d="M10 20a2 2 0 004 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+                <span class="badge">3</span>
+            </span>
+            <span>Bildirimler</span>
+        </a>
+        <a href="{{ url_for('profile') }}" class="nav-item">
+            <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                <path d="M4 20c1.5-3.5 4-5 8-5s6.5 1.5 8 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <span>Profil</span>
+        </a>
+    </nav>
 </body>
 </html>

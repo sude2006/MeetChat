@@ -10,10 +10,21 @@
     --text-soft: #666666;
     --white: #FFFFFF;
     --app-max: 430px;
-    --page-mint: #F3FBFA;
-    --card-read: #E9F7F4;
-    --card-unread: #D4F0EA;
-    --button-gray: #E8E8E8;
+    --page-mint: #F4FBFA;
+    --card-read: #E8F6F2;
+    --card-unread: #C5EBE3;
+    --button-gray: #E6E6E6;
+    --dot-coral: #FF465B;
+    --icon-friend: #8B6CC9;
+    --icon-friend-bg: #F0E8FB;
+    --icon-join: #2BB59A;
+    --icon-join-bg: #D8F6EF;
+    --icon-comment: #4A8DE0;
+    --icon-comment-bg: #E4F0FF;
+    --icon-time: #FF465B;
+    --icon-time-bg: #FFE6E9;
+    --avatar-bg: #F3D5C4;
+    --avatar-text: #8A5A44;
 }
 
 * {
@@ -24,7 +35,7 @@
 
 body {
     min-height: 100vh;
-    background: var(--page-mint);
+    background: #EDEDED;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     color: var(--text);
 }
@@ -54,6 +65,7 @@ body {
 }
 
 .notification-card {
+    position: relative;
     padding: 16px 18px;
     border-radius: 22px;
     background: var(--card-read);
@@ -61,36 +73,119 @@ body {
 
 .notification-card.is-unread {
     background: var(--card-unread);
+    padding-right: 28px;
 }
 
-.notification-card-header {
+.notification-card-inner {
     display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 6px;
+    align-items: flex-start;
 }
 
-.notification-actor {
-    font-size: 15px;
+.notification-main {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    flex: 1 1 auto;
+    min-width: 0;
+    color: inherit;
+    text-decoration: none;
+}
+
+.notification-media {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    padding-top: 2px;
+}
+
+.notification-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.notification-icon-symbol {
+    width: 16px;
+    height: 16px;
+    display: block;
+}
+
+.notification-icon--friend-request {
+    background: var(--icon-friend-bg);
+    color: var(--icon-friend);
+}
+
+.notification-icon--activity-join {
+    background: var(--icon-join-bg);
+    color: var(--icon-join);
+}
+
+.notification-icon--activity-comment {
+    background: var(--icon-comment-bg);
+    color: var(--icon-comment);
+}
+
+.notification-icon--activity-time-change {
+    background: var(--icon-time-bg);
+    color: var(--icon-time);
+}
+
+.notification-icon--unknown {
+    background: rgba(46, 46, 46, 0.06);
+    color: var(--text-muted);
+}
+
+.notification-avatar {
+    width: 28px;
+    height: 28px;
+    margin-left: -8px;
+    border-radius: 50%;
+    background: var(--avatar-bg);
+    color: var(--avatar-text);
+    font-size: 11px;
     font-weight: 700;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+}
+
+.notification-content {
+    flex: 1 1 auto;
+    min-width: 0;
 }
 
 .notification-time {
-    flex-shrink: 0;
+    display: block;
+    margin-top: 6px;
     font-size: 12px;
     color: var(--text-muted);
 }
 
 .notification-body {
     font-size: 14px;
+    font-weight: 400;
     line-height: 1.45;
-    color: var(--text-soft);
+    color: var(--text);
 }
 
 .notification-body strong {
     font-weight: 700;
+    color: var(--text);
+}
+
+.notification-activity-pill {
+    display: inline;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: rgba(46, 46, 46, 0.07);
+    font-weight: 600;
     color: var(--text);
 }
 
@@ -109,7 +204,8 @@ body {
 
 .notification-actions button {
     width: 100%;
-    padding: 8px 10px;
+    height: 34px;
+    padding: 0 10px;
     border: none;
     border-radius: 12px;
     background: var(--button-gray);
@@ -117,7 +213,7 @@ body {
     font-family: inherit;
     font-size: 13px;
     font-weight: 600;
-    line-height: 1.2;
+    line-height: 1;
     white-space: nowrap;
     cursor: pointer;
 }
@@ -127,18 +223,30 @@ body {
     flex-wrap: wrap;
     align-items: baseline;
     gap: 8px 14px;
-    margin-top: 8px;
-    font-size: 13px;
+    margin-top: 10px;
+    font-size: 14px;
     color: var(--text-soft);
 }
 
 .notification-change del {
     color: var(--text-muted);
+    font-weight: 400;
 }
 
 .notification-change strong {
     font-weight: 700;
-    color: var(--text);
+    color: var(--dot-coral);
+}
+
+.notification-dot {
+    position: absolute;
+    top: 50%;
+    right: 14px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--dot-coral);
+    transform: translateY(-50%);
 }
 
 .empty-text {
@@ -162,8 +270,23 @@ body {
         border-radius: 18px;
     }
 
+    .notification-card.is-unread {
+        padding-right: 24px;
+    }
+
+    .notification-icon {
+        width: 32px;
+        height: 32px;
+    }
+
+    .notification-icon-symbol {
+        width: 14px;
+        height: 14px;
+    }
+
     .notification-actions button {
+        height: 32px;
         font-size: 12px;
-        padding: 7px 8px;
+        padding: 0 8px;
     }
 }

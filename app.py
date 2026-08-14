@@ -95,7 +95,7 @@ def parse_home_filter(raw):
     return value if value in VALID_HOME_FILTERS else "all"
 
 
-ALLOWED_DETAIL_FROM = {"home", "discover", "profile"}
+ALLOWED_DETAIL_FROM = {"home", "discover", "profile", "notifications"}
 ALLOWED_RESPOND_ORIGINS = {"detail", "home", "discover"}
 
 
@@ -118,6 +118,8 @@ def build_list_back_url(from_page, q="", activity_filter="all"):
         return url_for("home", **kwargs)
     if from_page == "profile":
         return url_for("profile")
+    if from_page == "notifications":
+        return url_for("notifications")
     return url_for("home")
 
 
