@@ -95,8 +95,18 @@ def parse_home_filter(raw):
     return value if value in VALID_HOME_FILTERS else "all"
 
 
-ALLOWED_DETAIL_FROM = {"home", "discover", "profile", "notifications"}
+ALLOWED_DETAIL_FROM = {"home", "discover", "profile", "notifications", "user_profile"}
 ALLOWED_RESPOND_ORIGINS = {"detail", "home", "discover"}
+
+
+def parse_user_profile_id(raw):
+    try:
+        user_id = int(raw)
+    except (TypeError, ValueError):
+        return None
+    if user_id < 1:
+        return None
+    return user_id
 
 
 def parse_detail_context(from_raw, q_raw="", filter_raw="all"):
@@ -106,7 +116,7 @@ def parse_detail_context(from_raw, q_raw="", filter_raw="all"):
     return from_page, q, activity_filter
 
 
-def build_list_back_url(from_page, q="", activity_filter="all"):
+def build_list_back_url(from_page, q="", activity_filter="all", user_id=None):
     if from_page == "discover":
         return url_for("discover", q=q) if q else url_for("discover")
     if from_page == "home":
@@ -120,27 +130,80 @@ def build_list_back_url(from_page, q="", activity_filter="all"):
         return url_for("profile")
     if from_page == "notifications":
         return url_for("notifications")
+    if from_page == "user_profile":
+        profile_user_id = parse_user_profile_id(user_id)
+        if profile_user_id is None:
+            return url_for("home")
+        return url_for("user_profile", user_id=profile_user_id)
     return url_for("home")
 
 
-def build_detail_url(activity_id, from_page, q="", activity_filter="all"):
+def build_detail_url(activity_id, from_page, q="", activity_filter="all", user_id=None):
     kwargs = {"activity_id": activity_id, "source": from_page}
     if from_page == "discover":
         kwargs["q"] = q
     elif from_page == "home":
         kwargs["q"] = q
         kwargs["filter"] = activity_filter
+    elif from_page == "user_profile":
+        profile_user_id = parse_user_profile_id(user_id)
+        if profile_user_id is not None:
+            kwargs["user_id"] = profile_user_id
     return url_for("activity_detail", **kwargs)
 
 
-def redirect_after_respond(activity_id, origin, from_page="home", q="", activity_filter="all"):
+def build_user_profile_url(
+    profile_user_id,
+    from_activity_id=None,
+    from_page="home",
+    q="",
+    activity_filter="all",
+    detail_user_id=None,
+):
+    kwargs = {"user_id": profile_user_id}
+    activity_id = parse_user_profile_id(from_activity_id)
+    if activity_id is None:
+        return url_for("user_profile", **kwargs)
+
+    from_page, q, activity_filter = parse_detail_context(from_page, q, activity_filter)
+    kwargs["from_activity"] = activity_id
+    kwargs["source"] = from_page
+    if from_page in ("home", "discover") and q:
+        kwargs["q"] = q
+    if from_page == "home" and activity_filter != "all":
+        kwargs["filter"] = activity_filter
+    if from_page == "user_profile":
+        nested_id = parse_user_profile_id(detail_user_id)
+        if nested_id is not None:
+            kwargs["detail_user_id"] = nested_id
+    return url_for("user_profile", **kwargs)
+
+
+def user_profile_url_from_values(profile_user_id, values):
+    return build_user_profile_url(
+        profile_user_id,
+        from_activity_id=values.get("from_activity"),
+        from_page=values.get("source", ""),
+        q=values.get("q", ""),
+        activity_filter=values.get("filter", "all"),
+        detail_user_id=values.get("detail_user_id"),
+    )
+
+
+def redirect_after_respond(
+    activity_id, origin, from_page="home", q="", activity_filter="all", user_id=None
+):
     from_page, q, activity_filter = parse_detail_context(from_page, q, activity_filter)
 
     if origin not in ALLOWED_RESPOND_ORIGINS:
         return redirect(url_for("home"))
 
     if origin == "detail":
-        return redirect(build_detail_url(activity_id, from_page, q, activity_filter))
+        return redirect(
+            build_detail_url(
+                activity_id, from_page, q, activity_filter, user_id=user_id
+            )
+        )
     if origin == "discover":
         return redirect(url_for("discover", q=q) if q else url_for("discover"))
     if origin == "home":
@@ -658,12 +721,20 @@ def count_joined_participants(activity):
     )
 
 
-def serialize_profile_activity(activity, *, is_past):
+def serialize_profile_activity(activity, *, is_past, source="profile", user_id=None):
     joined_count = count_joined_participants(activity)
     if is_past:
         participant_label = f"{joined_count} kişi katıldı"
     else:
         participant_label = f"{joined_count} kişi katılıyor"
+    detail_kwargs = {
+        "activity_id": activity.id,
+        "source": source,
+    }
+    if source == "user_profile":
+        profile_user_id = parse_user_profile_id(user_id)
+        if profile_user_id is not None:
+            detail_kwargs["user_id"] = profile_user_id
     return {
         "id": activity.id,
         "title": activity.title,
@@ -674,11 +745,7 @@ def serialize_profile_activity(activity, *, is_past):
         "visibility": activity.visibility,
         "visibility_label": VISIBILITY_LABELS.get(activity.visibility, "Herkese açık"),
         "is_past": is_past,
-        "detail_url": url_for(
-            "activity_detail",
-            activity_id=activity.id,
-            source="profile",
-        ),
+        "detail_url": url_for("activity_detail", **detail_kwargs),
     }
 
 
@@ -686,7 +753,7 @@ def activity_sort_key(activity):
     return parse_activity_datetime_local(activity.date, activity.time)
 
 
-def partition_profile_activities(activities):
+def partition_profile_activities(activities, source="profile", user_id=None):
     upcoming_raw = []
     past_raw = []
     for activity in activities:
@@ -698,17 +765,21 @@ def partition_profile_activities(activities):
     past_raw.sort(key=activity_sort_key, reverse=True)
     return {
         "upcoming": [
-            serialize_profile_activity(activity, is_past=False)
+            serialize_profile_activity(
+                activity, is_past=False, source=source, user_id=user_id
+            )
             for activity in upcoming_raw
         ],
         "past": [
-            serialize_profile_activity(activity, is_past=True)
+            serialize_profile_activity(
+                activity, is_past=True, source=source, user_id=user_id
+            )
             for activity in past_raw
         ],
     }
 
 
-def get_profile_context(user):
+def get_profile_context(user, viewer=None):
     first_name = user.full_name.split()[0] if user.full_name else "Kullanıcı"
     created_activities = Activity.query.filter_by(creator_id=user.id).all()
     joined_activities = (
@@ -720,6 +791,22 @@ def get_profile_context(user):
         )
         .all()
     )
+    detail_source = "profile"
+    detail_user_id = None
+    if viewer is not None and viewer.id != user.id:
+        friend_ids = get_accepted_friend_ids(viewer.id)
+        created_activities = [
+            activity
+            for activity in created_activities
+            if can_view_activity(viewer, activity, friend_ids=friend_ids)
+        ]
+        joined_activities = [
+            activity
+            for activity in joined_activities
+            if can_view_activity(viewer, activity, friend_ids=friend_ids)
+        ]
+        detail_source = "user_profile"
+        detail_user_id = user.id
     friend_ids = get_accepted_friend_ids(user.id)
     return {
         "profile_user": {
@@ -733,8 +820,12 @@ def get_profile_context(user):
             "joined_count": len(joined_activities),
             "friends_count": len(friend_ids),
         },
-        "created": partition_profile_activities(created_activities),
-        "joined": partition_profile_activities(joined_activities),
+        "created": partition_profile_activities(
+            created_activities, source=detail_source, user_id=detail_user_id
+        ),
+        "joined": partition_profile_activities(
+            joined_activities, source=detail_source, user_id=detail_user_id
+        ),
     }
 
 
@@ -763,11 +854,19 @@ def render_activity_detail(
     detail_from="home",
     detail_q="",
     detail_filter="all",
+    detail_user_id="",
 ):
     from_page, q, activity_filter = parse_detail_context(
         detail_from, detail_q, detail_filter
     )
-    back_url = build_list_back_url(from_page, q, activity_filter)
+    profile_user_id = None
+    if from_page == "user_profile":
+        profile_user_id = parse_user_profile_id(detail_user_id)
+        if profile_user_id is None:
+            from_page = "home"
+    back_url = build_list_back_url(
+        from_page, q, activity_filter, user_id=profile_user_id
+    )
     joined_count = sum(1 for p in activity.participants if p.status == "joined")
     maybe_count = sum(1 for p in activity.participants if p.status == "maybe")
     comments = (
@@ -804,6 +903,15 @@ def render_activity_detail(
         detail_from=from_page,
         detail_q=q,
         detail_filter=activity_filter,
+        detail_user_id=profile_user_id or "",
+        creator_profile_url=build_user_profile_url(
+            activity.creator.id,
+            from_activity_id=activity.id,
+            from_page=from_page,
+            q=q,
+            activity_filter=activity_filter,
+            detail_user_id=profile_user_id,
+        ),
     )
 
 
@@ -935,10 +1043,16 @@ def respond_activity(activity_id):
     return_from = request.form.get("return_from", "home").strip()
     return_q = request.form.get("return_q", "").strip()
     return_filter = request.form.get("return_filter", "all").strip()
+    return_user_id = request.form.get("return_user_id", "").strip()
 
     if status not in VALID_PARTICIPANT_STATUSES:
         return redirect_after_respond(
-            activity_id, origin, return_from, return_q, return_filter
+            activity_id,
+            origin,
+            return_from,
+            return_q,
+            return_filter,
+            user_id=return_user_id,
         )
 
     activity = db.session.get(Activity, activity_id)
@@ -982,7 +1096,12 @@ def respond_activity(activity_id):
 
     db.session.commit()
     return redirect_after_respond(
-        activity_id, origin, return_from, return_q, return_filter
+        activity_id,
+        origin,
+        return_from,
+        return_q,
+        return_filter,
+        user_id=return_user_id,
     )
 
 
@@ -1003,6 +1122,7 @@ def activity_detail(activity_id):
         detail_from=request.args.get("source", ""),
         detail_q=request.args.get("q", ""),
         detail_filter=request.args.get("filter", "all"),
+        detail_user_id=request.args.get("user_id", ""),
     )
 
 
@@ -1124,6 +1244,10 @@ def add_comment(activity_id):
         return redirect(url_for("home"))
 
     body = request.form.get("body", "").strip()
+    return_from = request.form.get("return_from", "home").strip()
+    return_q = request.form.get("return_q", "").strip()
+    return_filter = request.form.get("return_filter", "all").strip()
+    return_user_id = request.form.get("return_user_id", "").strip()
 
     if not body:
         return render_activity_detail(
@@ -1131,6 +1255,10 @@ def add_comment(activity_id):
             current_user=current_user,
             error="Lütfen bir yorum yazın.",
             form_body="",
+            detail_from=return_from,
+            detail_q=return_q,
+            detail_filter=return_filter,
+            detail_user_id=return_user_id,
         )
 
     if len(body) > COMMENT_MAX_LENGTH:
@@ -1139,6 +1267,10 @@ def add_comment(activity_id):
             current_user=current_user,
             error=f"Yorum en fazla {COMMENT_MAX_LENGTH} karakter olabilir.",
             form_body=body[:COMMENT_MAX_LENGTH],
+            detail_from=return_from,
+            detail_q=return_q,
+            detail_filter=return_filter,
+            detail_user_id=return_user_id,
         )
 
     comment = Comment(
@@ -1159,7 +1291,18 @@ def add_comment(activity_id):
         )
 
     db.session.commit()
-    return redirect(url_for("activity_detail", activity_id=activity_id))
+    from_page, q, activity_filter = parse_detail_context(
+        return_from, return_q, return_filter
+    )
+    return redirect(
+        build_detail_url(
+            activity_id,
+            from_page,
+            q,
+            activity_filter,
+            user_id=return_user_id,
+        )
+    )
 
 @app.route("/discover")
 def discover():
@@ -1218,6 +1361,58 @@ def profile():
 
     context = get_profile_context(current_user)
     return render_template("profile.html", **context)
+
+
+@app.route("/users/<int:user_id>")
+def user_profile(user_id):
+    current_user = get_current_user()
+    if current_user is None:
+        return redirect(url_for("login"))
+
+    if user_id == current_user.id:
+        return redirect(url_for("profile"))
+
+    viewed_user = db.session.get(User, user_id)
+    if viewed_user is None:
+        return redirect(url_for("home"))
+
+    friendship = get_friendship(current_user.id, viewed_user.id)
+    friendship_state = friendship_ui_state(
+        current_user.id, viewed_user.id, friendship
+    )
+    context = get_profile_context(viewed_user, viewer=current_user)
+
+    from_activity = parse_user_profile_id(request.args.get("from_activity"))
+    from_page, q, activity_filter = parse_detail_context(
+        request.args.get("source", ""),
+        request.args.get("q", ""),
+        request.args.get("filter", "all"),
+    )
+    nested_profile_id = parse_user_profile_id(request.args.get("detail_user_id"))
+    if from_activity is None:
+        back_url = url_for("home")
+    else:
+        back_url = build_detail_url(
+            from_activity,
+            from_page,
+            q,
+            activity_filter,
+            user_id=nested_profile_id,
+        )
+
+    return render_template(
+        "user_profile.html",
+        viewed_user=viewed_user,
+        friendship=friendship,
+        friendship_state=friendship_state,
+        back_url=back_url,
+        from_activity=from_activity or "",
+        detail_from=from_page,
+        detail_q=q,
+        detail_filter=activity_filter,
+        detail_user_id=nested_profile_id or "",
+        **context,
+    )
 
 
 @app.route("/notifications")
@@ -1385,6 +1580,17 @@ def friends_request(user_id):
         return redirect(url_for("friends"))
 
     other = db.session.get(User, user_id)
+    next_page = request.form.get("next", "friends").strip()
+    if next_page != "user_profile":
+        next_page = "friends"
+
+    def redirect_after_friend_request():
+        if next_page == "user_profile":
+            form_user_id = request.form.get("user_id", type=int)
+            if form_user_id == user_id:
+                return redirect(user_profile_url_from_values(user_id, request.form))
+        return redirect(url_for("friends"))
+
     if other is None:
         return redirect(url_for("friends"))
 
@@ -1416,7 +1622,7 @@ def friends_request(user_id):
         )
 
     db.session.commit()
-    return redirect(url_for("friends"))
+    return redirect_after_friend_request()
 
 
 @app.route("/friends/accept/<int:friendship_id>", methods=["POST"])
@@ -1482,6 +1688,11 @@ def friends_cancel(friendship_id):
     if current_user is None:
         return redirect(url_for("login"))
 
+    next_page = request.form.get("next", "friends").strip()
+    if next_page != "user_profile":
+        next_page = "friends"
+    form_user_id = request.form.get("user_id", type=int)
+
     friendship = db.session.get(Friendship, friendship_id)
     if (
         friendship is None
@@ -1489,6 +1700,10 @@ def friends_cancel(friendship_id):
         or friendship.sender_id != current_user.id
     ):
         return redirect(url_for("friends"))
+
+    return_user_id = None
+    if next_page == "user_profile" and form_user_id == friendship.receiver_id:
+        return_user_id = friendship.receiver_id
 
     notification = Notification.query.filter_by(
         recipient_id=friendship.receiver_id,
@@ -1503,6 +1718,8 @@ def friends_cancel(friendship_id):
 
     db.session.delete(friendship)
     db.session.commit()
+    if return_user_id is not None:
+        return redirect(user_profile_url_from_values(return_user_id, request.form))
     return redirect(url_for("friends"))
 
 @app.route("/friends/remove/<int:friendship_id>", methods=["POST"])

@@ -89,7 +89,11 @@
 
             <section class="detail-section creator-section">
                 <h2 class="section-heading">Oluşturan</h2>
-                <div class="creator-card creator-card-static" role="group" aria-label="Etkinliği oluşturan kişi">
+                <a
+                    class="creator-card"
+                    href="{{ creator_profile_url }}"
+                    aria-label="Etkinliği oluşturan kişi"
+                >
                     <img
                         class="creator-avatar"
                         src="{{ url_for('static', filename='img/avatar-user.jpg') }}"
@@ -100,7 +104,7 @@
                         <span class="creator-label">Etkinliği oluşturan kişi</span>
                     </div>
                     <span class="creator-chevron" aria-hidden="true">›</span>
-                </div>
+                </a>
 
                 {% if is_owner %}
                 <div class="owner-actions">
@@ -171,6 +175,16 @@
                     action="{{ url_for('add_comment', activity_id=activity.id) }}"
                     method="post"
                 >
+                    <input type="hidden" name="return_from" value="{{ detail_from }}">
+                    {% if detail_q %}
+                    <input type="hidden" name="return_q" value="{{ detail_q }}">
+                    {% endif %}
+                    {% if detail_from == 'home' and detail_filter != 'all' %}
+                    <input type="hidden" name="return_filter" value="{{ detail_filter }}">
+                    {% endif %}
+                    {% if detail_user_id %}
+                    <input type="hidden" name="return_user_id" value="{{ detail_user_id }}">
+                    {% endif %}
                     {% if error %}
                     <p class="form-error" role="alert">{{ error }}</p>
                     {% endif %}
@@ -201,6 +215,9 @@
                 {% if detail_from == 'home' and detail_filter != 'all' %}
                 <input type="hidden" name="return_filter" value="{{ detail_filter }}">
                 {% endif %}
+                {% if detail_user_id %}
+                <input type="hidden" name="return_user_id" value="{{ detail_user_id }}">
+                {% endif %}
                 <input type="hidden" name="status" value="maybe">
                 <button
                     type="submit"
@@ -215,6 +232,9 @@
                 {% endif %}
                 {% if detail_from == 'home' and detail_filter != 'all' %}
                 <input type="hidden" name="return_filter" value="{{ detail_filter }}">
+                {% endif %}
+                {% if detail_user_id %}
+                <input type="hidden" name="return_user_id" value="{{ detail_user_id }}">
                 {% endif %}
                 <input type="hidden" name="status" value="joined">
                 <button
