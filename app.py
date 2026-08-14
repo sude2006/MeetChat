@@ -472,6 +472,16 @@ def get_current_user():
     return user
 
 
+@app.context_processor
+def inject_unread_notification_count():
+    user = get_current_user()
+    if user is None:
+        return {"unread_notification_count": 0}
+    return {
+        "unread_notification_count": get_unread_notification_count(user.id)
+    }
+
+
 def get_friendship(user_a_id, user_b_id):
     return Friendship.query.filter(
         db.or_(
