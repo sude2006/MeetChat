@@ -36,7 +36,7 @@
                     {% if can_open_activity %}
                     <a
                         class="notification-main"
-                        href="{{ url_for('activity_detail', activity_id=notification.activity_id, source='notifications') }}"
+                        href="{{ url_for('open_notification', notification_id=notification.id) }}"
                     >
                     {% else %}
                     <div class="notification-main">

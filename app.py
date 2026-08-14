@@ -1247,6 +1247,42 @@ def notifications():
 
     return render_template("notifications.html", notifications=notifications)
 
+
+ACTIVITY_NOTIFICATION_TYPES = (
+    "activity_join",
+    "activity_comment",
+    "activity_time_change",
+)
+
+
+@app.route("/notifications/<int:notification_id>/open")
+def open_notification(notification_id):
+    current_user = get_current_user()
+    if current_user is None:
+        return redirect(url_for("login"))
+
+    notification = db.session.get(Notification, notification_id)
+    if (
+        notification is None
+        or notification.recipient_id != current_user.id
+        or notification.type not in ACTIVITY_NOTIFICATION_TYPES
+        or not notification.activity_id
+    ):
+        return redirect(url_for("notifications"))
+
+    if not notification.is_read:
+        notification.is_read = True
+        db.session.commit()
+
+    return redirect(
+        url_for(
+            "activity_detail",
+            activity_id=notification.activity_id,
+            source="notifications",
+        )
+    )
+
+
 @app.route("/friend-list")
 def friend_list():
     current_user = get_current_user()
