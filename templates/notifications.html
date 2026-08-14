@@ -21,6 +21,8 @@
             {% set actor_initial = actor_name[0].upper() if actor_name else "?" %}
             {% if notification.type == "friend_request" %}
                 {% set icon_mod = "friend-request" %}
+            {% elif notification.type == "friend_accept" %}
+                {% set icon_mod = "friend-request" %}
             {% elif notification.type == "activity_join" %}
                 {% set icon_mod = "activity-join" %}
             {% elif notification.type == "activity_comment" %}
@@ -31,9 +33,11 @@
                 {% set icon_mod = "unknown" %}
             {% endif %}
             {% set can_open_activity = notification.type in ["activity_join", "activity_comment", "activity_time_change"] and notification.activity_id %}
+            {% set can_open_friend_accept = notification.type == "friend_accept" and notification.actor_id %}
+            {% set can_open = can_open_activity or can_open_friend_accept %}
             <article class="notification-card{% if not notification.is_read %} is-unread{% endif %}">
                 <div class="notification-card-inner">
-                    {% if can_open_activity %}
+                    {% if can_open %}
                     <a
                         class="notification-main"
                         href="{{ url_for('open_notification', notification_id=notification.id) }}"
@@ -44,7 +48,7 @@
                     <div class="notification-media">
                         <span class="notification-icon notification-icon--{{ icon_mod }}">
                             <span class="notification-icon-symbol">
-                                {% if notification.type == "friend_request" %}
+                                {% if notification.type == "friend_request" or notification.type == "friend_accept" %}
                                 <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
                                     <circle cx="9" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                                     <circle cx="16" cy="9.5" r="2.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -69,29 +73,49 @@
                                 {% endif %}
                             </span>
                         </span>
-                        {% if notification.type == "friend_request" %}
+                        {% if notification.type == "friend_request" or notification.type == "friend_accept" %}
                         <div class="notification-avatar">{{ actor_initial }}</div>
                         {% endif %}
                     </div>
 
                     <div class="notification-content">
                         {% if notification.type == "friend_request" %}
+                        {% set friendship_status = notification.friendship.status if notification.friendship else none %}
+                        {% if friendship_status == "accepted" %}
+                        <p class="notification-body">
+                            <strong>{{ actor_name }}</strong> ile artık arkadaşsınız.
+                        </p>
+                        <time class="notification-time" datetime="{{ notification.created_at.isoformat() }}">
+                            {{ notification.relative_time }}
+                        </time>
+                        {% else %}
                         <p class="notification-body">
                             <strong>{{ actor_name }}</strong> sana arkadaşlık isteği gönderdi.
                         </p>
                         <time class="notification-time" datetime="{{ notification.created_at.isoformat() }}">
                             {{ notification.relative_time }}
                         </time>
-                        {% if notification.friendship_id %}
+                        {% if notification.friendship_id and friendship_status == "pending" %}
                         <div class="notification-actions">
                             <form action="{{ url_for('friends_accept', friendship_id=notification.friendship_id) }}" method="post">
+                                <input type="hidden" name="next" value="notifications">
                                 <button type="submit">Kabul Et</button>
                             </form>
                             <form action="{{ url_for('friends_reject', friendship_id=notification.friendship_id) }}" method="post">
+                                <input type="hidden" name="next" value="notifications">
                                 <button type="submit">Reddet</button>
                             </form>
                         </div>
                         {% endif %}
+                        {% endif %}
+
+                        {% elif notification.type == "friend_accept" %}
+                        <p class="notification-body">
+                            <strong>{{ actor_name }}</strong> arkadaşlık isteğini kabul etti. Artık arkadaşsınız.
+                        </p>
+                        <time class="notification-time" datetime="{{ notification.created_at.isoformat() }}">
+                            {{ notification.relative_time }}
+                        </time>
 
                         {% elif notification.type == "activity_join" %}
                         <p class="notification-body">
@@ -141,7 +165,7 @@
                         </time>
                         {% endif %}
                     </div>
-                    {% if can_open_activity %}
+                    {% if can_open %}
                     </a>
                     {% else %}
                     </div>

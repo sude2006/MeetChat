@@ -56,13 +56,51 @@
             </form>
             {% elif friendship_state == "incoming" and friendship %}
             <form action="{{ url_for('friends_accept', friendship_id=friendship.id) }}" method="post">
+                <input type="hidden" name="next" value="user_profile">
+                <input type="hidden" name="user_id" value="{{ viewed_user.id }}">
+                {% if from_activity %}
+                <input type="hidden" name="from_activity" value="{{ from_activity }}">
+                <input type="hidden" name="source" value="{{ detail_from }}">
+                <input type="hidden" name="q" value="{{ detail_q }}">
+                <input type="hidden" name="filter" value="{{ detail_filter }}">
+                <input type="hidden" name="detail_user_id" value="{{ detail_user_id }}">
+                {% endif %}
                 <button type="submit">Kabul Et</button>
             </form>
             <form action="{{ url_for('friends_reject', friendship_id=friendship.id) }}" method="post">
+                <input type="hidden" name="next" value="user_profile">
+                <input type="hidden" name="user_id" value="{{ viewed_user.id }}">
+                {% if from_activity %}
+                <input type="hidden" name="from_activity" value="{{ from_activity }}">
+                <input type="hidden" name="source" value="{{ detail_from }}">
+                <input type="hidden" name="q" value="{{ detail_q }}">
+                <input type="hidden" name="filter" value="{{ detail_filter }}">
+                <input type="hidden" name="detail_user_id" value="{{ detail_user_id }}">
+                {% endif %}
                 <button type="submit">Reddet</button>
             </form>
-            {% elif friendship_state == "friends" %}
-            <p>Arkadaş</p>
+            {% elif friendship_state == "friends" and friendship %}
+            <div>
+                <button type="button" id="friend-status-btn">Arkadaş</button>
+                <div id="friend-status-menu" hidden>
+                    <form
+                        action="{{ url_for('friends_remove', friendship_id=friendship.id) }}"
+                        method="post"
+                    >
+                        <input type="hidden" name="next" value="user_profile">
+                        <input type="hidden" name="user_id" value="{{ viewed_user.id }}">
+                        {% if from_activity %}
+                        <input type="hidden" name="from_activity" value="{{ from_activity }}">
+                        <input type="hidden" name="source" value="{{ detail_from }}">
+                        <input type="hidden" name="q" value="{{ detail_q }}">
+                        <input type="hidden" name="filter" value="{{ detail_filter }}">
+                        <input type="hidden" name="detail_user_id" value="{{ detail_user_id }}">
+                        {% endif %}
+                        <button type="submit">Arkadaşlıktan Çıkar</button>
+                    </form>
+                    <button type="button" id="friend-status-cancel">İptal</button>
+                </div>
+            </div>
             {% endif %}
 
             <h2 class="plans-title">{{ profile_user.first_name }}&#39;s Hangouts</h2>
@@ -245,6 +283,20 @@
                 activateTab(tab.dataset.tab);
             });
         });
+
+        const friendStatusBtn = document.getElementById("friend-status-btn");
+        const friendStatusMenu = document.getElementById("friend-status-menu");
+        const friendStatusCancel = document.getElementById("friend-status-cancel");
+        if (friendStatusBtn && friendStatusMenu && friendStatusCancel) {
+            friendStatusBtn.addEventListener("click", function () {
+                friendStatusBtn.hidden = true;
+                friendStatusMenu.hidden = false;
+            });
+            friendStatusCancel.addEventListener("click", function () {
+                friendStatusMenu.hidden = true;
+                friendStatusBtn.hidden = false;
+            });
+        }
     </script>
 </body>
 

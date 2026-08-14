@@ -1,5 +1,6 @@
 from flask import Flask, redirect, render_template, request, session, url_for
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import text
 from sqlalchemy.orm import joinedload
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime, timedelta, timezone
@@ -259,6 +260,7 @@ class Comment(db.Model):
 
 VALID_NOTIFICATION_TYPES = (
     "friend_request",
+    "friend_accept",
     "activity_join",
     "activity_comment",
     "activity_time_change",
@@ -309,7 +311,7 @@ class Notification(db.Model):
     __table_args__ = (
         db.CheckConstraint(
             "type IN ("
-            "'friend_request', 'activity_join', "
+            "'friend_request', 'friend_accept', 'activity_join', "
             "'activity_comment', 'activity_time_change'"
             ")",
             name="ck_notification_type",
@@ -324,8 +326,73 @@ class Notification(db.Model):
     )
 
 
+def _ensure_friend_accept_notification_type():
+    if db.engine.dialect.name != "sqlite":
+        return
+    with db.engine.begin() as conn:
+        conn.execute(text("PRAGMA foreign_keys=OFF"))
+        create_sql = conn.execute(
+            text(
+                "SELECT sql FROM sqlite_master "
+                "WHERE type='table' AND name='notification'"
+            )
+        ).scalar()
+        if not create_sql or "friend_accept" in create_sql:
+            conn.execute(text("PRAGMA foreign_keys=ON"))
+            return
+
+        new_sql = create_sql.replace(
+            "'activity_time_change'",
+            "'activity_time_change', 'friend_accept'",
+            1,
+        )
+        if 'CREATE TABLE "notification"' in new_sql:
+            new_sql = new_sql.replace(
+                'CREATE TABLE "notification"',
+                'CREATE TABLE "notification__new"',
+                1,
+            )
+        else:
+            new_sql = new_sql.replace(
+                "CREATE TABLE notification",
+                "CREATE TABLE notification__new",
+                1,
+            )
+        if "notification__new" not in new_sql:
+            conn.execute(text("PRAGMA foreign_keys=ON"))
+            return
+        conn.execute(text(new_sql))
+        conn.execute(
+            text("INSERT INTO notification__new SELECT * FROM notification")
+        )
+        conn.execute(text("DROP TABLE notification"))
+        conn.execute(
+            text("ALTER TABLE notification__new RENAME TO notification")
+        )
+        conn.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS ix_notification_recipient_created "
+                "ON notification (recipient_id, created_at)"
+            )
+        )
+        conn.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS ix_notification_recipient_unread "
+                "ON notification (recipient_id, is_dismissed, is_read)"
+            )
+        )
+        conn.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS ix_notification_recipient_id "
+                "ON notification (recipient_id)"
+            )
+        )
+        conn.execute(text("PRAGMA foreign_keys=ON"))
+
+
 with app.app_context():
     db.create_all()
+    _ensure_friend_accept_notification_type()
 
 
 NOTIFICATION_FIELD_UNSET = object()
@@ -368,6 +435,16 @@ def create_or_update_notification(
         return None
 
     if type == "friend_request":
+        if _is_missing_notification_field(friendship_id) or _is_missing_notification_field(
+            actor_id
+        ):
+            return None
+        existing = Notification.query.filter_by(
+            recipient_id=recipient_id,
+            type=type,
+            friendship_id=friendship_id,
+        ).first()
+    elif type == "friend_accept":
         if _is_missing_notification_field(friendship_id) or _is_missing_notification_field(
             actor_id
         ):
@@ -1457,25 +1534,32 @@ def open_notification(notification_id):
         return redirect(url_for("login"))
 
     notification = db.session.get(Notification, notification_id)
-    if (
-        notification is None
-        or notification.recipient_id != current_user.id
-        or notification.type not in ACTIVITY_NOTIFICATION_TYPES
-        or not notification.activity_id
-    ):
+    if notification is None or notification.recipient_id != current_user.id:
         return redirect(url_for("notifications"))
 
-    if not notification.is_read:
-        notification.is_read = True
-        db.session.commit()
-
-    return redirect(
-        url_for(
-            "activity_detail",
-            activity_id=notification.activity_id,
-            source="notifications",
+    if notification.type in ACTIVITY_NOTIFICATION_TYPES:
+        if not notification.activity_id:
+            return redirect(url_for("notifications"))
+        if not notification.is_read:
+            notification.is_read = True
+            db.session.commit()
+        return redirect(
+            url_for(
+                "activity_detail",
+                activity_id=notification.activity_id,
+                source="notifications",
+            )
         )
-    )
+
+    if notification.type == "friend_accept":
+        if not notification.actor_id:
+            return redirect(url_for("notifications"))
+        if not notification.is_read:
+            notification.is_read = True
+            db.session.commit()
+        return redirect(url_for("user_profile", user_id=notification.actor_id))
+
+    return redirect(url_for("notifications"))
 
 
 @app.route("/friend-list")
@@ -1625,6 +1709,26 @@ def friends_request(user_id):
     return redirect_after_friend_request()
 
 
+def _redirect_after_friend_response(friendship=None):
+    next_page = (request.form.get("next") or "friends").strip()
+    if next_page == "notifications":
+        return redirect(url_for("notifications"))
+    if next_page == "user_profile" and friendship is not None:
+        form_user_id = request.form.get("user_id", type=int)
+        current_user = get_current_user()
+        other_user_id = None
+        if current_user is not None:
+            if current_user.id == friendship.sender_id:
+                other_user_id = friendship.receiver_id
+            elif current_user.id == friendship.receiver_id:
+                other_user_id = friendship.sender_id
+        if form_user_id is not None and form_user_id == other_user_id:
+            return redirect(
+                user_profile_url_from_values(other_user_id, request.form)
+            )
+    return redirect(url_for("friends"))
+
+
 @app.route("/friends/accept/<int:friendship_id>", methods=["POST"])
 def friends_accept(friendship_id):
     current_user = get_current_user()
@@ -1637,7 +1741,7 @@ def friends_accept(friendship_id):
         or friendship.status != "pending"
         or friendship.receiver_id != current_user.id
     ):
-        return redirect(url_for("friends"))
+        return _redirect_after_friend_response()
 
     friendship.status = "accepted"
     friendship.updated_at = datetime.utcnow()
@@ -1650,8 +1754,15 @@ def friends_accept(friendship_id):
     if notification is not None:
         notification.is_read = True
 
+    create_or_update_notification(
+        recipient_id=friendship.sender_id,
+        type="friend_accept",
+        actor_id=current_user.id,
+        friendship_id=friendship.id,
+    )
+
     db.session.commit()
-    return redirect(url_for("friends"))
+    return _redirect_after_friend_response(friendship)
 
 
 @app.route("/friends/reject/<int:friendship_id>", methods=["POST"])
@@ -1666,7 +1777,7 @@ def friends_reject(friendship_id):
         or friendship.status != "pending"
         or friendship.receiver_id != current_user.id
     ):
-        return redirect(url_for("friends"))
+        return _redirect_after_friend_response()
 
     friendship.status = "rejected"
     friendship.updated_at = datetime.utcnow()
@@ -1677,10 +1788,13 @@ def friends_reject(friendship_id):
         type="friend_request",
     ).first()
     if notification is not None:
+        now = _utc_now_naive()
         notification.is_read = True
+        notification.is_dismissed = True
+        notification.dismissed_at = now
 
     db.session.commit()
-    return redirect(url_for("friends"))
+    return _redirect_after_friend_response(friendship)
 
 @app.route("/friends/cancel/<int:friendship_id>", methods=["POST"])
 def friends_cancel(friendship_id):
@@ -1728,8 +1842,16 @@ def friends_remove(friendship_id):
     if current_user is None:
         return redirect(url_for("login"))
 
-    next_page = request.form.get("next", "friends")
-    return_endpoint = "friend_list" if next_page == "friend_list" else "friends"
+    next_page = (request.form.get("next") or "friends").strip()
+    if next_page == "friend_list":
+        return_endpoint = "friend_list"
+    elif next_page == "user_profile":
+        return_endpoint = "friends"
+    else:
+        next_page = "friends"
+        return_endpoint = "friends"
+
+    form_user_id = request.form.get("user_id", type=int)
 
     friendship = db.session.get(Friendship, friendship_id)
     if (
@@ -1739,8 +1861,19 @@ def friends_remove(friendship_id):
     ):
         return redirect(url_for(return_endpoint))
 
+    other_user_id = (
+        friendship.receiver_id
+        if friendship.sender_id == current_user.id
+        else friendship.sender_id
+    )
+    return_to_profile = (
+        next_page == "user_profile" and form_user_id == other_user_id
+    )
+
     db.session.delete(friendship)
     db.session.commit()
+    if return_to_profile:
+        return redirect(user_profile_url_from_values(other_user_id, request.form))
     return redirect(url_for(return_endpoint))
 
 @app.route("/login", methods=["GET", "POST"])
