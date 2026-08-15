@@ -784,6 +784,29 @@ def derive_display_handle(user):
     return f"@{safe[:30] or 'user'}"
 
 
+def turkish_possessive(name):
+    name = (name or "").strip() or "Kullanıcı"
+    last_vowel = None
+    for char in reversed(name):
+        folded = char.replace("İ", "i").replace("I", "ı").lower()
+        if folded in "aeıioöuü":
+            last_vowel = folded
+            break
+    if last_vowel in ("e", "i"):
+        harmony = "i"
+    elif last_vowel in ("a", "ı"):
+        harmony = "ı"
+    elif last_vowel in ("o", "u"):
+        harmony = "u"
+    elif last_vowel in ("ö", "ü"):
+        harmony = "ü"
+    else:
+        harmony = "i"
+    last_folded = name[-1].replace("İ", "i").replace("I", "ı").lower()
+    suffix = f"n{harmony}n" if last_folded in "aeıioöuü" else f"{harmony}n"
+    return f"{name}'{suffix}"
+
+
 def format_profile_datetime(date_str, time_str):
     try:
         dt = datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M")
@@ -888,6 +911,7 @@ def get_profile_context(user, viewer=None):
     return {
         "profile_user": {
             "first_name": first_name,
+            "possessive_first_name": turkish_possessive(first_name),
             "handle": derive_display_handle(user),
             "bio": "Henüz biyografi eklenmedi.",
             "avatar_initial": user.full_name[0].upper() if user.full_name else "?",

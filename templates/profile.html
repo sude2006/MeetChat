@@ -10,7 +10,7 @@
 
 <body>
     <div class="app-shell">
-        <header class="profile-topbar">
+        <header class="profile-topbar profile-topbar-end">
             <button
                 type="button"
                 class="icon-button"
@@ -19,8 +19,8 @@
                 disabled
                 aria-disabled="true"
             >
-                <svg width="21" height="21" viewBox="0 0 24 24" aria-hidden="true">
-                    <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/>
                     <path d="M19 12a7 7 0 00-.1-1l2-1.5-2-3.4-2.4 1a8 8 0 00-1.8-1L14.4 3h-4.8l-.4 3.1a8 8 0 00-1.8 1L5 6.1 3 9.5 5.1 11a7 7 0 000 2L3 14.5l2 3.4 2.4-1a8 8 0 001.8 1l.4 3.1h4.8l.4-3.1a8 8 0 001.8-1l2.4 1 2-3.4-2.1-1.5c.1-.3.1-.7.1-1z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
                 </svg>
             </button>
@@ -33,22 +33,12 @@
                     <h1 class="profile-handle">{{ profile_user.handle }}</h1>
                     <p class="profile-bio">{{ profile_user.bio }}</p>
                 </div>
-                <button
-                    type="button"
-                    class="profile-edit-icon"
-                    aria-label="Profili düzenle"
-                    title="Yakında"
-                    disabled
-                    aria-disabled="true"
-                >
-                    <svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M4 20l4.2-1 10.7-10.7a2.1 2.1 0 00-3-3L5.2 16z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-                        <path d="M14.5 6.7l2.8 2.8" fill="none" stroke="currentColor" stroke-width="1.8"/>
-                    </svg>
-                </button>
             </section>
 
-            <h2 class="plans-title">{{ profile_user.first_name }}&#39;s Hangouts</h2>
+            <h2 class="plans-title">
+                <span class="plans-title-name">{{ profile_user.possessive_first_name }}</span>
+                <span class="plans-title-plans">Planları</span>
+            </h2>
 
             <section class="stats" role="tablist" aria-label="{{ profile_user.first_name }} profil bölümleri">
                 <button
@@ -58,8 +48,14 @@
                     aria-selected="true"
                     data-tab="created"
                 >
+                    <span class="stat-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24">
+                            <rect x="4" y="5" width="16" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                            <path d="M4 10h16M8 3v4M16 3v4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                        </svg>
+                    </span>
                     <strong>{{ stats.created_count }}</strong>
-                    <span>Oluşturduğu</span>
+                    <span>Planları</span>
                 </button>
                 <button
                     class="stat"
@@ -68,10 +64,22 @@
                     aria-selected="false"
                     data-tab="joined"
                 >
+                    <span class="stat-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24">
+                            <circle cx="9" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                            <circle cx="16.5" cy="9" r="2.4" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                            <path d="M3.5 19c.7-3 2.5-4.5 5.5-4.5s4.8 1.5 5.5 4.5M14 15.2c2.6-.4 4.8.8 5.8 3.3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                        </svg>
+                    </span>
                     <strong>{{ stats.joined_count }}</strong>
-                    <span>Katıldığı</span>
+                    <span>Katılım</span>
                 </button>
                 <a href="{{ url_for('friend_list') }}" class="stat stat-link">
+                    <span class="stat-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24">
+                            <path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
                     <strong>{{ stats.friends_count }}</strong>
                     <span>Arkadaşlar</span>
                 </a>
@@ -94,12 +102,15 @@
                         <span>{{ event.datetime }}</span>
                     </div>
                     <div class="event-meta">
-                        <span aria-hidden="true">&#9817;</span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle cx="12" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                            <path d="M5 19c1.2-3.2 3.6-4.8 7-4.8s5.8 1.6 7 4.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
                         <span>{{ event.participant_label }}</span>
                     </div>
                     <div class="event-footer">
                         {% if event.is_past %}
-                        <span class="completed-label">Tamamlandı</span>
+                        <a href="{{ event.detail_url }}" class="detail-chevron" aria-label="Detay">›</a>
                         {% else %}
                         <span
                             class="visibility{% if event.visibility == 'public' %} public{% endif %}"
@@ -119,8 +130,8 @@
                             </svg>
                             {% endif %}
                         </span>
-                        {% endif %}
                         <a href="{{ event.detail_url }}" class="detail-link">Detay &#8250;</a>
+                        {% endif %}
                     </div>
                 </div>
             </article>
