@@ -35,18 +35,19 @@
                 {% set icon_mod = "unknown" %}
             {% endif %}
             {% set can_open_activity = notification.type in ["activity_join", "activity_comment", "activity_time_change"] and notification.activity_id %}
-            {% set can_open_friend_accept = notification.type == "friend_accept" and notification.actor_id %}
-            {% set can_open = can_open_activity or can_open_friend_accept %}
-            <article class="notification-card{% if not notification.is_read %} is-unread{% endif %}">
+            {% set can_open_profile = notification.type in ["friend_request", "friend_accept"] and notification.actor_id %}
+            {% set can_open = can_open_activity or can_open_profile %}
+            <article class="notification-card{% if not notification.is_read %} is-unread{% endif %}{% if can_open %} is-clickable{% endif %}">
+                {% if can_open %}
+                <a
+                    class="notification-card-link"
+                    href="{{ url_for('open_notification', notification_id=notification.id) }}"
+                >
+                    <span class="visually-hidden">Bildirimi aç</span>
+                </a>
+                {% endif %}
                 <div class="notification-card-inner">
-                    {% if can_open %}
-                    <a
-                        class="notification-main"
-                        href="{{ url_for('open_notification', notification_id=notification.id) }}"
-                    >
-                    {% else %}
                     <div class="notification-main">
-                    {% endif %}
                     <div class="notification-media">
                         <span class="notification-icon notification-icon--{{ icon_mod }}">
                             <span class="notification-icon-symbol">
@@ -167,11 +168,7 @@
                         </time>
                         {% endif %}
                     </div>
-                    {% if can_open %}
-                    </a>
-                    {% else %}
                     </div>
-                    {% endif %}
 
                     {% if not notification.is_read %}
                     <div class="notification-dot"></div>

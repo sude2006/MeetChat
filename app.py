@@ -1807,7 +1807,9 @@ def user_profile(user_id):
     )
     nested_profile_id = parse_user_profile_id(request.args.get("detail_user_id"))
     if from_activity is None:
-        back_url = url_for("home")
+        back_url = build_list_back_url(
+            from_page, q, activity_filter, user_id=nested_profile_id
+        )
     else:
         back_url = build_detail_url(
             from_activity,
@@ -1891,13 +1893,19 @@ def open_notification(notification_id):
             )
         )
 
-    if notification.type == "friend_accept":
+    if notification.type in ("friend_request", "friend_accept"):
         if not notification.actor_id:
             return redirect(url_for("notifications"))
         if not notification.is_read:
             notification.is_read = True
             db.session.commit()
-        return redirect(url_for("user_profile", user_id=notification.actor_id))
+        return redirect(
+            url_for(
+                "user_profile",
+                user_id=notification.actor_id,
+                source="notifications",
+            )
+        )
 
     return redirect(url_for("notifications"))
 

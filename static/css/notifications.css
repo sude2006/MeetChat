@@ -10,6 +10,7 @@
     --text-soft: #666666;
     --white: #FFFFFF;
     --app-max: 430px;
+    --nav-height: 78px;
     --page-mint: #F4FBFA;
     --card-read: #E8F6F2;
     --card-unread: #C5EBE3;
@@ -33,19 +34,28 @@
     box-sizing: border-box;
 }
 
+html,
 body {
-    min-height: 100vh;
+    height: 100%;
+}
+
+body {
+    min-height: 100%;
     background: #EDEDED;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     color: var(--text);
+    overflow: hidden;
 }
 
 .notifications-page {
     max-width: var(--app-max);
-    min-height: 100vh;
+    height: 100%;
     margin: 0 auto;
     background: var(--page-mint);
-    padding: 24px 20px 40px;
+    padding: 24px 20px calc(var(--nav-height) + 24px + env(safe-area-inset-bottom, 0px));
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .notifications-header {
@@ -69,6 +79,24 @@ body {
     padding: 16px 18px;
     border-radius: 22px;
     background: var(--card-read);
+}
+
+.notification-card.is-clickable {
+    cursor: pointer;
+}
+
+.notification-card-link {
+    position: static;
+    color: inherit;
+    text-decoration: none;
+}
+
+.notification-card-link::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
 }
 
 .notification-card.is-unread {
@@ -179,6 +207,8 @@ body {
 }
 
 .notification-actions {
+    position: relative;
+    z-index: 2;
     display: flex;
     flex-wrap: nowrap;
     align-items: center;
@@ -247,7 +277,7 @@ body {
 
 @media (max-width: 360px) {
     .notifications-page {
-        padding: 20px 14px 32px;
+        padding: 20px 14px calc(var(--nav-height) + 24px + env(safe-area-inset-bottom, 0px));
     }
 
     .notifications-header h1 {

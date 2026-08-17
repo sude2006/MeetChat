@@ -13,7 +13,7 @@
     {% from "partials/letter_avatar.html" import letter_avatar %}
     <div class="app-shell">
         <header class="profile-topbar">
-            <a href="{{ back_url }}" class="icon-button" aria-label="Geri">
+            <a href="{{ back_url }}" class="icon-button" data-profile-back aria-label="Geri">
                 <svg width="21" height="21" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
@@ -82,27 +82,47 @@
                 <button type="submit">Reddet</button>
             </form>
             {% elif friendship_state == "friends" and friendship %}
-            <div>
-                <button type="button" id="friend-status-btn">Arkadaş</button>
-                <div id="friend-status-menu" hidden>
-                    <form
-                        action="{{ url_for('friends_remove', friendship_id=friendship.id) }}"
-                        method="post"
-                    >
-                        <input type="hidden" name="next" value="user_profile">
-                        <input type="hidden" name="user_id" value="{{ viewed_user.id }}">
-                        {% if from_activity %}
-                        <input type="hidden" name="from_activity" value="{{ from_activity }}">
-                        <input type="hidden" name="source" value="{{ detail_from }}">
-                        <input type="hidden" name="q" value="{{ detail_q }}">
-                        <input type="hidden" name="filter" value="{{ detail_filter }}">
-                        <input type="hidden" name="detail_user_id" value="{{ detail_user_id }}">
-                        {% endif %}
-                        <button type="submit">Arkadaşlıktan Çıkar</button>
-                    </form>
-                    <button type="button" id="friend-status-cancel">İptal</button>
+            <div class="friend-status owner-menu">
+                <button
+                    type="button"
+                    class="friend-status-btn"
+                    id="friend-status-btn"
+                    aria-expanded="false"
+                    aria-haspopup="true"
+                    aria-controls="friend-status-menu"
+                >
+                    <span>✓ Arkadaşsınız</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <div class="owner-menu-panel" id="friend-status-menu" hidden>
+                    <button type="button" class="owner-menu-delete" data-unfriend-open>Arkadaşlıktan Çıkar</button>
                 </div>
             </div>
+            <dialog class="confirm-modal" aria-labelledby="unfriend-modal-title" aria-describedby="unfriend-modal-copy">
+                <form
+                    class="confirm-modal-card"
+                    action="{{ url_for('friends_remove', friendship_id=friendship.id) }}"
+                    method="post"
+                >
+                    <input type="hidden" name="next" value="user_profile">
+                    <input type="hidden" name="user_id" value="{{ viewed_user.id }}">
+                    {% if from_activity %}
+                    <input type="hidden" name="from_activity" value="{{ from_activity }}">
+                    <input type="hidden" name="source" value="{{ detail_from }}">
+                    <input type="hidden" name="q" value="{{ detail_q }}">
+                    <input type="hidden" name="filter" value="{{ detail_filter }}">
+                    <input type="hidden" name="detail_user_id" value="{{ detail_user_id }}">
+                    {% endif %}
+                    <h2 id="unfriend-modal-title">Arkadaşlıktan çıkarılsın mı?</h2>
+                    <p id="unfriend-modal-copy">Bu kişi arkadaş listenizden kaldırılacak. Daha sonra tekrar arkadaşlık isteği gönderebilirsiniz.</p>
+                    <div class="confirm-modal-actions">
+                        <button type="button" class="confirm-cancel" data-unfriend-close>Vazgeç</button>
+                        <button type="submit" class="confirm-danger">Arkadaşlıktan Çıkar</button>
+                    </div>
+                </form>
+            </dialog>
             {% endif %}
 
             <h2 class="plans-title">
@@ -310,19 +330,112 @@
             });
         });
 
+        const friendStatus = document.querySelector(".friend-status");
         const friendStatusBtn = document.getElementById("friend-status-btn");
         const friendStatusMenu = document.getElementById("friend-status-menu");
-        const friendStatusCancel = document.getElementById("friend-status-cancel");
-        if (friendStatusBtn && friendStatusMenu && friendStatusCancel) {
-            friendStatusBtn.addEventListener("click", function () {
-                friendStatusBtn.hidden = true;
+        const unfriendModal = document.querySelector(".confirm-modal");
+        const openUnfriendBtn = document.querySelector("[data-unfriend-open]");
+        const closeUnfriendBtns = document.querySelectorAll("[data-unfriend-close]");
+
+        function closeFriendMenu() {
+            if (!friendStatusBtn || !friendStatusMenu) return;
+            friendStatusMenu.hidden = true;
+            friendStatusBtn.setAttribute("aria-expanded", "false");
+        }
+
+        function openUnfriendModal() {
+            closeFriendMenu();
+            if (!unfriendModal || typeof unfriendModal.showModal !== "function") return;
+            unfriendModal.showModal();
+        }
+
+        function closeUnfriendModal() {
+            if (!unfriendModal || !unfriendModal.open) return;
+            unfriendModal.close();
+        }
+
+        if (friendStatus && friendStatusBtn && friendStatusMenu) {
+            friendStatusBtn.addEventListener("click", function (event) {
+                event.stopPropagation();
+                if (friendStatusMenu.hidden === false) {
+                    closeFriendMenu();
+                    return;
+                }
                 friendStatusMenu.hidden = false;
+                friendStatusBtn.setAttribute("aria-expanded", "true");
             });
-            friendStatusCancel.addEventListener("click", function () {
-                friendStatusMenu.hidden = true;
-                friendStatusBtn.hidden = false;
+
+            document.addEventListener("click", function (event) {
+                if (!friendStatus.contains(event.target)) {
+                    closeFriendMenu();
+                }
+            });
+
+            document.addEventListener("keydown", function (event) {
+                if (event.key === "Escape") {
+                    closeFriendMenu();
+                }
             });
         }
+
+        if (openUnfriendBtn) {
+            openUnfriendBtn.addEventListener("click", function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                openUnfriendModal();
+            });
+        }
+
+        closeUnfriendBtns.forEach(function (button) {
+            button.addEventListener("click", closeUnfriendModal);
+        });
+
+        if (unfriendModal) {
+            unfriendModal.addEventListener("click", function (event) {
+                if (event.target === unfriendModal) {
+                    closeUnfriendModal();
+                }
+            });
+        }
+
+        (function () {
+            var backLink = document.querySelector("[data-profile-back]");
+            if (!backLink) return;
+
+            function referrerUrl() {
+                if (!document.referrer) return null;
+                try {
+                    return new URL(document.referrer);
+                } catch (error) {
+                    return null;
+                }
+            }
+
+            function canGoBack() {
+                if (window.history.length <= 1) return false;
+                var referrer = referrerUrl();
+                if (!referrer || referrer.origin !== window.location.origin) return false;
+                if (referrer.pathname === "/login" || referrer.pathname === "/register") {
+                    return false;
+                }
+                if (/\/notifications\/\d+\/open\/?$/.test(referrer.pathname)) {
+                    return false;
+                }
+                if (
+                    referrer.pathname === window.location.pathname &&
+                    referrer.search === window.location.search
+                ) {
+                    return false;
+                }
+                return true;
+            }
+
+            backLink.addEventListener("click", function (event) {
+                if (!canGoBack()) return;
+                event.preventDefault();
+                history.back();
+            });
+        })();
     </script>
 </body>
 

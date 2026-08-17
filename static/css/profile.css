@@ -8,6 +8,8 @@
     --primary: #FF465B;
     --secondary: #61EAD5;
     --accent: #FFA3A2;
+    --coral: #E8929C;
+    --coral-hover: #E07E8A;
     --background: #FFFFFF;
     --surface-soft: #F8F8F8;
     --text: #2E2E2E;
@@ -132,6 +134,156 @@ main {
     font-size: 13px;
     font-weight: 400;
     line-height: 1.4;
+}
+
+.friend-status {
+    position: relative;
+    margin: 2px 2px 16px;
+}
+
+.friend-status-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 44px;
+    padding: 8px 14px;
+    border-radius: 12px;
+    border: 1.5px solid var(--coral);
+    background: #FFFFFF;
+    color: var(--coral);
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+    appearance: none;
+    -webkit-appearance: none;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.friend-status-btn:hover {
+    background: #FFF8F9;
+    border-color: var(--coral-hover);
+    color: var(--coral-hover);
+}
+
+.friend-status-btn svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    transition: transform 0.15s ease;
+}
+
+.friend-status-btn[aria-expanded="true"] svg {
+    transform: rotate(180deg);
+}
+
+.owner-menu-panel {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    z-index: 30;
+    min-width: 0;
+    padding: 6px;
+    border-radius: 14px;
+    background: #FFFFFF;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
+    border: 1px solid #F0F0F0;
+}
+
+.owner-menu-panel button {
+    display: block;
+    width: 100%;
+    padding: 10px 12px;
+    border: none;
+    border-radius: 10px;
+    background: none;
+    text-align: left;
+    font-size: 14px;
+    font-weight: 600;
+    color: #C44B5A;
+}
+
+.owner-menu-panel button:hover {
+    background: #F7F7F7;
+}
+
+.confirm-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 140;
+    width: min(calc(100% - 40px), 340px);
+    max-width: 340px;
+    margin: auto;
+    padding: 0;
+    border: none;
+    background: transparent;
+}
+
+.confirm-modal::backdrop {
+    background: rgba(20, 20, 20, 0.42);
+}
+
+.confirm-modal-card {
+    padding: 22px 20px 18px;
+    border-radius: 20px;
+    background: #FFFFFF;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.16);
+}
+
+.confirm-modal-card h2 {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.25;
+    color: #111111;
+}
+
+.confirm-modal-card p {
+    margin-top: 8px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #6B6B6B;
+}
+
+.confirm-modal-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+.confirm-cancel,
+.confirm-danger {
+    min-height: 44px;
+    padding: 8px 10px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: inherit;
+}
+
+.confirm-cancel {
+    border: 1px solid #E6E6E6;
+    background: #FFFFFF;
+    color: #1A1A1A;
+}
+
+.confirm-cancel:hover {
+    background: #F7F7F7;
+}
+
+.confirm-danger {
+    border: 1.5px solid var(--coral);
+    background: var(--coral);
+    color: #FFFFFF;
+}
+
+.confirm-danger:hover {
+    background: var(--coral-hover);
+    border-color: var(--coral-hover);
 }
 
 .profile-edit-icon {
