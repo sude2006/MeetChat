@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Plan Oluştur — MeetChat</title>
+    <title>{% if is_edit %}Planı Düzenle{% else %}Plan Oluştur{% endif %} — MeetChat</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/create_activity.css') }}">
 </head>
 
@@ -12,18 +12,28 @@
     <div class="create-shell create-shell-v2">
         <div class="create-flow">
         <header class="create-header create-header-v2">
-            <a href="{{ url_for('home') }}" class="back-btn" aria-label="Geri">
+            <a href="{% if is_edit %}{{ url_for('activity_detail', activity_id=activity.id) }}{% else %}{{ url_for('home') }}{% endif %}" class="back-btn" aria-label="Geri">
                 <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
             </a>
             <div class="create-header-text">
+                {% if is_edit %}
+                <h1>Planı Düzenle</h1>
+                <p>Planındaki detayları güncelle, arkadaşların güncel hali görsün.</p>
+                {% else %}
                 <h1>Plan Oluştur</h1>
                 <p>Planını paylaş, katılmak isteyenler sana eşlik etsin.</p>
+                {% endif %}
             </div>
         </header>
 
-        <form class="create-form create-form-v2" action="{{ url_for('create_activity') }}" method="post">
+        <form
+            class="create-form create-form-v2"
+            action="{% if is_edit %}{{ url_for('edit_activity', activity_id=activity.id) }}{% else %}{{ url_for('create_activity') }}{% endif %}"
+            method="post"
+            {% if is_edit %}data-mode="edit"{% endif %}
+        >
             {% if error %}
             <p class="form-error" role="alert">{{ error }}</p>
             {% endif %}
@@ -68,14 +78,14 @@
                 <p class="plan-section-hint">Bu plan ne hakkında?</p>
 
                 <div class="category-scroller" aria-label="Kategoriler">
-                    <input type="hidden" name="category" id="plan-category-input" value="">
+                    <input type="hidden" name="category" id="plan-category-input" value="{% if form_data is defined %}{{ form_data.category }}{% endif %}">
                     <div class="category-track">
                         <button type="button" class="category-chip" data-category="kahve">
                             <span class="chip-icon chip-kahve" aria-hidden="true">
                                 <svg width="16" height="16" viewBox="0 0 24 24">
-                                    <path d="M5 8h11v6a4 4 0 01-4 4H9a4 4 0 01-4-4V8z" fill="none" stroke="currentColor" stroke-width="1.7"/>
-                                    <path d="M16 9h2.2A2.8 2.8 0 0119 14h-3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
-                                    <path d="M8 4.5c.4.8.4 1.6 0 2.4M11 4.5c.4.8.4 1.6 0 2.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                                    <path d="M5 8h11v6a4 4 0 01-4 4H9a4 4 0 01-4-4V8z" fill="none" stroke="currentColor" stroke-width="2"/>
+                                    <path d="M16 9h2.2A2.8 2.8 0 0119 14h-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    <path d="M8 4.5c.4.8.4 1.6 0 2.4M11 4.5c.4.8.4 1.6 0 2.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                                 </svg>
                             </span>
                             Kahve
@@ -83,7 +93,7 @@
                         <button type="button" class="category-chip" data-category="yeme">
                             <span class="chip-icon chip-yeme" aria-hidden="true">
                                 <svg width="16" height="16" viewBox="0 0 24 24">
-                                    <path d="M7 4v7M5 4v4.5a2 2 0 002 2V20M9 4v7M17 4v4c0 2-1.5 3-3 3v9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                                    <path d="M7 4v7M5 4v4.5a2 2 0 002 2V20M9 4v7M17 4v4c0 2-1.5 3-3 3v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                                 </svg>
                             </span>
                             Yeme &amp; İçme
@@ -91,9 +101,9 @@
                         <button type="button" class="category-chip" data-category="spor">
                             <span class="chip-icon chip-spor" aria-hidden="true">
                                 <svg width="16" height="16" viewBox="0 0 24 24">
-                                    <circle cx="14.2" cy="5.2" r="2" fill="none" stroke="currentColor" stroke-width="1.9"/>
-                                    <path d="M7.5 21l2.6-5.2 3.2-2 2.2 3.8H20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <path d="M10.1 15.8L8.2 12.2l4.4-2.4 3.2 2.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <circle cx="14.2" cy="5.2" r="2" fill="none" stroke="currentColor" stroke-width="2.25"/>
+                                    <path d="M7.5 21l2.6-5.2 3.2-2 2.2 3.8H20" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M10.1 15.8L8.2 12.2l4.4-2.4 3.2 2.2" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
                             </span>
                             Spor
@@ -101,7 +111,7 @@
                         <button type="button" class="category-chip" data-category="sanat">
                             <span class="chip-icon chip-sanat" aria-hidden="true">
                                 <svg width="16" height="16" viewBox="0 0 24 24">
-                                    <path d="M12 4.2a7.8 7.8 0 107.2 10.4c0-1.3-1.1-1.8-2.2-1.8h-1.1c-1.2 0-2.1.9-2.1 2.1 0 .6.2 1.2.2 1.7a2.6 2.6 0 01-2 2.5A7.8 7.8 0 0112 4.2z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                                    <path d="M12 4.2a7.8 7.8 0 107.2 10.4c0-1.3-1.1-1.8-2.2-1.8h-1.1c-1.2 0-2.1.9-2.1 2.1 0 .6.2 1.2.2 1.7a2.6 2.6 0 01-2 2.5A7.8 7.8 0 0112 4.2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
                                     <circle cx="8.6" cy="11.2" r="1" fill="currentColor"/>
                                     <circle cx="12" cy="8.6" r="1" fill="currentColor"/>
                                     <circle cx="15.6" cy="10.4" r="1" fill="currentColor"/>
@@ -112,8 +122,8 @@
                         <button type="button" class="category-chip" data-category="kitap">
                             <span class="chip-icon chip-kitap" aria-hidden="true">
                                 <svg width="16" height="16" viewBox="0 0 24 24">
-                                    <path d="M5 5.5A2.5 2.5 0 017.5 3H20v15H7.5A2.5 2.5 0 005 15.5v-10z" fill="none" stroke="currentColor" stroke-width="1.7"/>
-                                    <path d="M5 18.5A2.5 2.5 0 017.5 21H20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                                    <path d="M5 5.5A2.5 2.5 0 017.5 3H20v15H7.5A2.5 2.5 0 005 15.5v-10z" fill="none" stroke="currentColor" stroke-width="2"/>
+                                    <path d="M5 18.5A2.5 2.5 0 017.5 21H20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                                 </svg>
                             </span>
                             Kitap
@@ -121,8 +131,8 @@
                         <button type="button" class="category-chip" data-category="doga">
                             <span class="chip-icon chip-doga" aria-hidden="true">
                                 <svg width="16" height="16" viewBox="0 0 24 24">
-                                    <path d="M12 21V11M7 21h10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
-                                    <path d="M12 14c-4-1-6-4.2-6-7.2C6 5 8.5 4 12 7c3.5-3 6-2 6-.2C18 9.8 16 13 12 14z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                                    <path d="M12 21V11M7 21h10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    <path d="M12 14c-4-1-6-4.2-6-7.2C6 5 8.5 4 12 7c3.5-3 6-2 6-.2C18 9.8 16 13 12 14z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
                                 </svg>
                             </span>
                             Doğa
@@ -130,7 +140,7 @@
                         <button type="button" class="category-chip" data-category="gezi">
                             <span class="chip-icon chip-gezi" aria-hidden="true">
                                 <svg width="16" height="16" viewBox="0 0 24 24">
-                                    <path d="M3 11.5L21 4l-6.5 17-2.8-6.7L3 11.5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                                    <path d="M3 11.5L21 4l-6.5 17-2.8-6.7L3 11.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
                                 </svg>
                             </span>
                             Gezi
@@ -138,8 +148,8 @@
                         <button type="button" class="category-chip" data-category="hobi">
                             <span class="chip-icon chip-hobi" aria-hidden="true">
                                 <svg width="16" height="16" viewBox="0 0 24 24">
-                                    <path d="M4 9h3.2l1.5-2.2h6.6L16.8 9H20v10H4V9z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
-                                    <circle cx="12" cy="14" r="3.1" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                                    <path d="M4 9h3.2l1.5-2.2h6.6L16.8 9H20v10H4V9z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                                    <circle cx="12" cy="14" r="3.1" fill="none" stroke="currentColor" stroke-width="2"/>
                                 </svg>
                             </span>
                             Hobi
@@ -266,10 +276,12 @@
                 </fieldset>
             </section>
 
-            <button type="submit" class="submit-btn submit-btn-v2">Planı Paylaş</button>
+            <button type="submit" class="submit-btn submit-btn-v2">{% if is_edit %}Değişiklikleri Kaydet{% else %}Planı Paylaş{% endif %}</button>
         </form>
         </div>
+        {% if not is_edit %}
         {% include "partials/plan_success.html" %}
+        {% endif %}
     </div>
 
     <script>
@@ -290,6 +302,22 @@
                 }
             });
         });
+
+        (function () {
+            var categoryInput = document.getElementById("plan-category-input");
+            var initialCategory = categoryInput ? (categoryInput.value || "").trim() : "";
+            if (!initialCategory) {
+                return;
+            }
+            var selected = document.querySelector('.category-chip[data-category="' + initialCategory + '"]');
+            if (selected) {
+                selected.classList.add("is-selected");
+                var info = document.querySelector(".plan-section-info");
+                if (info) {
+                    info.setAttribute("data-selected-category", initialCategory);
+                }
+            }
+        })();
 
         (function () {
             var form = document.querySelector(".create-form-v2");
@@ -530,6 +558,13 @@
             });
 
             form.addEventListener("submit", function (event) {
+                if (form.getAttribute("data-mode") === "edit") {
+                    if (!validateFields(true)) {
+                        event.preventDefault();
+                    }
+                    return;
+                }
+
                 event.preventDefault();
                 if (form.getAttribute("data-busy") === "1") {
                     return;

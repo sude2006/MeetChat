@@ -6,9 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profil — MeetChat</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/letter_avatar.css') }}">
 </head>
 
 <body>
+    {% from "partials/letter_avatar.html" import letter_avatar %}
     <div class="app-shell">
         <header class="profile-topbar profile-topbar-end">
             <button
@@ -28,7 +30,7 @@
 
         <main>
             <section class="identity">
-                <div class="avatar" aria-hidden="true">{{ profile_user.avatar_initial }}</div>
+                {{ letter_avatar(profile_user.avatar, size="xl") }}
                 <div class="profile-copy">
                     <h1 class="profile-handle">{{ profile_user.handle }}</h1>
                     <p class="profile-bio">{{ profile_user.bio }}</p>

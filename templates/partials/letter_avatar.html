@@ -1,0 +1,16 @@
+{% macro letter_avatar(avatar, size="md", extra_class="") %}
+{% if avatar and avatar.photo_url %}
+<img
+    class="letter-avatar letter-avatar-{{ size }} {{ extra_class }}"
+    src="{{ avatar.photo_url }}"
+    alt="{{ avatar.name }}"
+>
+{% else %}
+<span
+    class="letter-avatar letter-avatar-{{ size }} {{ extra_class }}"
+    style="--avatar-color: {{ avatar.color if avatar else '#E97B8F' }};"
+    title="{{ avatar.name if avatar else '' }}"
+    aria-hidden="true"
+>{{ avatar.initial if avatar else "?" }}</span>
+{% endif %}
+{% endmacro %}

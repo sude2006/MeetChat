@@ -5,6 +5,7 @@ from sqlalchemy.orm import joinedload
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
+import hashlib
 import os
 
 TURKEY_TZ = ZoneInfo("Europe/Istanbul")
@@ -99,12 +100,44 @@ class ActivityParticipant(db.Model):
 
 VALID_PARTICIPANT_STATUSES = ("joined", "maybe")
 VALID_HOME_FILTERS = ("all", "mine", "joined")
+VALID_TIME_FILTERS = ("all", "today", "tomorrow", "week")
+VALID_CATEGORY_FILTERS = tuple(ACTIVITY_CATEGORY_LABELS.keys())
 VALID_FRIENDSHIP_STATUSES = ("pending", "accepted", "rejected")
 
 
 def parse_home_filter(raw):
     value = (raw or "all").strip()
     return value if value in VALID_HOME_FILTERS else "all"
+
+
+def parse_time_filter(raw):
+    value = (raw or "all").strip()
+    return value if value in VALID_TIME_FILTERS else "all"
+
+
+def parse_category_filter(raw):
+    value = (raw or "").strip()
+    return value if value in VALID_CATEGORY_FILTERS else ""
+
+
+def activity_matches_time_filter(activity, time_filter):
+    if time_filter == "all":
+        return True
+    try:
+        activity_date = datetime.strptime(activity.date, "%Y-%m-%d").date()
+    except ValueError:
+        return False
+
+    today = datetime.now(TURKEY_TZ).date()
+    if time_filter == "today":
+        return activity_date == today
+    if time_filter == "tomorrow":
+        return activity_date == today + timedelta(days=1)
+    if time_filter == "week":
+        week_start = today - timedelta(days=today.weekday())
+        week_end = week_start + timedelta(days=6)
+        return week_start <= activity_date <= week_end
+    return True
 
 
 ALLOWED_DETAIL_FROM = {"home", "discover", "profile", "notifications", "user_profile"}
@@ -783,10 +816,150 @@ def format_activity_datetime(date_str, time_str):
         return f"{date_str} {time_str}"
 
 
+WEEKDAY_NAMES = [
+    "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar",
+]
+
 PROFILE_MONTHS = [
     "", "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
     "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık",
 ]
+
+
+def format_activity_time_label(date_str, time_str):
+    try:
+        dt = datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M")
+        activity_date = dt.date()
+        today = datetime.now(TURKEY_TZ).date()
+        time_part = dt.strftime("%H:%M")
+
+        if activity_date == today:
+            return f"Bugün • {time_part}", True
+        if activity_date == today + timedelta(days=1):
+            return f"Yarın • {time_part}", False
+
+        week_start = today - timedelta(days=today.weekday())
+        week_end = week_start + timedelta(days=6)
+        if week_start <= activity_date <= week_end:
+            return f"{WEEKDAY_NAMES[dt.weekday()]} • {time_part}", False
+
+        return f"{dt.day} {PROFILE_MONTHS[dt.month]} • {time_part}", False
+    except ValueError:
+        return f"{date_str} {time_str}", False
+
+
+def format_display_name(name):
+    if not name:
+        return ""
+    parts = []
+    for part in name.strip().split():
+        first = part[0]
+        if first == "i":
+            first = "İ"
+        elif first == "ı":
+            first = "I"
+        else:
+            first = first.upper()
+        parts.append(first + part[1:] if len(part) > 1 else first)
+    return " ".join(parts)
+
+
+def display_first_name(name):
+    formatted = format_display_name(name)
+    if not formatted:
+        return ""
+    return formatted.split()[0]
+
+
+def letter_avatar_initial(name):
+    formatted = format_display_name(name)
+    return formatted[0] if formatted else "?"
+
+
+LETTER_AVATAR_COLORS = (
+    "#E97B8F",
+    "#F2A07B",
+    "#E8C15C",
+    "#7DBA93",
+    "#6FC9B6",
+    "#62C5D4",
+    "#8CB6E8",
+    "#A996E8",
+    "#C49AD9",
+    "#D98EA8",
+    "#C9AE8B",
+    "#7FA5C9",
+)
+
+
+def letter_avatar_color(name):
+    key = (name or "").strip().casefold()
+    if not key:
+        return LETTER_AVATAR_COLORS[0]
+    digest = hashlib.md5(key.encode("utf-8")).digest()
+    return LETTER_AVATAR_COLORS[sum(digest) % len(LETTER_AVATAR_COLORS)]
+
+
+def build_letter_avatar(name, photo_url=None):
+    display_name = format_display_name(name)
+    return {
+        "initial": letter_avatar_initial(name),
+        "color": letter_avatar_color(name),
+        "name": display_name,
+        "photo_url": photo_url or "",
+    }
+
+
+def avatar_for_user(user, photo_url=None):
+    if user is None:
+        return build_letter_avatar("", photo_url=photo_url)
+    return build_letter_avatar(user.full_name, photo_url=photo_url)
+
+
+@app.context_processor
+def inject_avatar_helpers():
+    return {
+        "build_letter_avatar": build_letter_avatar,
+        "avatar_for_user": avatar_for_user,
+    }
+
+
+def build_participant_display(activity, current_user_id, friend_ids):
+    joined = [p for p in activity.participants if p.status == "joined"]
+    joined_count = len(joined)
+    maybe_count = sum(1 for p in activity.participants if p.status == "maybe")
+    friend_joined = [
+        p for p in joined
+        if p.user_id in friend_ids and p.user_id != current_user_id
+    ]
+
+    avatars = [avatar_for_user(p.user) for p in joined[:3]]
+    lead_name = ""
+
+    if joined_count == 0:
+        summary = "Henüz kimse katılmıyor"
+    elif friend_joined:
+        lead_name = display_first_name(friend_joined[0].user.full_name)
+        other_friends = len(friend_joined) - 1
+        if other_friends > 0:
+            summary = f"{lead_name} ve {other_friends} arkadaşın katılıyor"
+        elif joined_count > 1:
+            summary = f"{lead_name} ve {joined_count - 1} kişi katılıyor"
+        else:
+            summary = f"{lead_name} katılıyor"
+    elif joined_count == 1:
+        lead_name = display_first_name(joined[0].user.full_name)
+        summary = f"{lead_name} katılıyor"
+    else:
+        summary = f"{joined_count} kişi katılıyor"
+
+    return {
+        "avatars": avatars,
+        "summary": summary,
+        "lead_name": lead_name,
+        "joined_count": joined_count,
+        "maybe_count": maybe_count,
+    }
 
 
 def format_plan_date_short(date_str):
@@ -953,7 +1126,7 @@ def get_profile_context(user, viewer=None):
             "possessive_first_name": turkish_possessive(first_name),
             "handle": derive_display_handle(user),
             "bio": "Henüz biyografi eklenmedi.",
-            "avatar_initial": user.full_name[0].upper() if user.full_name else "?",
+            "avatar": avatar_for_user(user),
         },
         "stats": {
             "created_count": len(created_activities),
@@ -986,6 +1159,27 @@ def format_comment_datetime(dt):
     )
 
 
+def format_comment_relative(dt):
+    if dt is None:
+        return ""
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    now = datetime.now(timezone.utc)
+    seconds = int((now - dt).total_seconds())
+    if seconds < 45:
+        return "şimdi"
+    if seconds < 3600:
+        return f"{max(seconds // 60, 1)} dk"
+    if seconds < 86400:
+        return f"{seconds // 3600} sa"
+    if seconds < 172800:
+        return "dün"
+    days = seconds // 86400
+    if days < 7:
+        return f"{days} g"
+    return format_comment_datetime(dt)
+
+
 def render_activity_detail(
     activity,
     current_user=None,
@@ -1009,6 +1203,31 @@ def render_activity_detail(
     )
     joined_count = sum(1 for p in activity.participants if p.status == "joined")
     maybe_count = sum(1 for p in activity.participants if p.status == "maybe")
+    friend_ids = (
+        get_accepted_friend_ids(current_user.id) if current_user is not None else set()
+    )
+    participant_display = build_participant_display(
+        activity,
+        current_user.id if current_user is not None else 0,
+        friend_ids,
+    )
+    maybe_people = [
+        {
+            "name": format_display_name(participant.user.full_name),
+            "avatar": avatar_for_user(participant.user),
+        }
+        for participant in activity.participants
+        if participant.status == "maybe"
+    ]
+    joined_people = [
+        {
+            "name": format_display_name(participant.user.full_name),
+            "avatar": avatar_for_user(participant.user),
+        }
+        for participant in activity.participants
+        if participant.status == "joined"
+    ]
+    maybe_avatars = [person["avatar"] for person in maybe_people[:4]]
     comments = (
         Comment.query.filter_by(activity_id=activity.id)
         .order_by(Comment.created_at.asc())
@@ -1016,15 +1235,20 @@ def render_activity_detail(
     )
     comment_items = [
         {
-            "author_name": comment.user.full_name,
+            "author_name": display_first_name(comment.user.full_name),
+            "avatar": avatar_for_user(comment.user),
             "body": comment.body,
-            "created_at": format_comment_datetime(comment.created_at),
+            "created_at": format_comment_relative(comment.created_at),
         }
         for comment in comments
     ]
     is_owner = (
         current_user is not None and is_activity_owner(current_user, activity)
     )
+    time_label, _time_is_today = format_activity_time_label(activity.date, activity.time)
+    category_key = session.get(f"created_plan_category_{activity.id}", "")
+    if category_key not in ACTIVITY_CATEGORY_LABELS:
+        category_key = ""
 
     return render_template(
         "activity_detail.html",
@@ -1032,9 +1256,21 @@ def render_activity_detail(
         comments=comment_items,
         cover_image=COVER_IMAGES[activity.id % len(COVER_IMAGES)],
         datetime=format_activity_datetime(activity.date, activity.time),
+        time_label=time_label,
+        category_key=category_key,
+        category_label=ACTIVITY_CATEGORY_LABELS.get(category_key, ""),
         visibility_label=VISIBILITY_LABELS.get(activity.visibility, "Herkese açık"),
         joined_count=joined_count,
         maybe_count=maybe_count,
+        participants_summary=participant_display["summary"],
+        participants_lead_name=participant_display["lead_name"],
+        participant_avatars=participant_display["avatars"],
+        maybe_avatars=maybe_avatars,
+        joined_people=joined_people,
+        maybe_people=maybe_people,
+        current_user_avatar=(
+            avatar_for_user(current_user) if current_user is not None else None
+        ),
         is_owner=is_owner,
         error=error,
         form_body=form_body,
@@ -1062,67 +1298,67 @@ def home():
         return redirect(url_for("login"))
 
     friend_ids = get_accepted_friend_ids(current_user.id)
-    search_q = request.args.get("q", "").strip()
-    activity_filter = parse_home_filter(request.args.get("filter"))
+    time_filter = parse_time_filter(request.args.get("time"))
+    category_filter = parse_category_filter(request.args.get("category"))
 
     query = Activity.query
-    if activity_filter == "mine":
-        query = query.filter(Activity.creator_id == current_user.id)
-    elif activity_filter == "joined":
-        query = query.join(ActivityParticipant).filter(
-            ActivityParticipant.user_id == current_user.id,
-            ActivityParticipant.status == "joined",
-        )
-
-    if search_q:
-        query = query.filter(Activity.title.ilike(f"%{search_q}%"))
-
     activities_db = query.order_by(Activity.date.asc(), Activity.time.asc()).all()
     activities = []
     for activity in activities_db:
         if not can_view_activity(current_user, activity, friend_ids=friend_ids):
             continue
-        joined_count = sum(1 for p in activity.participants if p.status == "joined")
-        maybe_count = sum(1 for p in activity.participants if p.status == "maybe")
+        if not activity_matches_time_filter(activity, time_filter):
+            continue
+        time_label, time_is_today = format_activity_time_label(activity.date, activity.time)
+        participant_display = build_participant_display(
+            activity, current_user.id, friend_ids
+        )
+        category_key = session.get(f"created_plan_category_{activity.id}", "")
+        if category_key not in ACTIVITY_CATEGORY_LABELS:
+            category_key = ""
+        joined_count = participant_display["joined_count"]
+        maybe_count = participant_display["maybe_count"]
         user_participation = next(
             (p for p in activity.participants if p.user_id == current_user.id),
             None,
         )
+        creator_avatar = avatar_for_user(activity.creator)
         activities.append(
             {
                 "id": activity.id,
-                "creator_name": activity.creator.full_name,
-                "creator_avatar": "img/avatar-user.jpg",
+                "creator_name": creator_avatar["name"],
+                "creator_avatar": creator_avatar,
                 "title": activity.title,
-                "description": activity.description,
-                "datetime": format_activity_datetime(activity.date, activity.time),
+                "description": " ".join((activity.description or "").split()),
+                "time_label": time_label,
+                "time_is_today": time_is_today,
                 "location": activity.location,
-                "cover_image": COVER_IMAGES[activity.id % len(COVER_IMAGES)],
+                "category_key": category_key,
                 "joined_count": joined_count,
                 "maybe_count": maybe_count,
+                "participants_summary": participant_display["summary"],
+                "participant_avatars": participant_display["avatars"],
                 "user_status": user_participation.status if user_participation else None,
-                "comment_count": len(activity.comments),
                 "visibility": activity.visibility,
-                "visibility_label": VISIBILITY_LABELS.get(
-                    activity.visibility, "Herkese açık"
-                ),
             }
         )
 
-    first_name = current_user.full_name.split()[0]
+    first_name = display_first_name(current_user.full_name)
     user = {
         "name": first_name,
-        "avatar": "img/avatar-user.jpg",
+        "avatar": avatar_for_user(current_user),
     }
 
-    has_active_search = bool(search_q) or activity_filter != "all"
+    has_active_search = time_filter != "all" or bool(category_filter)
 
     return render_template(
         "index.html",
         activities=activities,
         user=user,
-        q=search_q,
-        activity_filter=activity_filter,
+        q="",
+        activity_filter="all",
+        time_filter=time_filter,
+        category_filter=category_filter,
         has_active_search=has_active_search,
     )
 
@@ -1300,6 +1536,9 @@ def edit_activity(activity_id):
         return redirect(url_for("home"))
 
     if request.method == "GET":
+        category_key = session.get(f"created_plan_category_{activity.id}", "")
+        if category_key not in ACTIVITY_CATEGORY_LABELS:
+            category_key = ""
         form_data = {
             "title": activity.title,
             "description": activity.description,
@@ -1307,25 +1546,35 @@ def edit_activity(activity_id):
             "time": activity.time,
             "location": activity.location,
             "visibility": activity.visibility,
+            "category": category_key,
         }
+        today = datetime.now(TURKEY_TZ).strftime("%Y-%m-%d")
+        min_date = activity.date if activity.date and activity.date < today else today
         return render_template(
-            "edit_activity.html",
+            "create_activity.html",
             activity=activity,
             form_data=form_data,
+            min_date=min_date,
+            is_edit=True,
         )
 
     form_data = parse_activity_form()
+    form_data["category"] = request.form.get("category", "").strip()
     error = validate_activity_form(
         form_data,
         original_date=activity.date,
         original_time=activity.time,
     )
+    today = datetime.now(TURKEY_TZ).strftime("%Y-%m-%d")
+    min_date = activity.date if activity.date and activity.date < today else today
     if error:
         return render_template(
-            "edit_activity.html",
+            "create_activity.html",
             activity=activity,
             form_data=form_data,
             error=error,
+            min_date=min_date,
+            is_edit=True,
         )
 
     old_date = activity.date
@@ -1364,6 +1613,10 @@ def edit_activity(activity_id):
             )
 
     db.session.commit()
+    category_key = form_data.get("category", "").strip()
+    if category_key not in ACTIVITY_CATEGORY_LABELS:
+        category_key = ""
+    session[f"created_plan_category_{activity.id}"] = category_key
 
     return redirect(url_for("activity_detail", activity_id=activity_id))
 
@@ -1488,11 +1741,12 @@ def discover():
             (p for p in activity.participants if p.user_id == current_user.id),
             None,
         )
+        creator_avatar = avatar_for_user(activity.creator)
         activities.append(
             {
                 "id": activity.id,
-                "creator_name": activity.creator.full_name,
-                "creator_avatar": "img/avatar-user.jpg",
+                "creator_name": creator_avatar["name"],
+                "creator_avatar": creator_avatar,
                 "title": activity.title,
                 "description": activity.description,
                 "datetime": format_activity_datetime(activity.date, activity.time),

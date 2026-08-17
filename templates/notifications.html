@@ -6,8 +6,10 @@
     <title>Bildirimler — MeetChat</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/notifications.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/letter_avatar.css') }}">
 </head>
 <body>
+    {% from "partials/letter_avatar.html" import letter_avatar %}
     <main class="notifications-page">
         <header class="notifications-header">
             <h1>Bildirimler</h1>
@@ -18,7 +20,7 @@
             {% for notification in notifications %}
             {% set actor_name = notification.actor.full_name if notification.actor else "Bilinmeyen kullanıcı" %}
             {% set activity_title = notification.activity.title if notification.activity else "Etkinlik" %}
-            {% set actor_initial = actor_name[0].upper() if actor_name else "?" %}
+            {% set actor_avatar = avatar_for_user(notification.actor) if notification.actor else build_letter_avatar(actor_name) %}
             {% if notification.type == "friend_request" %}
                 {% set icon_mod = "friend-request" %}
             {% elif notification.type == "friend_accept" %}
@@ -74,7 +76,7 @@
                             </span>
                         </span>
                         {% if notification.type == "friend_request" or notification.type == "friend_accept" %}
-                        <div class="notification-avatar">{{ actor_initial }}</div>
+                        {{ letter_avatar(actor_avatar, size="sm", extra_class="notification-avatar") }}
                         {% endif %}
                     </div>
 

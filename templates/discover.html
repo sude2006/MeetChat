@@ -7,9 +7,11 @@
     <title>Keşfet - MeetChat</title>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/discover.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/letter_avatar.css') }}">
 </head>
 
 <body>
+    {% from "partials/letter_avatar.html" import letter_avatar %}
     <div class="discover-shell">
         <main class="discover-page">
             <header class="discover-header">
@@ -79,11 +81,7 @@
                         </div>
 
                         <div class="creator-info">
-                            <img
-                                class="activity-creator-avatar"
-                                src="{{ url_for('static', filename=plan.creator_avatar) }}"
-                                alt="{{ plan.creator_name }}"
-                            >
+                            {{ letter_avatar(plan.creator_avatar, size="md", extra_class="activity-creator-avatar") }}
                             <span class="activity-creator-name">{{ plan.creator_name }}</span>
                         </div>
 

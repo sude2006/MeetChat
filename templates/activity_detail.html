@@ -6,9 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ activity.title }} — MeetChat</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/activity_detail.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/letter_avatar.css') }}">
 </head>
 
 <body>
+    {% from "partials/letter_avatar.html" import letter_avatar %}
+    {% from "partials/category_icon.html" import render_category_icon %}
+    {% set creator_avatar = avatar_for_user(activity.creator) %}
     {% set ns = namespace(user_status=none) %}
     {% for participant in activity.participants %}
         {% if participant.user_id == session.get('user_id') %}
@@ -16,158 +20,192 @@
         {% endif %}
     {% endfor %}
 
-    {% set joined_participants = activity.participants | selectattr('status', 'equalto', 'joined') | list %}
-    {% set max_visible_avatars = 4 %}
-    {% set extra_participant_count = joined_participants|length - max_visible_avatars %}
+    {% set extra_participant_count = joined_count - participant_avatars|length %}
 
     <div class="detail-shell">
         <main class="detail-content">
-            <section class="detail-header">
-                <a href="{{ back_url }}" class="back-btn" aria-label="Geri">
+            <header class="detail-topbar">
+                <a href="{{ back_url }}" class="detail-icon-btn" aria-label="Geri">
                     <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </a>
-
-                <div class="detail-header-grid">
-                    <button
-                        type="button"
-                        class="detail-cover-trigger"
-                        aria-label="Etkinlik görselini tam ekran aç"
-                    >
-                        <img
-                            class="activity-cover"
-                            src="{{ url_for('static', filename=cover_image) }}"
-                            alt=""
+                <div class="detail-topbar-actions">
+                    {% if is_owner %}
+                    <div class="owner-menu">
+                        <button
+                            type="button"
+                            class="detail-icon-btn owner-menu-toggle"
+                            aria-label="Daha fazla"
+                            aria-expanded="false"
+                            aria-haspopup="true"
+                            aria-controls="owner-menu-panel"
                         >
-                    </button>
-
-                    <div class="detail-main">
-                        <h1 class="activity-title">{{ activity.title }}</h1>
-
-                        {% if activity.description %}
-                            {% if activity.description|length > 180 %}
-                            <p class="activity-description activity-description-lead">{{ activity.description[:180] }}…</p>
-                            <details class="description-details">
-                                <summary class="description-summary">Daha Fazla</summary>
-                                <p class="activity-description">{{ activity.description }}</p>
-                            </details>
-                            {% else %}
-                            <p class="activity-description">{{ activity.description }}</p>
-                            {% endif %}
-                        {% endif %}
-
-                        <ul class="info-list">
-                            <li class="info-row">
-                                <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
-                                    <rect x="3" y="5" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/>
-                                    <path d="M3 10h18M8 3v4M16 3v4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                                </svg>
-                                <span>{{ datetime }}</span>
-                            </li>
-                            {% if activity.location %}
-                            <li class="info-row">
-                                <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
-                                    <path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z" fill="none" stroke="currentColor" stroke-width="1.8"/>
-                                    <circle cx="12" cy="10" r="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
-                                </svg>
-                                <span>{{ activity.location }}</span>
-                            </li>
-                            {% endif %}
-                            <li class="info-row">
-                                <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
-                                    <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/>
-                                    <path d="M3 12h18" fill="none" stroke="currentColor" stroke-width="1.8"/>
-                                    <path d="M12 3c2.5 3 4 6.5 4 9s-1.5 6-4 9M12 3c-2.5 3-4 6.5-4 9s1.5 6 4 9" fill="none" stroke="currentColor" stroke-width="1.8"/>
-                                </svg>
-                                <span>{{ visibility_label }}</span>
-                            </li>
-                        </ul>
+                            <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+                                <circle cx="6" cy="12" r="1.6" fill="currentColor"/>
+                                <circle cx="12" cy="12" r="1.6" fill="currentColor"/>
+                                <circle cx="18" cy="12" r="1.6" fill="currentColor"/>
+                            </svg>
+                        </button>
+                        <div class="owner-menu-panel" id="owner-menu-panel" hidden>
+                            <a href="{{ url_for('edit_activity', activity_id=activity.id) }}">Düzenle</a>
+                            <button type="button" class="owner-menu-delete" data-delete-open>Sil</button>
+                        </div>
                     </div>
+                    {% endif %}
+                    <button type="button" class="detail-icon-btn share-btn" aria-label="Paylaş">
+                    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 4v11" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/>
+                        <path d="M8.2 7.6L12 4l3.8 3.6" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M6.5 12.5v5.2A2.3 2.3 0 008.8 20h6.4a2.3 2.3 0 002.3-2.3v-5.2" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    </button>
+                </div>
+            </header>
+            <p class="share-status" role="status" aria-live="polite"></p>
+
+            <section class="detail-hero">
+                <a class="detail-organizer" href="{{ creator_profile_url }}">
+                    {{ letter_avatar(creator_avatar, size="sm", extra_class="detail-organizer-avatar") }}
+                    <span class="detail-organizer-copy">
+                        <span class="detail-organizer-name">{{ creator_avatar.name }}</span>
+                        <span class="detail-organizer-verb">planladı</span>
+                    </span>
+                </a>
+
+                <div class="activity-title-row">
+                    {% if category_key %}
+                    <span class="activity-title-icon chip-{{ category_key }}" aria-hidden="true">
+                        {{ render_category_icon(category_key, 19) }}
+                    </span>
+                    {% endif %}
+                    <h1 class="activity-title">{{ activity.title }}</h1>
+                </div>
+
+                {% if activity.description %}
+                <p class="activity-description">{{ activity.description }}</p>
+                {% endif %}
+
+                <div class="detail-logistics">
+                    <div class="detail-time-group">
+                        <svg class="detail-meta-icon" width="17" height="17" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle cx="12" cy="12" r="7.6" fill="none" stroke="currentColor" stroke-width="2.25"/>
+                            <path d="M12 8.2v4.2l3 1.7" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span class="detail-time-badge">{{ time_label }}</span>
+                    </div>
+                    {% if activity.location %}
+                    <div class="detail-location">
+                        <svg class="detail-meta-icon" width="17" height="17" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 21s6.6-5.8 6.6-10.4a6.6 6.6 0 10-13.2 0c0 4.6 6.6 10.4 6.6 10.4z" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linejoin="round"/>
+                            <circle cx="12" cy="10.4" r="2.35" fill="none" stroke="currentColor" stroke-width="2.25"/>
+                        </svg>
+                        <span>{{ activity.location }}</span>
+                    </div>
+                    {% endif %}
                 </div>
             </section>
 
-            <section class="detail-section creator-section">
-                <h2 class="section-heading">Oluşturan</h2>
-                <a
-                    class="creator-card"
-                    href="{{ creator_profile_url }}"
-                    aria-label="Etkinliği oluşturan kişi"
-                >
-                    <img
-                        class="creator-avatar"
-                        src="{{ url_for('static', filename='img/avatar-user.jpg') }}"
-                        alt="{{ activity.creator.full_name }}"
-                    >
-                    <div class="creator-info">
-                        <span class="creator-name">{{ activity.creator.full_name }}</span>
-                        <span class="creator-label">Etkinliği oluşturan kişi</span>
-                    </div>
-                    <span class="creator-chevron" aria-hidden="true">›</span>
-                </a>
+            <section class="detail-map-section" aria-label="Konum">
+                <div class="detail-map{% if not activity.location %} is-empty{% endif %}">
+                    <svg class="detail-map-art" viewBox="0 0 360 176" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+                        <rect width="360" height="176" fill="#EEF2EE"/>
+                        <rect x="18" y="22" width="86" height="58" rx="10" fill="#DCE8D8"/>
+                        <rect x="248" y="14" width="92" height="70" rx="10" fill="#E4EBDF"/>
+                        <rect x="40" y="108" width="120" height="48" rx="10" fill="#E7EEE4"/>
+                        <path d="M0 92h360M118 0v176M236 0v176M0 44h360" fill="none" stroke="#E2E6E1" stroke-width="10"/>
+                        <path d="M0 92h360M118 0v176M236 0v176" fill="none" stroke="#F7F8F6" stroke-width="2.5"/>
+                        <circle cx="180" cy="86" r="16" fill="rgba(232,146,156,0.22)"/>
+                        <circle cx="180" cy="86" r="8" fill="#E8929C"/>
+                        <circle cx="180" cy="86" r="3.2" fill="#FFFFFF"/>
+                    </svg>
+                    {% if activity.location %}
+                    <span class="detail-map-label">{{ activity.location }}</span>
+                    {% else %}
+                    <span class="detail-map-label is-muted">Konum eklenmedi</span>
+                    {% endif %}
+                </div>
+            </section>
 
-                {% if is_owner %}
-                <div class="owner-actions">
-                    <a href="{{ url_for('edit_activity', activity_id=activity.id) }}" class="edit-btn">Düzenle</a>
-                    <form
-                        class="delete-form"
-                        action="{{ url_for('delete_activity', activity_id=activity.id) }}"
-                        method="post"
-                        onsubmit="return confirm('Bu etkinliği silmek istediğinize emin misiniz? Bu işlem geri alınamaz.');"
-                    >
-                        <button type="submit" class="delete-btn">Sil</button>
-                    </form>
+            <section class="detail-block detail-social" aria-label="Katılımcılar">
+                <div class="social-header">
+                    <h2 class="detail-kicker">Kimler geliyor</h2>
+                    <button type="button" class="social-all-btn" data-people-sheet-open>
+                        Tümünü Gör
+                    </button>
+                </div>
+                <p class="social-visibility">
+                    <span class="social-visibility-icon" aria-hidden="true">
+                        {% if activity.visibility == "friends" %}
+                        <svg width="14" height="14" viewBox="0 0 24 24">
+                            <circle cx="9" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="2"/>
+                            <circle cx="16.2" cy="9" r="2.4" fill="none" stroke="currentColor" stroke-width="2"/>
+                            <path d="M3.6 19c.7-3 2.5-4.6 5.4-4.6s4.7 1.6 5.4 4.6M14.2 15.4c2.5-.3 4.6.9 5.5 3.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        {% else %}
+                        <svg width="14" height="14" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/>
+                            <path d="M4 12h16M12 4c2.4 2.6 3.6 5.2 3.6 8S14.4 17.4 12 20M12 4c-2.4 2.6-3.6 5.2-3.6 8S9.6 17.4 12 20" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                        </svg>
+                        {% endif %}
+                    </span>
+                    {% if activity.visibility == "friends" %}
+                    Sadece Arkadaşlar
+                    {% else %}
+                    Herkese Açık
+                    {% endif %}
+                </p>
+                <div class="social-row">
+                    {% if participant_avatars %}
+                    <div class="social-avatars" aria-hidden="true">
+                        {% for avatar in participant_avatars %}
+                        {{ letter_avatar(avatar, size="sm", extra_class="letter-avatar-overlap") }}
+                        {% endfor %}
+                        {% if extra_participant_count > 0 %}
+                        <span class="letter-avatar letter-avatar-sm letter-avatar-overlap social-avatar-more">+{{ extra_participant_count }}</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    <p class="social-summary">
+                        {% if participants_lead_name %}
+                        <strong>{{ participants_lead_name }}</strong>{{ participants_summary[participants_lead_name|length:] }}
+                        {% else %}
+                        {{ participants_summary }}
+                        {% endif %}
+                    </p>
+                </div>
+                {% if maybe_avatars %}
+                <div class="social-maybe-preview">
+                    <div class="social-maybe-avatars" aria-hidden="true">
+                        {% for avatar in maybe_avatars %}
+                        {{ letter_avatar(avatar, size="xs", extra_class="letter-avatar-overlap") }}
+                        {% endfor %}
+                    </div>
+                    <p class="social-maybe">Belki</p>
                 </div>
                 {% endif %}
             </section>
 
-            <section class="detail-section participants-section">
-                <div class="section-header-row">
-                    <h2 class="section-heading">Katılımcılar</h2>
-                    <span class="section-action-text">Tümünü Gör ›</span>
-                </div>
-
-                <div class="participants-summary">
-                    <div class="participant-avatars" aria-label="{{ joined_count }} kişi katılıyor">
-                        {% for participant in joined_participants[:max_visible_avatars] %}
-                        <span
-                            class="participant-avatar"
-                            title="{{ participant.user.full_name }}"
-                        >{{ participant.user.full_name[0] }}</span>
-                        {% endfor %}
-                        {% if extra_participant_count > 0 %}
-                        <span class="participant-avatar participant-avatar-more">+{{ extra_participant_count }}</span>
-                        {% endif %}
-                    </div>
-                    <p class="participants-count">
-                        {{ joined_count }} kişi katılıyor
-                        {% if maybe_count %}
-                        <span class="maybe-count">· {{ maybe_count }} belki</span>
-                        {% endif %}
-                    </p>
-                </div>
-            </section>
-
-            <section class="detail-section comments-section">
-                <h2 class="section-heading">
-                    Yorumlar
-                    <span class="comments-count">({{ comments|length }})</span>
-                </h2>
+            <section class="detail-block detail-comments">
+                <h2 class="detail-kicker">Yorumlar</h2>
 
                 {% if comments %}
                 <ul class="comments-list">
                     {% for comment in comments %}
                     <li class="comment-item">
-                        <div class="comment-header">
-                            <span class="comment-author">{{ comment.author_name }}</span>
-                            <time class="comment-date">{{ comment.created_at }}</time>
+                        {{ letter_avatar(comment.avatar, size="xs", extra_class="comment-avatar") }}
+                        <div class="comment-main">
+                            <p class="comment-meta">
+                                <span class="comment-author">{{ comment.author_name }}</span>
+                                <time class="comment-date">{{ comment.created_at }}</time>
+                            </p>
+                            <p class="comment-body">{{ comment.body }}</p>
                         </div>
-                        <p class="comment-body">{{ comment.body }}</p>
                     </li>
                     {% endfor %}
                 </ul>
                 {% else %}
-                <p class="comments-empty">Henüz yorum yok. İlk yorumu sen yaz!</p>
+                <p class="comments-empty">Henüz yorum yok. İlk cümleyi sen bırak.</p>
                 {% endif %}
 
                 <form
@@ -189,41 +227,96 @@
                     <p class="form-error" role="alert">{{ error }}</p>
                     {% endif %}
 
-                    <label class="comment-field">
-                        <span class="comment-label">Yorum yaz</span>
+                    <div class="comment-composer">
+                        {% if current_user_avatar %}
+                        {{ letter_avatar(current_user_avatar, size="xs", extra_class="comment-composer-avatar") }}
+                        {% endif %}
+                        <label class="visually-hidden" for="comment-body">Yorum yaz</label>
                         <textarea
+                            id="comment-body"
                             name="body"
                             maxlength="{{ comment_max_length }}"
                             required
-                            placeholder="Düşüncelerini paylaş..."
-                            rows="3"
+                            placeholder="Bir şey yaz..."
+                            rows="1"
                         >{{ form_body }}</textarea>
-                    </label>
-                    <p class="field-hint">En fazla {{ comment_max_length }} karakter</p>
-                    <button type="submit" class="submit-btn">Yorumu Gönder</button>
+                        <button type="submit" class="comment-send" aria-label="Yorumu gönder">
+                            <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M4 12l16-8-6.5 16-2.2-6.6L4 12z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                    </div>
                 </form>
             </section>
         </main>
 
-        <div class="sticky-actions" aria-label="Etkinlik aksiyonları">
-            <form action="{{ url_for('respond_activity', activity_id=activity.id) }}" method="post" class="respond-form">
-                <input type="hidden" name="origin" value="detail">
-                <input type="hidden" name="return_from" value="{{ detail_from }}">
-                {% if detail_q %}
-                <input type="hidden" name="return_q" value="{{ detail_q }}">
-                {% endif %}
-                {% if detail_from == 'home' and detail_filter != 'all' %}
-                <input type="hidden" name="return_filter" value="{{ detail_filter }}">
-                {% endif %}
-                {% if detail_user_id %}
-                <input type="hidden" name="return_user_id" value="{{ detail_user_id }}">
-                {% endif %}
-                <input type="hidden" name="status" value="maybe">
-                <button
-                    type="submit"
-                    class="maybe-btn{% if ns.user_status == 'maybe' %} active{% endif %}"
-                >Belki</button>
+        <dialog class="people-sheet" aria-labelledby="people-sheet-title">
+            <div class="people-sheet-panel">
+                <div class="people-sheet-handle" aria-hidden="true"></div>
+                <div class="people-sheet-header">
+                    <h2 id="people-sheet-title">Kimler geliyor</h2>
+                    <button type="button" class="people-sheet-close" data-people-sheet-close aria-label="Kapat">
+                        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="people-sheet-scroll">
+                    <section class="people-sheet-group">
+                        <h3>Katılıyor ({{ joined_people|length }})</h3>
+                        {% if joined_people %}
+                        <ul class="people-sheet-list">
+                            {% for person in joined_people %}
+                            <li>
+                                {{ letter_avatar(person.avatar, size="sm") }}
+                                <span>{{ person.name }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <p class="people-sheet-empty">Henüz katılan yok.</p>
+                        {% endif %}
+                    </section>
+                    <section class="people-sheet-group">
+                        <h3>Belki ({{ maybe_people|length }})</h3>
+                        {% if maybe_people %}
+                        <ul class="people-sheet-list">
+                            {% for person in maybe_people %}
+                            <li>
+                                {{ letter_avatar(person.avatar, size="sm") }}
+                                <span>{{ person.name }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <p class="people-sheet-empty">Belki diyen yok.</p>
+                        {% endif %}
+                    </section>
+                </div>
+            </div>
+        </dialog>
+
+        {% if is_owner %}
+        <dialog class="confirm-modal" aria-labelledby="delete-modal-title" aria-describedby="delete-modal-copy">
+            <form
+                class="confirm-modal-card"
+                action="{{ url_for('delete_activity', activity_id=activity.id) }}"
+                method="post"
+            >
+                <h2 id="delete-modal-title">Etkinliği silmek istiyor musun?</h2>
+                <p id="delete-modal-copy">Bu işlem geri alınamaz. Etkinlik ve tüm yorumlar kalıcı olarak silinecek.</p>
+                <div class="confirm-modal-actions">
+                    <button type="button" class="confirm-cancel" data-delete-close>Vazgeç</button>
+                    <button type="submit" class="confirm-danger">Sil</button>
+                </div>
             </form>
+        </dialog>
+        {% endif %}
+
+        <div
+            class="sticky-actions{% if ns.user_status == 'joined' %} is-joined{% elif ns.user_status == 'maybe' %} is-maybe{% endif %}"
+            aria-label="Etkinlik aksiyonları"
+        >
             <form action="{{ url_for('respond_activity', activity_id=activity.id) }}" method="post" class="respond-form">
                 <input type="hidden" name="origin" value="detail">
                 <input type="hidden" name="return_from" value="{{ detail_from }}">
@@ -240,49 +333,179 @@
                 <button
                     type="submit"
                     class="join-btn{% if ns.user_status == 'joined' %} active{% endif %}"
-                >Katıl</button>
+                >
+                    {% if ns.user_status == 'joined' %}✓ Katılıyorsun{% else %}Katıl{% endif %}
+                </button>
+            </form>
+            <form action="{{ url_for('respond_activity', activity_id=activity.id) }}" method="post" class="respond-form">
+                <input type="hidden" name="origin" value="detail">
+                <input type="hidden" name="return_from" value="{{ detail_from }}">
+                {% if detail_q %}
+                <input type="hidden" name="return_q" value="{{ detail_q }}">
+                {% endif %}
+                {% if detail_from == 'home' and detail_filter != 'all' %}
+                <input type="hidden" name="return_filter" value="{{ detail_filter }}">
+                {% endif %}
+                {% if detail_user_id %}
+                <input type="hidden" name="return_user_id" value="{{ detail_user_id }}">
+                {% endif %}
+                <input type="hidden" name="status" value="maybe">
+                <button
+                    type="submit"
+                    class="maybe-btn{% if ns.user_status == 'maybe' %} active{% endif %}"
+                >
+                    {% if ns.user_status == 'maybe' %}✓ Belki{% else %}Belki{% endif %}
+                </button>
             </form>
         </div>
     </div>
 
-    <dialog class="cover-lightbox" aria-label="Etkinlik görseli">
-        <button type="button" class="cover-lightbox-close" aria-label="Kapat">
-            <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-        </button>
-        <img
-            class="cover-lightbox-image"
-            src="{{ url_for('static', filename=cover_image) }}"
-            alt=""
-        >
-    </dialog>
-
     <script>
         (function () {
-            var trigger = document.querySelector(".detail-cover-trigger");
-            var dialog = document.querySelector(".cover-lightbox");
-            if (!trigger || !dialog) return;
+            var shareBtn = document.querySelector(".share-btn");
+            var statusEl = document.querySelector(".share-status");
+            var shareTitle = {{ activity.title|tojson }};
+            var shareUrl = window.location.href;
 
-            var closeBtn = dialog.querySelector(".cover-lightbox-close");
+            function setStatus(message) {
+                if (!statusEl) return;
+                statusEl.textContent = message || "";
+            }
 
-            trigger.addEventListener("click", function () {
-                dialog.showModal();
-            });
-
-            closeBtn.addEventListener("click", function () {
-                dialog.close();
-            });
-
-            dialog.addEventListener("click", function (event) {
-                if (event.target === dialog) {
-                    dialog.close();
+            function copyLink() {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    return navigator.clipboard.writeText(shareUrl);
                 }
+                return Promise.reject();
+            }
+
+            if (shareBtn) {
+                shareBtn.addEventListener("click", function () {
+                    var payload = {
+                        title: shareTitle,
+                        text: shareTitle,
+                        url: shareUrl,
+                    };
+
+                    if (navigator.share) {
+                        navigator.share(payload).catch(function (error) {
+                            if (error && error.name === "AbortError") return;
+                            copyLink().then(function () {
+                                setStatus("Bağlantı kopyalandı");
+                            }).catch(function () {
+                                setStatus("");
+                            });
+                        });
+                        return;
+                    }
+
+                    copyLink().then(function () {
+                        setStatus("Bağlantı kopyalandı");
+                    }).catch(function () {
+                        setStatus("");
+                    });
+                });
+            }
+
+            var ownerMenu = document.querySelector(".owner-menu");
+            var ownerToggle = document.querySelector(".owner-menu-toggle");
+            var ownerPanel = document.getElementById("owner-menu-panel");
+
+            function closeOwnerMenu() {
+                if (!ownerToggle || !ownerPanel) return;
+                ownerPanel.hidden = true;
+                ownerToggle.setAttribute("aria-expanded", "false");
+            }
+
+            if (ownerMenu && ownerToggle && ownerPanel) {
+                ownerToggle.addEventListener("click", function (event) {
+                    event.stopPropagation();
+                    var isOpen = ownerPanel.hidden === false;
+                    if (isOpen) {
+                        closeOwnerMenu();
+                    } else {
+                        ownerPanel.hidden = false;
+                        ownerToggle.setAttribute("aria-expanded", "true");
+                    }
+                });
+
+                document.addEventListener("click", function (event) {
+                    if (!ownerMenu.contains(event.target)) {
+                        closeOwnerMenu();
+                    }
+                });
+
+                document.addEventListener("keydown", function (event) {
+                    if (event.key === "Escape") {
+                        closeOwnerMenu();
+                    }
+                });
+            }
+
+            var peopleSheet = document.querySelector(".people-sheet");
+            var openSheetBtn = document.querySelector("[data-people-sheet-open]");
+            var closeSheetBtns = document.querySelectorAll("[data-people-sheet-close]");
+
+            function openPeopleSheet() {
+                if (!peopleSheet || typeof peopleSheet.showModal !== "function") return;
+                peopleSheet.showModal();
+            }
+
+            function closePeopleSheet() {
+                if (!peopleSheet || !peopleSheet.open) return;
+                peopleSheet.close();
+            }
+
+            if (openSheetBtn) {
+                openSheetBtn.addEventListener("click", openPeopleSheet);
+            }
+
+            closeSheetBtns.forEach(function (button) {
+                button.addEventListener("click", closePeopleSheet);
             });
 
-            dialog.addEventListener("close", function () {
-                trigger.focus();
+            if (peopleSheet) {
+                peopleSheet.addEventListener("click", function (event) {
+                    if (event.target === peopleSheet) {
+                        closePeopleSheet();
+                    }
+                });
+            }
+
+            var deleteModal = document.querySelector(".confirm-modal");
+            var openDeleteBtn = document.querySelector("[data-delete-open]");
+            var closeDeleteBtns = document.querySelectorAll("[data-delete-close]");
+
+            function openDeleteModal() {
+                closeOwnerMenu();
+                if (!deleteModal || typeof deleteModal.showModal !== "function") return;
+                deleteModal.showModal();
+            }
+
+            function closeDeleteModal() {
+                if (!deleteModal || !deleteModal.open) return;
+                deleteModal.close();
+            }
+
+            if (openDeleteBtn) {
+                openDeleteBtn.addEventListener("click", function (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    openDeleteModal();
+                });
+            }
+
+            closeDeleteBtns.forEach(function (button) {
+                button.addEventListener("click", closeDeleteModal);
             });
+
+            if (deleteModal) {
+                deleteModal.addEventListener("click", function (event) {
+                    if (event.target === deleteModal) {
+                        closeDeleteModal();
+                    }
+                });
+            }
         })();
     </script>
 </body>

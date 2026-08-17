@@ -113,18 +113,6 @@ main {
     box-shadow: none;
 }
 
-.avatar {
-    width: 88px;
-    height: 88px;
-    border-radius: 50%;
-    display: grid;
-    place-items: center;
-    color: var(--white);
-    font-size: 34px;
-    font-weight: 800;
-    background: linear-gradient(180deg, var(--primary) 0%, #ff8b98 100%);
-}
-
 .profile-copy {
     min-width: 0;
 }

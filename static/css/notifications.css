@@ -140,18 +140,7 @@ body {
 }
 
 .notification-avatar {
-    width: 28px;
-    height: 28px;
     margin-left: -8px;
-    border-radius: 50%;
-    background: var(--avatar-bg);
-    color: var(--avatar-text);
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     position: relative;
     z-index: 1;
 }
