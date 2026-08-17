@@ -769,7 +769,7 @@ def parse_activity_datetime_local(date_str, time_str):
 
 
 def is_activity_datetime_in_past(date_str, time_str):
-    return parse_activity_datetime_local(date_str, time_str) < get_now_turkey()
+    return parse_activity_datetime_local(date_str, time_str) <= get_now_turkey()
 
 
 def validate_activity_form(form_data, original_date=None, original_time=None):
@@ -1272,6 +1272,7 @@ def render_activity_detail(
             avatar_for_user(current_user) if current_user is not None else None
         ),
         is_owner=is_owner,
+        is_past=is_activity_datetime_in_past(activity.date, activity.time),
         error=error,
         form_body=form_body,
         comment_max_length=COMMENT_MAX_LENGTH,
@@ -1305,6 +1306,8 @@ def home():
     activities_db = query.order_by(Activity.date.asc(), Activity.time.asc()).all()
     activities = []
     for activity in activities_db:
+        if is_activity_datetime_in_past(activity.date, activity.time):
+            continue
         if not can_view_activity(current_user, activity, friend_ids=friend_ids):
             continue
         if not activity_matches_time_filter(activity, time_filter):
@@ -1460,6 +1463,16 @@ def respond_activity(activity_id):
 
     if not can_view_activity(current_user, activity):
         return redirect(url_for("home"))
+
+    if is_activity_datetime_in_past(activity.date, activity.time):
+        return redirect_after_respond(
+            activity_id,
+            origin,
+            return_from,
+            return_q,
+            return_filter,
+            user_id=return_user_id,
+        )
 
     participation = ActivityParticipant.query.filter_by(
         user_id=current_user.id,
@@ -1735,6 +1748,8 @@ def discover():
     activities_db = query.order_by(Activity.date.asc(), Activity.time.asc()).all()
     activities = []
     for activity in activities_db:
+        if is_activity_datetime_in_past(activity.date, activity.time):
+            continue
         joined_count = sum(1 for p in activity.participants if p.status == "joined")
         maybe_count = sum(1 for p in activity.participants if p.status == "maybe")
         user_participation = next(

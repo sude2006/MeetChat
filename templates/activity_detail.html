@@ -313,6 +313,11 @@
         </dialog>
         {% endif %}
 
+        {% if is_past %}
+        <div class="sticky-actions is-ended" aria-label="Etkinlik durumu">
+            <p class="ended-status">Bu etkinlik sona erdi</p>
+        </div>
+        {% else %}
         <div
             class="sticky-actions{% if ns.user_status == 'joined' %} is-joined{% elif ns.user_status == 'maybe' %} is-maybe{% endif %}"
             aria-label="Etkinlik aksiyonları"
@@ -358,6 +363,7 @@
                 </button>
             </form>
         </div>
+        {% endif %}
     </div>
 
     <script>
