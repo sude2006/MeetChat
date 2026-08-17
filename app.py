@@ -1,4 +1,4 @@
-from flask import Flask, redirect, render_template, request, session, url_for
+from flask import Flask, jsonify, redirect, render_template, request, session, url_for
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 from sqlalchemy.orm import joinedload
@@ -64,6 +64,17 @@ VALID_ACTIVITY_VISIBILITIES = ("public", "friends")
 VISIBILITY_LABELS = {
     "public": "Herkese açık",
     "friends": "Sadece arkadaşlar",
+}
+ACTIVITY_CATEGORY_LABELS = {
+    "kahve": "Kahve",
+    "yeme": "Yeme & İçme",
+    "spor": "Spor",
+    "sanat": "Sanat",
+    "kitap": "Kitap",
+    "doga": "Doğa",
+    "gezi": "Gezi",
+    "hobi": "Hobi",
+    "diger": "Diğer",
 }
 
 
@@ -778,6 +789,34 @@ PROFILE_MONTHS = [
 ]
 
 
+def format_plan_date_short(date_str):
+    try:
+        dt = datetime.strptime(date_str, "%Y-%m-%d")
+        return f"{dt.day} {PROFILE_MONTHS[dt.month]}"
+    except ValueError:
+        return date_str
+
+
+def build_created_plan_view(activity, category_key=""):
+    key = category_key if category_key in ACTIVITY_CATEGORY_LABELS else ""
+    visibility_label = (
+        "Herkese Açık" if activity.visibility == "public" else "Sadece Arkadaşlar"
+    )
+    return {
+        "id": activity.id,
+        "title": activity.title,
+        "date_label": format_plan_date_short(activity.date),
+        "time_label": activity.time,
+        "location": activity.location,
+        "visibility_label": visibility_label,
+        "category_key": key,
+        "category_label": ACTIVITY_CATEGORY_LABELS.get(key, ""),
+        "detail_url": url_for("activity_detail", activity_id=activity.id),
+        "home_url": url_for("home"),
+        "success_url": url_for("activity_created", activity_id=activity.id),
+    }
+
+
 def derive_display_handle(user):
     local_part = (user.email or "").split("@")[0].lower()
     safe = "".join(char for char in local_part if char.isalnum() or char == "_")
@@ -1110,7 +1149,10 @@ def create_activity():
     print("visibility:", repr(form_data["visibility"]))
 
     error = validate_activity_form(form_data)
+    wants_json = request.headers.get("X-Requested-With") == "XMLHttpRequest"
     if error:
+        if wants_json:
+            return jsonify({"ok": False, "error": error}), 400
         return render_template(
             "create_activity.html",
             error=error,
@@ -1130,7 +1172,27 @@ def create_activity():
     db.session.add(activity)
     db.session.commit()
 
-    return redirect(url_for("home"))
+    category_key = request.form.get("category", "").strip()
+    session[f"created_plan_category_{activity.id}"] = category_key
+    created = build_created_plan_view(activity, category_key)
+    if wants_json:
+        return jsonify({"ok": True, **created})
+    return redirect(url_for("activity_created", activity_id=activity.id))
+
+
+@app.route("/create-activity/success/<int:activity_id>")
+def activity_created(activity_id):
+    current_user = get_current_user()
+    if current_user is None:
+        return redirect(url_for("login"))
+
+    activity = db.session.get(Activity, activity_id)
+    if activity is None or activity.creator_id != current_user.id:
+        return redirect(url_for("home"))
+
+    category_key = session.get(f"created_plan_category_{activity.id}", "")
+    created = build_created_plan_view(activity, category_key)
+    return render_template("activity_created.html", created=created)
 
 
 @app.route("/activity/<int:activity_id>/respond", methods=["POST"])

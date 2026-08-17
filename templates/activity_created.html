@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planın Hazır! — MeetChat</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/create_activity.css') }}">
+</head>
+
+<body>
+    <div class="create-shell create-shell-v2 is-success-page">
+        {% include "partials/plan_success.html" %}
+    </div>
+    <script>
+        (function () {
+            var screen = document.getElementById("success-screen");
+            if (!screen) {
+                return;
+            }
+            requestAnimationFrame(function () {
+                screen.removeAttribute("hidden");
+                screen.classList.add("is-visible");
+            });
+        })();
+    </script>
+</body>
+
+</html>

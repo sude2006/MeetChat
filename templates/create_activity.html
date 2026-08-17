@@ -6,35 +6,591 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Plan Oluştur — MeetChat</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/create_activity.css') }}">
-    <style>
-        .field-hint {
-            margin: -4px 0 0;
-            font-size: 12px;
-            color: #6B6B6B;
-            line-height: 1.4;
-        }
-    </style>
 </head>
 
 <body>
-    <div class="create-shell">
-        <header class="create-header">
+    <div class="create-shell create-shell-v2">
+        <div class="create-flow">
+        <header class="create-header create-header-v2">
             <a href="{{ url_for('home') }}" class="back-btn" aria-label="Geri">
-                <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
             </a>
             <div class="create-header-text">
                 <h1>Plan Oluştur</h1>
-                <p>Harika bir plan paylaş, arkadaşlarını bul!</p>
+                <p>Planını paylaş, katılmak isteyenler sana eşlik etsin.</p>
             </div>
         </header>
 
-        <form class="create-form" action="{{ url_for('create_activity') }}" method="post">
-            {% include "partials/activity_form.html" %}
-            <button type="submit" class="submit-btn">Planı Paylaş</button>
+        <form class="create-form create-form-v2" action="{{ url_for('create_activity') }}" method="post">
+            {% if error %}
+            <p class="form-error" role="alert">{{ error }}</p>
+            {% endif %}
+
+            <section class="plan-section plan-section-info">
+                <h2 class="plan-section-label">Plan Bilgileri</h2>
+                <div class="info-card">
+                    <label class="info-row">
+                        <span class="info-icon" aria-hidden="true">
+                            <svg width="18" height="18" viewBox="0 0 24 24">
+                                <rect x="5" y="3" width="14" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                                <path d="M8 8h8M8 12h8M8 16h5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                            </svg>
+                        </span>
+                        <input
+                            type="text"
+                            name="title"
+                            maxlength="60"
+                            placeholder="Örn. Kahve Buluşması"
+                            value="{% if form_data is defined %}{{ form_data.title }}{% else %}{% endif %}"
+                        >
+                    </label>
+                    <label class="info-row info-row-textarea">
+                        <span class="info-icon" aria-hidden="true">
+                            <svg width="18" height="18" viewBox="0 0 24 24">
+                                <path d="M4 20l4.2-1 10.7-10.7a2.1 2.1 0 00-3-3L5.2 16z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                                <path d="M14.5 6.7l2.8 2.8" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                            </svg>
+                        </span>
+                        <textarea
+                            name="description"
+                            maxlength="300"
+                            rows="3"
+                            placeholder="Planın hakkında kısa bir açıklama yaz..."
+                        >{% if form_data is defined %}{{ form_data.description }}{% else %}{% endif %}</textarea>
+                    </label>
+                </div>
+            </section>
+
+            <section class="plan-section">
+                <h2 class="plan-section-label">Plan Detayları</h2>
+                <p class="plan-section-hint">Bu plan ne hakkında?</p>
+
+                <div class="category-scroller" aria-label="Kategoriler">
+                    <input type="hidden" name="category" id="plan-category-input" value="">
+                    <div class="category-track">
+                        <button type="button" class="category-chip" data-category="kahve">
+                            <span class="chip-icon chip-kahve" aria-hidden="true">
+                                <svg width="16" height="16" viewBox="0 0 24 24">
+                                    <path d="M5 8h11v6a4 4 0 01-4 4H9a4 4 0 01-4-4V8z" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                                    <path d="M16 9h2.2A2.8 2.8 0 0119 14h-3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                                    <path d="M8 4.5c.4.8.4 1.6 0 2.4M11 4.5c.4.8.4 1.6 0 2.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                                </svg>
+                            </span>
+                            Kahve
+                        </button>
+                        <button type="button" class="category-chip" data-category="yeme">
+                            <span class="chip-icon chip-yeme" aria-hidden="true">
+                                <svg width="16" height="16" viewBox="0 0 24 24">
+                                    <path d="M7 4v7M5 4v4.5a2 2 0 002 2V20M9 4v7M17 4v4c0 2-1.5 3-3 3v9" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                                </svg>
+                            </span>
+                            Yeme &amp; İçme
+                        </button>
+                        <button type="button" class="category-chip" data-category="spor">
+                            <span class="chip-icon chip-spor" aria-hidden="true">
+                                <svg width="16" height="16" viewBox="0 0 24 24">
+                                    <circle cx="14.2" cy="5.2" r="2" fill="none" stroke="currentColor" stroke-width="1.9"/>
+                                    <path d="M7.5 21l2.6-5.2 3.2-2 2.2 3.8H20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M10.1 15.8L8.2 12.2l4.4-2.4 3.2 2.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                            Spor
+                        </button>
+                        <button type="button" class="category-chip" data-category="sanat">
+                            <span class="chip-icon chip-sanat" aria-hidden="true">
+                                <svg width="16" height="16" viewBox="0 0 24 24">
+                                    <path d="M12 4.2a7.8 7.8 0 107.2 10.4c0-1.3-1.1-1.8-2.2-1.8h-1.1c-1.2 0-2.1.9-2.1 2.1 0 .6.2 1.2.2 1.7a2.6 2.6 0 01-2 2.5A7.8 7.8 0 0112 4.2z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                                    <circle cx="8.6" cy="11.2" r="1" fill="currentColor"/>
+                                    <circle cx="12" cy="8.6" r="1" fill="currentColor"/>
+                                    <circle cx="15.6" cy="10.4" r="1" fill="currentColor"/>
+                                </svg>
+                            </span>
+                            Sanat
+                        </button>
+                        <button type="button" class="category-chip" data-category="kitap">
+                            <span class="chip-icon chip-kitap" aria-hidden="true">
+                                <svg width="16" height="16" viewBox="0 0 24 24">
+                                    <path d="M5 5.5A2.5 2.5 0 017.5 3H20v15H7.5A2.5 2.5 0 005 15.5v-10z" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                                    <path d="M5 18.5A2.5 2.5 0 017.5 21H20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                                </svg>
+                            </span>
+                            Kitap
+                        </button>
+                        <button type="button" class="category-chip" data-category="doga">
+                            <span class="chip-icon chip-doga" aria-hidden="true">
+                                <svg width="16" height="16" viewBox="0 0 24 24">
+                                    <path d="M12 21V11M7 21h10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                                    <path d="M12 14c-4-1-6-4.2-6-7.2C6 5 8.5 4 12 7c3.5-3 6-2 6-.2C18 9.8 16 13 12 14z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                            Doğa
+                        </button>
+                        <button type="button" class="category-chip" data-category="gezi">
+                            <span class="chip-icon chip-gezi" aria-hidden="true">
+                                <svg width="16" height="16" viewBox="0 0 24 24">
+                                    <path d="M3 11.5L21 4l-6.5 17-2.8-6.7L3 11.5z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                            Gezi
+                        </button>
+                        <button type="button" class="category-chip" data-category="hobi">
+                            <span class="chip-icon chip-hobi" aria-hidden="true">
+                                <svg width="16" height="16" viewBox="0 0 24 24">
+                                    <path d="M4 9h3.2l1.5-2.2h6.6L16.8 9H20v10H4V9z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                                    <circle cx="12" cy="14" r="3.1" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                                </svg>
+                            </span>
+                            Hobi
+                        </button>
+                        <button type="button" class="category-chip" data-category="diger">
+                            <span class="chip-icon chip-diger" aria-hidden="true">
+                                <svg width="16" height="16" viewBox="0 0 24 24">
+                                    <circle cx="6" cy="12" r="1.6" fill="currentColor"/>
+                                    <circle cx="12" cy="12" r="1.6" fill="currentColor"/>
+                                    <circle cx="18" cy="12" r="1.6" fill="currentColor"/>
+                                </svg>
+                            </span>
+                            Diğer
+                        </button>
+                    </div>
+                </div>
+
+                <div class="detail-row">
+                    <label class="detail-pill">
+                        <span class="info-icon" aria-hidden="true">
+                            <svg width="18" height="18" viewBox="0 0 24 24">
+                                <rect x="3" y="5" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                                <path d="M3 10h18M8 3v4M16 3v4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                            </svg>
+                        </span>
+                        <input
+                            type="date"
+                            name="date"
+                            required
+                            {% if min_date is defined and min_date %}min="{{ min_date }}"{% endif %}
+                            value="{% if form_data is defined %}{{ form_data.date }}{% else %}{% endif %}"
+                        >
+                    </label>
+                    <label class="detail-pill">
+                        <span class="info-icon" aria-hidden="true">
+                            <svg width="18" height="18" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                                <path d="M12 8v5l3 2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                            </svg>
+                        </span>
+                        <input
+                            type="text"
+                            name="time"
+                            placeholder="14:30"
+                            inputmode="numeric"
+                            maxlength="5"
+                            required
+                            value="{% if form_data is defined %}{{ form_data.time }}{% else %}{% endif %}"
+                        >
+                    </label>
+                </div>
+                <div class="detail-errors">
+                    <p class="field-error" data-date-error>Geçmiş bir tarih seçilemez.</p>
+                    <p class="field-error" data-time-error>Geçerli bir saat girin.</p>
+                    <p class="field-error field-error-full" data-datetime-error>Etkinlik tarihi ve saati geçmiş olamaz.</p>
+                </div>
+                <p class="field-hint">Geçmiş tarih veya saat seçilemez.</p>
+
+                <label class="location-card">
+                    <span class="location-map" aria-hidden="true">
+                        <span class="location-pin"></span>
+                    </span>
+                    <span class="location-bar">
+                        <span class="info-icon" aria-hidden="true">
+                            <svg width="16" height="16" viewBox="0 0 24 24">
+                                <path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                                <circle cx="12" cy="10" r="2.4" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                            </svg>
+                        </span>
+                        <input
+                            type="text"
+                            name="location"
+                            maxlength="200"
+                            placeholder="Konum ara veya seç"
+                            value="{% if form_data is defined %}{{ form_data.location }}{% else %}{% endif %}"
+                        >
+                    </span>
+                </label>
+            </section>
+
+            <section class="plan-section">
+                <h2 class="plan-section-label">Kimler Görebilir?</h2>
+                <fieldset class="visibility-block visibility-block-v2">
+                    <legend class="sr-only">Görünürlük</legend>
+                    <div class="visibility-options visibility-options-v2">
+                        <label class="visibility-card">
+                            <input
+                                type="radio"
+                                name="visibility"
+                                value="public"
+                                {% if form_data is not defined or form_data.visibility == 'public' or not form_data.visibility %}checked{% endif %}
+                            >
+                            <span class="visibility-content">
+                                <span class="visibility-icon" aria-hidden="true">
+                                    <svg width="22" height="22" viewBox="0 0 24 24">
+                                        <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                                        <path d="M4 12h16M12 4c2.4 2.6 3.6 5.2 3.6 8S14.4 17.4 12 20M12 4c-2.4 2.6-3.6 5.2-3.6 8S9.6 17.4 12 20" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                                    </svg>
+                                </span>
+                                <span class="visibility-title">Herkese Açık</span>
+                                <span class="visibility-desc">Planını herkes görebilir ve katılabilir.</span>
+                            </span>
+                        </label>
+                        <label class="visibility-card">
+                            <input
+                                type="radio"
+                                name="visibility"
+                                value="friends"
+                                {% if form_data is defined and form_data.visibility == 'friends' %}checked{% endif %}
+                            >
+                            <span class="visibility-content">
+                                <span class="visibility-icon" aria-hidden="true">
+                                    <svg width="22" height="22" viewBox="0 0 24 24">
+                                        <circle cx="9" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                                        <circle cx="16.2" cy="9" r="2.4" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                                        <path d="M3.6 19c.7-3 2.5-4.6 5.4-4.6s4.7 1.6 5.4 4.6M14.2 15.4c2.5-.3 4.6.9 5.5 3.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                                    </svg>
+                                </span>
+                                <span class="visibility-title">Sadece Arkadaşlar</span>
+                                <span class="visibility-desc">Planını yalnızca arkadaşların görebilir ve katılabilir.</span>
+                            </span>
+                        </label>
+                    </div>
+                </fieldset>
+            </section>
+
+            <button type="submit" class="submit-btn submit-btn-v2">Planı Paylaş</button>
         </form>
+        </div>
+        {% include "partials/plan_success.html" %}
     </div>
+
+    <script>
+        document.querySelectorAll(".category-chip").forEach(function (chip) {
+            chip.addEventListener("click", function () {
+                document.querySelectorAll(".category-chip").forEach(function (item) {
+                    item.classList.remove("is-selected");
+                });
+                chip.classList.add("is-selected");
+                var info = document.querySelector(".plan-section-info");
+                var categoryInput = document.getElementById("plan-category-input");
+                var category = chip.getAttribute("data-category") || "";
+                if (info) {
+                    info.setAttribute("data-selected-category", category);
+                }
+                if (categoryInput) {
+                    categoryInput.value = category;
+                }
+            });
+        });
+
+        (function () {
+            var form = document.querySelector(".create-form-v2");
+            var timeInput = document.querySelector(".create-shell-v2 input[name='time']");
+            var dateInput = document.querySelector(".create-shell-v2 input[name='date']");
+            if (!form || !timeInput || !dateInput) {
+                return;
+            }
+
+            var timeError = document.querySelector("[data-time-error]");
+            var dateError = document.querySelector("[data-date-error]");
+            var datetimeError = document.querySelector("[data-datetime-error]");
+            var lastDigits = (timeInput.value || "").replace(/\D/g, "").slice(0, 4);
+
+            function formatTime(digits, inserting) {
+                digits = digits.slice(0, 4);
+                if (digits.length === 0) {
+                    return "";
+                }
+                if (digits.length < 2) {
+                    return digits;
+                }
+                if (digits.length === 2) {
+                    return inserting ? digits + ":" : digits;
+                }
+                return digits.slice(0, 2) + ":" + digits.slice(2);
+            }
+
+            function setInvalid(input, errorEl, on) {
+                var pill = input.closest(".detail-pill");
+                if (pill) {
+                    pill.classList.toggle("is-invalid", on);
+                }
+                if (errorEl) {
+                    errorEl.classList.toggle("is-visible", on);
+                }
+            }
+
+            function isValidTimeDigits(digits) {
+                if (digits.length !== 4) {
+                    return false;
+                }
+                var hour = parseInt(digits.slice(0, 2), 10);
+                var minute = parseInt(digits.slice(2, 4), 10);
+                return hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59;
+            }
+
+            function isValidCalendarDate(value) {
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+                    return false;
+                }
+                var parts = value.split("-");
+                var year = Number(parts[0]);
+                var month = Number(parts[1]);
+                var day = Number(parts[2]);
+                var parsed = new Date(year, month - 1, day);
+                return parsed.getFullYear() === year && parsed.getMonth() === month - 1 && parsed.getDate() === day;
+            }
+
+            function syncDateEmptyState() {
+                var pill = dateInput.closest(".detail-pill");
+                if (!pill) {
+                    return;
+                }
+                pill.classList.toggle("is-date-empty", !(dateInput.value || "").trim());
+            }
+
+            function turkeyNow() {
+                var parts = new Intl.DateTimeFormat("en-GB", {
+                    timeZone: "Europe/Istanbul",
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hourCycle: "h23"
+                }).formatToParts(new Date());
+                var map = {};
+                parts.forEach(function (part) {
+                    map[part.type] = part.value;
+                });
+                return {
+                    date: map.year + "-" + map.month + "-" + map.day,
+                    time: map.hour + ":" + map.minute
+                };
+            }
+
+            function clearFieldErrors() {
+                setInvalid(dateInput, dateError, false);
+                setInvalid(timeInput, timeError, false);
+                if (datetimeError) {
+                    datetimeError.classList.remove("is-visible");
+                }
+            }
+
+            function showDatetimeError() {
+                var datePill = dateInput.closest(".detail-pill");
+                var timePill = timeInput.closest(".detail-pill");
+                if (datePill) {
+                    datePill.classList.add("is-invalid");
+                }
+                if (timePill) {
+                    timePill.classList.add("is-invalid");
+                }
+                if (dateError) {
+                    dateError.classList.remove("is-visible");
+                }
+                if (timeError) {
+                    timeError.classList.remove("is-visible");
+                }
+                if (datetimeError) {
+                    datetimeError.classList.add("is-visible");
+                }
+            }
+
+            function validateFields(force) {
+                var dateValue = (dateInput.value || "").trim();
+                var digits = (timeInput.value || "").replace(/\D/g, "").slice(0, 4);
+                var min = dateInput.getAttribute("min") || "";
+                var now = turkeyNow();
+                var today = now.date;
+                var earliestDate = min && min > today ? min : today;
+
+                clearFieldErrors();
+
+                var dateReady = Boolean(dateValue);
+                var timeReady = digits.length === 4;
+                var dateOk = true;
+                var timeOk = true;
+
+                if (!dateReady) {
+                    dateOk = !force;
+                } else if (!isValidCalendarDate(dateValue) || dateValue < earliestDate) {
+                    dateOk = false;
+                    setInvalid(dateInput, dateError, true);
+                }
+
+                if (!timeReady) {
+                    timeOk = !force;
+                } else if (!isValidTimeDigits(digits)) {
+                    timeOk = false;
+                    setInvalid(timeInput, timeError, true);
+                }
+
+                if (dateOk && timeOk && dateReady && timeReady) {
+                    var selectedTime = digits.slice(0, 2) + ":" + digits.slice(2);
+                    if (dateValue + "T" + selectedTime < today + "T" + now.time) {
+                        showDatetimeError();
+                        return false;
+                    }
+                }
+
+                return dateOk && timeOk;
+            }
+
+            function fillText(selector, value) {
+                var node = document.querySelector(selector);
+                if (node) {
+                    node.textContent = value || "";
+                }
+            }
+
+            function showCreatedPlan(data) {
+                var shell = document.querySelector(".create-shell-v2");
+                var screen = document.getElementById("success-screen");
+                if (!shell || !screen) {
+                    window.location.href = data.success_url || data.detail_url;
+                    return;
+                }
+
+                fillText("[data-success-title]", data.title);
+                fillText("[data-success-date]", data.date_label);
+                fillText("[data-success-time]", data.time_label);
+                fillText("[data-success-location]", data.location);
+                fillText("[data-success-visibility]", data.visibility_label);
+
+                var badge = document.querySelector("[data-success-badge]");
+                var badgeLabel = document.querySelector("[data-success-badge-label]");
+                var badgeIcon = document.querySelector("[data-success-badge-icon]");
+                var selectedIcon = document.querySelector(".category-chip.is-selected .chip-icon");
+                if (badge) {
+                    badge.classList.toggle("is-empty", !data.category_key);
+                }
+                if (badgeLabel) {
+                    badgeLabel.textContent = data.category_label || "";
+                }
+                if (badgeIcon && selectedIcon) {
+                    badgeIcon.innerHTML = selectedIcon.innerHTML;
+                    var iconClass = selectedIcon.className.replace("chip-icon", "").trim();
+                    if (iconClass) {
+                        badgeIcon.className = "chip-icon " + iconClass;
+                    }
+                }
+
+                var detail = document.querySelector("[data-success-detail]");
+                var home = document.querySelector("[data-success-home]");
+                if (detail) {
+                    detail.setAttribute("href", data.detail_url);
+                }
+                if (home) {
+                    home.setAttribute("href", data.home_url);
+                }
+
+                shell.classList.add("is-leaving");
+                window.setTimeout(function () {
+                    screen.hidden = false;
+                    shell.classList.add("is-success");
+                    requestAnimationFrame(function () {
+                        screen.classList.add("is-visible");
+                    });
+                    if (data.success_url) {
+                        window.history.replaceState({}, "", data.success_url);
+                    }
+                }, 160);
+            }
+
+            timeInput.addEventListener("input", function () {
+                var raw = timeInput.value;
+                var digits = raw.replace(/\D/g, "").slice(0, 4);
+                var inserting = digits.length > lastDigits.length;
+
+                if (!inserting && lastDigits.length === 2 && digits.length === 2 && raw.indexOf(":") === -1) {
+                    digits = digits.slice(0, 1);
+                }
+
+                timeInput.value = formatTime(digits, inserting);
+                lastDigits = digits;
+                validateFields(false);
+            });
+
+            dateInput.addEventListener("change", function () {
+                syncDateEmptyState();
+                validateFields(true);
+            });
+            dateInput.addEventListener("input", function () {
+                syncDateEmptyState();
+                validateFields(false);
+            });
+
+            form.addEventListener("submit", function (event) {
+                event.preventDefault();
+                if (form.getAttribute("data-busy") === "1") {
+                    return;
+                }
+                if (!validateFields(true)) {
+                    return;
+                }
+
+                var submitBtn = form.querySelector(".submit-btn-v2");
+                var errorBox = form.querySelector(".form-error");
+                form.setAttribute("data-busy", "1");
+                if (submitBtn) {
+                    submitBtn.classList.add("is-pressing");
+                    submitBtn.disabled = true;
+                }
+
+                window.setTimeout(function () {
+                    fetch(form.getAttribute("action"), {
+                        method: "POST",
+                        body: new FormData(form),
+                        headers: { "X-Requested-With": "XMLHttpRequest" },
+                        credentials: "same-origin"
+                    }).then(function (response) {
+                        return response.json().catch(function () {
+                            return {};
+                        }).then(function (data) {
+                            return { ok: response.ok, data: data };
+                        });
+                    }).then(function (result) {
+                        if (!result.ok || !result.data || !result.data.ok) {
+                            form.removeAttribute("data-busy");
+                            if (submitBtn) {
+                                submitBtn.classList.remove("is-pressing");
+                                submitBtn.disabled = false;
+                            }
+                            var message = (result.data && result.data.error) || "Plan oluşturulamadı.";
+                            if (!errorBox) {
+                                errorBox = document.createElement("p");
+                                errorBox.className = "form-error";
+                                errorBox.setAttribute("role", "alert");
+                                form.insertBefore(errorBox, form.firstChild);
+                            }
+                            errorBox.textContent = message;
+                            errorBox.hidden = false;
+                            return;
+                        }
+                        showCreatedPlan(result.data);
+                    }).catch(function () {
+                        form.removeAttribute("data-busy");
+                        if (submitBtn) {
+                            submitBtn.classList.remove("is-pressing");
+                            submitBtn.disabled = false;
+                        }
+                    });
+                }, 180);
+            });
+
+            syncDateEmptyState();
+            validateFields(false);
+        })();
+    </script>
 </body>
 
 </html>
