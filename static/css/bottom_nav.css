@@ -1,0 +1,94 @@
+/* =========================
+   VESİLE — Floating alt navigasyon
+========================= */
+
+.bottom-nav {
+    position: fixed;
+    left: 50%;
+    bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    width: calc(100% - 36px);
+    max-width: calc(var(--app-max, 430px) - 36px);
+    min-height: 62px;
+    background: var(--white);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 999px;
+    box-shadow:
+        0 10px 32px rgba(0, 0, 0, 0.07),
+        0 2px 8px rgba(0, 0, 0, 0.04);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 6px 12px 8px;
+    z-index: 100;
+}
+
+.nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    color: var(--text-muted, #8A8A8A);
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 1;
+    min-width: 0;
+    padding: 4px 2px;
+}
+
+.bottom-nav .nav-item:not(.nav-create) svg {
+    width: 22px;
+    height: 22px;
+}
+
+.nav-item.active {
+    color: var(--primary);
+}
+
+.nav-item.nav-create {
+    flex: 0 0 auto;
+    margin-top: -26px;
+    padding: 0;
+}
+
+.create-btn {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 18px rgba(255, 70, 91, 0.28);
+}
+
+.create-btn svg {
+    width: 24px;
+    height: 24px;
+}
+
+.nav-icon-wrap {
+    position: relative;
+    display: inline-flex;
+}
+
+.badge {
+    position: absolute;
+    top: -4px;
+    right: -8px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: var(--primary);
+    color: var(--white);
+    font-size: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}

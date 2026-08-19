@@ -66,7 +66,7 @@
                         <textarea
                             name="description"
                             maxlength="300"
-                            rows="3"
+                            rows="2"
                             placeholder="Planın hakkında kısa bir açıklama yaz..."
                         >{% if form_data is defined %}{{ form_data.description }}{% else %}{% endif %}</textarea>
                     </label>
@@ -208,26 +208,27 @@
                 </div>
                 <p class="field-hint">Geçmiş tarih veya saat seçilemez.</p>
 
-                <label class="location-card">
-                    <span class="location-map" aria-hidden="true">
-                        <span class="location-pin"></span>
+                <div class="location-bar">
+                    <span class="info-icon" aria-hidden="true">
+                        <svg width="16" height="16" viewBox="0 0 24 24">
+                            <path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                            <circle cx="12" cy="10" r="2.4" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                        </svg>
                     </span>
-                    <span class="location-bar">
-                        <span class="info-icon" aria-hidden="true">
-                            <svg width="16" height="16" viewBox="0 0 24 24">
-                                <path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z" fill="none" stroke="currentColor" stroke-width="1.7"/>
-                                <circle cx="12" cy="10" r="2.4" fill="none" stroke="currentColor" stroke-width="1.7"/>
-                            </svg>
-                        </span>
-                        <input
-                            type="text"
-                            name="location"
-                            maxlength="200"
-                            placeholder="Konum ara veya seç"
-                            value="{% if form_data is defined %}{{ form_data.location }}{% else %}{% endif %}"
-                        >
-                    </span>
-                </label>
+                    <input
+                        type="text"
+                        name="location"
+                        maxlength="200"
+                        placeholder="Konum seçilmedi"
+                        value="{% if form_data is defined %}{{ form_data.location }}{% else %}{% endif %}"
+                    >
+                    <button type="button" class="location-pick-btn" data-location-pick>
+                        Haritadan Seç
+                        <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
             </section>
 
             <section class="plan-section">
@@ -243,14 +244,16 @@
                                 {% if form_data is not defined or form_data.visibility == 'public' or not form_data.visibility %}checked{% endif %}
                             >
                             <span class="visibility-content">
-                                <span class="visibility-icon" aria-hidden="true">
-                                    <svg width="22" height="22" viewBox="0 0 24 24">
-                                        <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.7"/>
-                                        <path d="M4 12h16M12 4c2.4 2.6 3.6 5.2 3.6 8S14.4 17.4 12 20M12 4c-2.4 2.6-3.6 5.2-3.6 8S9.6 17.4 12 20" fill="none" stroke="currentColor" stroke-width="1.5"/>
-                                    </svg>
+                                <span class="visibility-head">
+                                    <span class="visibility-icon" aria-hidden="true">
+                                        <svg width="18" height="18" viewBox="0 0 24 24">
+                                            <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                                            <path d="M4 12h16M12 4c2.4 2.6 3.6 5.2 3.6 8S14.4 17.4 12 20M12 4c-2.4 2.6-3.6 5.2-3.6 8S9.6 17.4 12 20" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                                        </svg>
+                                    </span>
+                                    <span class="visibility-title">Herkese Açık</span>
                                 </span>
-                                <span class="visibility-title">Herkese Açık</span>
-                                <span class="visibility-desc">Planını herkes görebilir ve katılabilir.</span>
+                                <span class="visibility-desc">Herkes görebilir ve katılabilir.</span>
                             </span>
                         </label>
                         <label class="visibility-card">
@@ -261,15 +264,17 @@
                                 {% if form_data is defined and form_data.visibility == 'friends' %}checked{% endif %}
                             >
                             <span class="visibility-content">
-                                <span class="visibility-icon" aria-hidden="true">
-                                    <svg width="22" height="22" viewBox="0 0 24 24">
-                                        <circle cx="9" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/>
-                                        <circle cx="16.2" cy="9" r="2.4" fill="none" stroke="currentColor" stroke-width="1.7"/>
-                                        <path d="M3.6 19c.7-3 2.5-4.6 5.4-4.6s4.7 1.6 5.4 4.6M14.2 15.4c2.5-.3 4.6.9 5.5 3.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
-                                    </svg>
+                                <span class="visibility-head">
+                                    <span class="visibility-icon" aria-hidden="true">
+                                        <svg width="18" height="18" viewBox="0 0 24 24">
+                                            <circle cx="9" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                                            <circle cx="16.2" cy="9" r="2.4" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                                            <path d="M3.6 19c.7-3 2.5-4.6 5.4-4.6s4.7 1.6 5.4 4.6M14.2 15.4c2.5-.3 4.6.9 5.5 3.4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                                        </svg>
+                                    </span>
+                                    <span class="visibility-title">Sadece Arkadaşlar</span>
                                 </span>
-                                <span class="visibility-title">Sadece Arkadaşlar</span>
-                                <span class="visibility-desc">Planını yalnızca arkadaşların görebilir ve katılabilir.</span>
+                                <span class="visibility-desc">Yalnızca arkadaşların görebilir.</span>
                             </span>
                         </label>
                     </div>
@@ -621,6 +626,14 @@
                     });
                 }, 180);
             });
+
+            var locationInput = document.querySelector(".create-shell-v2 input[name='location']");
+            var locationPick = document.querySelector("[data-location-pick]");
+            if (locationPick && locationInput) {
+                locationPick.addEventListener("click", function () {
+                    locationInput.focus();
+                });
+            }
 
             syncDateEmptyState();
             validateFields(false);

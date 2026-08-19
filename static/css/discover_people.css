@@ -1,0 +1,184 @@
+/* =========================
+   Keşfet — Arkadaş Önerileri (Tümü)
+========================= */
+
+.ue-search-field-solo {
+    width: 100%;
+}
+
+.dp-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 0 20px 8px;
+}
+
+.dp-card {
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: var(--white);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+    padding: 14px 16px 0;
+}
+
+.dp-card-body {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.dp-avatar-link {
+    flex-shrink: 0;
+    line-height: 0;
+}
+
+.dp-avatar {
+    width: 56px;
+    height: 56px;
+    font-size: 20px;
+}
+
+.dp-main {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.dp-name {
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    color: #1A1A1A;
+}
+
+.dp-reason {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 3px;
+    min-height: 22px;
+}
+
+.dp-reason-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--coral-soft);
+    color: var(--coral-text);
+}
+
+.dp-reason-badge svg {
+    display: block;
+}
+
+.dp-reason-text {
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    color: var(--coral-text);
+}
+
+.dp-bio {
+    margin-top: 3px;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.35;
+    color: #6B6B6B;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dp-interests {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.dp-interest {
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #F3F3F3;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1;
+    color: #5A5A5A;
+}
+
+.dp-divider {
+    margin: 10px 0 0;
+    border: 0;
+    border-top: 1px solid #ECECEC;
+}
+
+.dp-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 0 12px;
+}
+
+.dp-profile-link {
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--coral);
+}
+
+.dp-add {
+    flex-shrink: 0;
+}
+
+.dp-add button,
+.dp-sent {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 34px;
+    padding: 0 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.dp-add button {
+    border: 1.5px solid var(--coral);
+    background: var(--white);
+    color: var(--coral);
+    cursor: pointer;
+}
+
+.dp-sent {
+    border: 1.5px solid #E4E4E4;
+    background: #F7F7F7;
+    color: #8A8A8A;
+}
+
+@media (max-width: 380px) {
+    .dp-name {
+        font-size: 16px;
+    }
+
+    .dp-reason-text {
+        font-size: 12px;
+    }
+
+    .dp-bio {
+        font-size: 14px;
+    }
+
+    .dp-avatar {
+        width: 52px;
+        height: 52px;
+        font-size: 18px;
+    }
+}

@@ -10,7 +10,7 @@
     --text-soft: #666666;
     --white: #FFFFFF;
     --app-max: 430px;
-    --nav-height: 78px;
+    --nav-height: 92px;
     --page-mint: #F4FBFA;
     --card-read: #E8F6F2;
     --card-unread: #C5EBE3;
@@ -63,9 +63,12 @@ body {
 }
 
 .notifications-header h1 {
-    font-size: 24px;
-    font-weight: 700;
-    letter-spacing: -0.02em;
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 32px;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    line-height: 1.08;
+    color: #1A1A1A;
 }
 
 .notification-list {

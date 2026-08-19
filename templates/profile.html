@@ -11,8 +11,10 @@
 
 <body>
     {% from "partials/letter_avatar.html" import letter_avatar %}
+    {% from "partials/category_icon.html" import render_category_icon %}
     <div class="app-shell">
-        <header class="profile-topbar profile-topbar-end">
+        <header class="profile-topbar">
+            <h1 class="profile-page-title">Profil</h1>
             <button
                 type="button"
                 class="icon-button"
@@ -87,55 +89,52 @@
                 </a>
             </section>
 
-            {% macro render_event_card(event) %}
-            <article class="event-card{% if event.is_past %} completed{% endif %}">
-                <img
-                    class="event-cover"
-                    src="{{ url_for('static', filename=event.cover_image) }}"
-                    alt=""
-                >
-                <div class="event-body">
-                    <h3 class="event-title">{{ event.title }}</h3>
-                    <div class="event-meta">
-                        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
-                            <rect x="3" y="5" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/>
-                            <path d="M3 10h18M8 3v4M16 3v4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                        </svg>
-                        <span>{{ event.datetime }}</span>
-                    </div>
-                    <div class="event-meta">
-                        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
-                            <circle cx="12" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/>
-                            <path d="M5 19c1.2-3.2 3.6-4.8 7-4.8s5.8 1.6 7 4.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                        </svg>
-                        <span>{{ event.participant_label }}</span>
-                    </div>
-                    <div class="event-footer">
+            {% macro render_event_card(event, show_organizer=true) %}
+            <article class="re-card cat-{{ event.category_key }}{% if event.is_past %} completed{% endif %}">
+                <a class="card-link" href="{{ event.detail_url }}">
+                    <span class="visually-hidden">{{ event.title }} detayına git</span>
+                </a>
+                <div class="re-top">
+                    <p class="re-added">{{ event.created_label }}</p>
+                    <div class="re-top-end">
                         {% if event.is_past %}
-                        <a href="{{ event.detail_url }}" class="detail-chevron" aria-label="Detay">›</a>
-                        {% else %}
-                        <span
-                            class="visibility{% if event.visibility == 'public' %} public{% endif %}"
-                            title="{{ event.visibility_label }}"
-                            aria-label="{{ event.visibility_label }}"
-                        >
-                            {% if event.visibility == 'public' %}
-                            <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
-                                <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/>
-                                <path d="M3 12h18M12 3c3 3 4 6 4 9s-1 6-4 9M12 3c-3 3-4 6-4 9s1 6 4 9" fill="none" stroke="currentColor" stroke-width="1.5"/>
-                            </svg>
-                            {% else %}
-                            <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
-                                <circle cx="9" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/>
-                                <circle cx="16.5" cy="9" r="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
-                                <path d="M3.5 19c.7-3 2.5-4.5 5.5-4.5s4.8 1.5 5.5 4.5M14 15c2.8-.5 5 .8 6 3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                            </svg>
-                            {% endif %}
-                        </span>
-                        <a href="{{ event.detail_url }}" class="detail-link">Detay &#8250;</a>
+                        <span class="re-done">Tamamlandı</span>
                         {% endif %}
+                        <span class="re-cat">
+                            {{ render_category_icon(event.category_key, 13) }}
+                            <span>{{ event.category_label }}</span>
+                        </span>
                     </div>
                 </div>
+                <h2 class="re-title">{{ event.title }}</h2>
+                <div class="re-logistics">
+                    <span class="re-logistics-item">
+                        <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle cx="12" cy="12" r="7.6" fill="none" stroke="currentColor" stroke-width="2"/>
+                            <path d="M12 8.2v4.2l3 1.7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span>{{ event.time_label }}</span>
+                    </span>
+                    {% if event.location %}
+                    <span class="re-logistics-item">
+                        <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 21s6.6-5.8 6.6-10.4a6.6 6.6 0 10-13.2 0c0 4.6 6.6 10.4 6.6 10.4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                            <circle cx="12" cy="10.4" r="2.2" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                        </svg>
+                        <span>{{ event.location }}</span>
+                    </span>
+                    {% endif %}
+                </div>
+                {% if show_organizer %}
+                <div class="re-footer">
+                    <div class="re-organizer">
+                        {{ letter_avatar(event.creator_avatar, size="xs", extra_class="re-organizer-avatar") }}
+                        <p class="re-organizer-text">
+                            <strong>{{ event.creator_name }}</strong> oluşturdu
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
             </article>
             {% endmacro %}
 
@@ -148,7 +147,7 @@
                     </h3>
                     {% if sections.upcoming %}
                         {% for event in sections.upcoming %}
-                            {{ render_event_card(event) }}
+                            {{ render_event_card(event, show_organizer=(prefix == 'joined')) }}
                         {% endfor %}
                     {% else %}
                         <p class="empty-state">Yaklaşan plan yok.</p>
@@ -162,7 +161,7 @@
                     </h3>
                     {% if sections.past %}
                         {% for event in sections.past %}
-                            {{ render_event_card(event) }}
+                            {{ render_event_card(event, show_organizer=(prefix == 'joined')) }}
                         {% endfor %}
                     {% else %}
                         <p class="empty-state">Geçmiş plan yok.</p>

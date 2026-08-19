@@ -101,7 +101,38 @@ class ActivityParticipant(db.Model):
 VALID_PARTICIPANT_STATUSES = ("joined", "maybe")
 VALID_HOME_FILTERS = ("all", "mine", "joined")
 VALID_TIME_FILTERS = ("all", "today", "tomorrow", "week")
+VALID_DISCOVER_TIME_FILTERS = ("all", "today", "tomorrow", "week", "month")
+DISCOVER_TIME_FILTER_LABELS = {
+    "all": "Tümü",
+    "today": "Bugün",
+    "tomorrow": "Yarın",
+    "week": "Bu Hafta",
+    "month": "Bu Ay",
+}
+UPCOMING_LIST_TIME_FILTERS = ("all", "today", "tomorrow", "week")
+UPCOMING_LIST_TIME_FILTER_LABELS = {
+    "all": "Tümü",
+    "today": "Bugün",
+    "tomorrow": "Yarın",
+    "week": "Bu Hafta",
+}
+UPCOMING_LIST_WINDOW_DAYS = 7
 VALID_CATEGORY_FILTERS = tuple(ACTIVITY_CATEGORY_LABELS.keys())
+TURKEY_CITIES = (
+    "Adana", "Adıyaman", "Afyonkarahisar", "Ağrı", "Aksaray", "Amasya", "Ankara",
+    "Antalya", "Ardahan", "Artvin", "Aydın", "Balıkesir", "Bartın", "Batman",
+    "Bayburt", "Bilecik", "Bingöl", "Bitlis", "Bolu", "Burdur", "Bursa",
+    "Çanakkale", "Çankırı", "Çorum", "Denizli", "Diyarbakır", "Düzce", "Edirne",
+    "Elazığ", "Erzincan", "Erzurum", "Eskişehir", "Gaziantep", "Giresun",
+    "Gümüşhane", "Hakkari", "Hatay", "Iğdır", "Isparta", "İstanbul", "İzmir",
+    "Kahramanmaraş", "Karabük", "Karaman", "Kars", "Kastamonu", "Kayseri",
+    "Kırıkkale", "Kırklareli", "Kırşehir", "Kilis", "Kocaeli", "Konya", "Kütahya",
+    "Malatya", "Manisa", "Mardin", "Mersin", "Muğla", "Muş", "Nevşehir", "Niğde",
+    "Ordu", "Osmaniye", "Rize", "Sakarya", "Samsun", "Siirt", "Sinop", "Sivas",
+    "Şanlıurfa", "Şırnak", "Tekirdağ", "Tokat", "Trabzon", "Tunceli", "Uşak",
+    "Van", "Yalova", "Yozgat", "Zonguldak",
+)
+DEFAULT_DISCOVER_CITY = "İstanbul"
 VALID_FRIENDSHIP_STATUSES = ("pending", "accepted", "rejected")
 
 
@@ -137,10 +168,79 @@ def activity_matches_time_filter(activity, time_filter):
         week_start = today - timedelta(days=today.weekday())
         week_end = week_start + timedelta(days=6)
         return week_start <= activity_date <= week_end
+    if time_filter == "month":
+        month_start = today.replace(day=1)
+        if today.month == 12:
+            next_month = today.replace(year=today.year + 1, month=1, day=1)
+        else:
+            next_month = today.replace(month=today.month + 1, day=1)
+        month_end = next_month - timedelta(days=1)
+        return month_start <= activity_date <= month_end
     return True
 
 
-ALLOWED_DETAIL_FROM = {"home", "discover", "profile", "notifications", "user_profile"}
+def parse_upcoming_list_time_filter(raw):
+    value = (raw or "all").strip()
+    if value == "month":
+        return "all"
+    return value if value in UPCOMING_LIST_TIME_FILTERS else "all"
+
+
+def is_activity_in_upcoming_list_window(activity, window_days=UPCOMING_LIST_WINDOW_DAYS):
+    try:
+        activity_date = datetime.strptime(activity.date, "%Y-%m-%d").date()
+    except ValueError:
+        return False
+
+    today = datetime.now(TURKEY_TZ).date()
+    window_end = today + timedelta(days=window_days - 1)
+    return today <= activity_date <= window_end
+
+
+def activity_matches_upcoming_list_time_filter(activity, time_filter):
+    if not is_activity_in_upcoming_list_window(activity):
+        return False
+    if time_filter in ("all", "week"):
+        return True
+
+    try:
+        activity_date = datetime.strptime(activity.date, "%Y-%m-%d").date()
+    except ValueError:
+        return False
+
+    today = datetime.now(TURKEY_TZ).date()
+    if time_filter == "today":
+        return activity_date == today
+    if time_filter == "tomorrow":
+        return activity_date == today + timedelta(days=1)
+    return True
+
+
+def parse_discover_time_filter(raw):
+    value = (raw or "all").strip()
+    return value if value in VALID_DISCOVER_TIME_FILTERS else "all"
+
+
+def parse_discover_city_filter(raw):
+    value = (raw or "").strip()
+    if not value:
+        return ""
+    for city in TURKEY_CITIES:
+        if city.casefold() == value.casefold():
+            return city
+    return ""
+
+
+ALLOWED_DETAIL_FROM = {
+    "home",
+    "discover",
+    "discover_upcoming",
+    "discover_recent",
+    "discover_people",
+    "profile",
+    "notifications",
+    "user_profile",
+}
 ALLOWED_RESPOND_ORIGINS = {"detail", "home", "discover"}
 
 
@@ -161,9 +261,67 @@ def parse_detail_context(from_raw, q_raw="", filter_raw="all"):
     return from_page, q, activity_filter
 
 
-def build_list_back_url(from_page, q="", activity_filter="all", user_id=None):
+def build_discover_upcoming_url(
+    q="",
+    time_filter="all",
+    category_filter="",
+    city_filter="",
+):
+    kwargs = {}
+    if q:
+        kwargs["q"] = q
+    if time_filter != "all":
+        kwargs["time"] = time_filter
+    if category_filter:
+        kwargs["category"] = category_filter
+    if city_filter:
+        kwargs["city"] = city_filter
+    return url_for("discover_upcoming", **kwargs)
+
+
+def build_discover_recent_url(
+    q="",
+    category_filter="",
+    city_filter="",
+):
+    kwargs = {}
+    if q:
+        kwargs["q"] = q
+    if category_filter:
+        kwargs["category"] = category_filter
+    if city_filter:
+        kwargs["city"] = city_filter
+    return url_for("discover_recent", **kwargs)
+
+
+def build_discover_people_url(q=""):
+    kwargs = {}
+    if q:
+        kwargs["q"] = q
+    return url_for("discover_people", **kwargs)
+
+
+def build_list_back_url(
+    from_page,
+    q="",
+    activity_filter="all",
+    user_id=None,
+    detail_time="all",
+    detail_category="",
+    detail_city="",
+):
     if from_page == "discover":
         return url_for("discover", q=q) if q else url_for("discover")
+    if from_page == "discover_upcoming":
+        return build_discover_upcoming_url(
+            q, detail_time, detail_category, detail_city
+        )
+    if from_page == "discover_recent":
+        return build_discover_recent_url(
+            q, detail_category, detail_city
+        )
+    if from_page == "discover_people":
+        return build_discover_people_url(q)
     if from_page == "home":
         kwargs = {}
         if q:
@@ -183,10 +341,28 @@ def build_list_back_url(from_page, q="", activity_filter="all", user_id=None):
     return url_for("home")
 
 
-def build_detail_url(activity_id, from_page, q="", activity_filter="all", user_id=None):
+def build_detail_url(
+    activity_id,
+    from_page,
+    q="",
+    activity_filter="all",
+    user_id=None,
+    time_filter="all",
+    category_filter="",
+    city_filter="",
+):
     kwargs = {"activity_id": activity_id, "source": from_page}
     if from_page == "discover":
         kwargs["q"] = q
+    elif from_page in ("discover_upcoming", "discover_recent"):
+        if q:
+            kwargs["q"] = q
+        if time_filter != "all":
+            kwargs["time"] = time_filter
+        if category_filter:
+            kwargs["category"] = category_filter
+        if city_filter:
+            kwargs["city"] = city_filter
     elif from_page == "home":
         kwargs["q"] = q
         kwargs["filter"] = activity_filter
@@ -646,6 +822,78 @@ def format_relative_time(dt):
     return f"{local_dt.day} {PROFILE_MONTHS[local_dt.month]} {local_dt.year}"
 
 
+def format_added_ago_label(dt):
+    if dt is None:
+        return "Yakın zamanda eklendi"
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    local_dt = dt.astimezone(TURKEY_TZ)
+    now_local = datetime.now(TURKEY_TZ)
+    delta_seconds = (now_local - local_dt).total_seconds()
+    if delta_seconds < 60:
+        return "Az önce eklendi"
+
+    minutes = int(delta_seconds // 60)
+    if minutes < 60:
+        return f"{minutes} dk önce eklendi"
+
+    hours = int(delta_seconds // 3600)
+    local_date = local_dt.date()
+    today = now_local.date()
+    if local_date == today:
+        if hours < 6:
+            return f"{hours} saat önce eklendi"
+        return "Bugün eklendi"
+
+    yesterday = today - timedelta(days=1)
+    if local_date == yesterday:
+        return "Dün eklendi"
+
+    days = (today - local_date).days
+    if days == 7:
+        return "1 hafta önce eklendi"
+    if 2 <= days <= 6:
+        return f"{days} gün önce eklendi"
+    return f"{local_dt.day} {PROFILE_MONTHS[local_dt.month]} eklendi"
+
+
+def format_created_ago_label(dt):
+    if dt is None:
+        return "Yakın zamanda oluşturdu"
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    local_dt = dt.astimezone(TURKEY_TZ)
+    now_local = datetime.now(TURKEY_TZ)
+    delta_seconds = (now_local - local_dt).total_seconds()
+    if delta_seconds < 60:
+        return "Az önce oluşturdu"
+
+    minutes = int(delta_seconds // 60)
+    if minutes < 60:
+        return f"{minutes} dk önce oluşturdu"
+
+    hours = int(delta_seconds // 3600)
+    local_date = local_dt.date()
+    today = now_local.date()
+    if local_date == today:
+        if hours < 6:
+            return f"{hours} saat önce oluşturdu"
+        return "Bugün oluşturdu"
+
+    yesterday = today - timedelta(days=1)
+    if local_date == yesterday:
+        return "Dün oluşturdu"
+
+    days = (today - local_date).days
+    if days == 7:
+        return "1 hafta önce oluşturdu"
+    if 2 <= days <= 13:
+        return f"{days} gün önce oluşturdu"
+    if 14 <= days <= 20:
+        return "2 hafta önce oluşturdu"
+    return f"{local_dt.day} {PROFILE_MONTHS[local_dt.month]} oluşturdu"
+
+
 def get_current_user():
     user_id = session.get("user_id")
     if not user_id:
@@ -816,6 +1064,14 @@ def format_activity_datetime(date_str, time_str):
         return f"{date_str} {time_str}"
 
 
+def format_activity_datetime_compact(date_str, time_str):
+    try:
+        dt = datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M")
+        return f"{dt.day} {PROFILE_MONTHS[dt.month]} · {dt.strftime('%H:%M')}"
+    except ValueError:
+        return f"{date_str} {time_str}"
+
+
 WEEKDAY_NAMES = [
     "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar",
 ]
@@ -848,6 +1104,52 @@ def format_activity_time_label(date_str, time_str):
         return f"{date_str} {time_str}", False
 
 
+def format_upcoming_when_parts(date_str, time_str):
+    weekday_short = ("Pzt", "Sal", "Çar", "Per", "Cuma", "Cmt", "Paz")
+    try:
+        dt = datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M")
+        activity_date = dt.date()
+        today = datetime.now(TURKEY_TZ).date()
+        clock_label = dt.strftime("%H:%M")
+        weekday = weekday_short[dt.weekday()]
+        if activity_date == today:
+            return {
+                "day_label": "Bugün",
+                "clock_label": clock_label,
+                "date_label": "",
+                "is_today": True,
+            }
+        if activity_date == today + timedelta(days=1):
+            return {
+                "day_label": "Yarın",
+                "clock_label": clock_label,
+                "date_label": "",
+                "is_today": False,
+            }
+        week_start = today - timedelta(days=today.weekday())
+        week_end = week_start + timedelta(days=6)
+        if week_start <= activity_date <= week_end:
+            return {
+                "day_label": weekday,
+                "clock_label": clock_label,
+                "date_label": "",
+                "is_today": False,
+            }
+        return {
+            "day_label": weekday,
+            "clock_label": clock_label,
+            "date_label": f"{dt.day} {PROFILE_MONTHS[dt.month]}",
+            "is_today": False,
+        }
+    except ValueError:
+        return {
+            "day_label": date_str,
+            "clock_label": time_str,
+            "date_label": "",
+            "is_today": False,
+        }
+
+
 def format_display_name(name):
     if not name:
         return ""
@@ -862,6 +1164,16 @@ def format_display_name(name):
             first = first.upper()
         parts.append(first + part[1:] if len(part) > 1 else first)
     return " ".join(parts)
+
+
+def format_short_display_name(name):
+    formatted = format_display_name(name)
+    parts = formatted.split()
+    if not parts:
+        return ""
+    if len(parts) == 1:
+        return parts[0]
+    return f"{parts[0]} {parts[1][0]}."
 
 
 def display_first_name(name):
@@ -1022,7 +1334,7 @@ def turkish_possessive(name):
 def format_profile_datetime(date_str, time_str):
     try:
         dt = datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M")
-        return f"{dt.day} {PROFILE_MONTHS[dt.month]}, {dt.strftime('%H:%M')}"
+        return f"{dt.day} {PROFILE_MONTHS[dt.month]} · {dt.strftime('%H:%M')}"
     except ValueError:
         return f"{date_str} {time_str}"
 
@@ -1047,16 +1359,26 @@ def serialize_profile_activity(activity, *, is_past, source="profile", user_id=N
         profile_user_id = parse_user_profile_id(user_id)
         if profile_user_id is not None:
             detail_kwargs["user_id"] = profile_user_id
+    creator = activity.creator
+    category_key = _activity_category_key(activity.id)
+    time_label, _time_is_today = format_activity_time_label(activity.date, activity.time)
     return {
         "id": activity.id,
         "title": activity.title,
         "datetime": format_profile_datetime(activity.date, activity.time),
+        "time_label": time_label,
+        "location": (activity.location or "").strip(),
         "cover_image": COVER_IMAGES[activity.id % len(COVER_IMAGES)],
         "joined_count": joined_count,
         "participant_label": participant_label,
         "visibility": activity.visibility,
         "visibility_label": VISIBILITY_LABELS.get(activity.visibility, "Herkese açık"),
         "is_past": is_past,
+        "creator_name": display_first_name(creator.full_name if creator else ""),
+        "creator_avatar": avatar_for_user(creator),
+        "category_key": category_key,
+        "category_label": ACTIVITY_CATEGORY_LABELS.get(category_key, "Diğer"),
+        "created_label": format_created_ago_label(activity.created_at),
         "detail_url": url_for("activity_detail", **detail_kwargs),
     }
 
@@ -1189,6 +1511,9 @@ def render_activity_detail(
     detail_q="",
     detail_filter="all",
     detail_user_id="",
+    detail_time="all",
+    detail_category="",
+    detail_city="",
 ):
     from_page, q, activity_filter = parse_detail_context(
         detail_from, detail_q, detail_filter
@@ -1199,7 +1524,13 @@ def render_activity_detail(
         if profile_user_id is None:
             from_page = "home"
     back_url = build_list_back_url(
-        from_page, q, activity_filter, user_id=profile_user_id
+        from_page,
+        q,
+        activity_filter,
+        user_id=profile_user_id,
+        detail_time=detail_time,
+        detail_category=detail_category,
+        detail_city=detail_city,
     )
     joined_count = sum(1 for p in activity.participants if p.status == "joined")
     maybe_count = sum(1 for p in activity.participants if p.status == "maybe")
@@ -1256,6 +1587,7 @@ def render_activity_detail(
         comments=comment_items,
         cover_image=COVER_IMAGES[activity.id % len(COVER_IMAGES)],
         datetime=format_activity_datetime(activity.date, activity.time),
+        datetime_compact=format_activity_datetime_compact(activity.date, activity.time),
         time_label=time_label,
         category_key=category_key,
         category_label=ACTIVITY_CATEGORY_LABELS.get(category_key, ""),
@@ -1535,6 +1867,9 @@ def activity_detail(activity_id):
         detail_q=request.args.get("q", ""),
         detail_filter=request.args.get("filter", "all"),
         detail_user_id=request.args.get("user_id", ""),
+        detail_time=parse_discover_time_filter(request.args.get("time")),
+        detail_category=parse_category_filter(request.args.get("category")),
+        detail_city=parse_discover_city_filter(request.args.get("city")),
     )
 
 
@@ -1733,6 +2068,364 @@ def add_comment(activity_id):
         )
     )
 
+def _activity_category_key(activity_id):
+    key = session.get(f"created_plan_category_{activity_id}", "")
+    return key if key in ACTIVITY_CATEGORY_LABELS else "diger"
+
+
+def _discover_activity_card(activity, search_q=""):
+    creator_avatar = avatar_for_user(activity.creator)
+    time_label, _time_is_today = format_activity_time_label(activity.date, activity.time)
+    joined_count = sum(1 for p in activity.participants if p.status == "joined")
+    category_key = _activity_category_key(activity.id)
+    detail_kwargs = {"activity_id": activity.id, "source": "discover"}
+    if search_q:
+        detail_kwargs["q"] = search_q
+    return {
+        "id": activity.id,
+        "title": activity.title,
+        "time_label": time_label,
+        "location": activity.location or "",
+        "creator_name": format_short_display_name(activity.creator.full_name),
+        "creator_avatar": creator_avatar,
+        "joined_count": joined_count,
+        "category_key": category_key,
+        "category_label": ACTIVITY_CATEGORY_LABELS.get(category_key, "Diğer"),
+        "detail_url": url_for("activity_detail", **detail_kwargs),
+        "created_at": activity.created_at or datetime.min,
+        "date": activity.date,
+        "time": activity.time,
+    }
+
+
+def _discover_suggestion_reason(activity):
+    today = datetime.now(TURKEY_TZ).date()
+    try:
+        activity_date = datetime.strptime(activity.date, "%Y-%m-%d").date()
+    except ValueError:
+        return "Yakında katılabileceğin herkese açık bir plan"
+    if activity_date == today:
+        return "Bugün katılabileceğin herkese açık bir plan"
+    if activity_date == today + timedelta(days=1):
+        return "Yarın katılabileceğin herkese açık bir plan"
+    return "Yakında katılabileceğin herkese açık bir plan"
+
+
+def _user_joined_activity_ids(user_id):
+    rows = ActivityParticipant.query.filter_by(user_id=user_id, status="joined").all()
+    return {row.activity_id for row in rows}
+
+
+def _parse_activity_date(date_str):
+    try:
+        return datetime.strptime(date_str, "%Y-%m-%d").date()
+    except ValueError:
+        return None
+
+
+def _shared_joined_activities(user_a_id, user_b_id):
+    shared_ids = _user_joined_activity_ids(user_a_id) & _user_joined_activity_ids(user_b_id)
+    if not shared_ids:
+        return []
+    activities = Activity.query.filter(Activity.id.in_(shared_ids)).all()
+    activities.sort(
+        key=lambda activity: (
+            _parse_activity_date(activity.date) or datetime.min.date(),
+            activity.time or "",
+        ),
+        reverse=True,
+    )
+    return activities
+
+
+def _count_mutual_friends(user_a_id, user_b_id):
+    friends_a = get_accepted_friend_ids(user_a_id)
+    friends_b = get_accepted_friend_ids(user_b_id)
+    return len(friends_a & friends_b)
+
+
+def _user_joined_in_month(user_id, year, month):
+    participants = ActivityParticipant.query.filter_by(
+        user_id=user_id, status="joined"
+    ).all()
+    for participant in participants:
+        activity_date = _parse_activity_date(participant.activity.date)
+        if activity_date and activity_date.year == year and activity_date.month == month:
+            return True
+    return False
+
+
+def _user_joined_since(user_id, since_date):
+    participants = ActivityParticipant.query.filter_by(
+        user_id=user_id, status="joined"
+    ).all()
+    for participant in participants:
+        activity_date = _parse_activity_date(participant.activity.date)
+        if activity_date and activity_date >= since_date:
+            return True
+    return False
+
+
+def _user_public_activity_count(user_id):
+    return Activity.query.filter_by(creator_id=user_id, visibility="public").count()
+
+
+def _pick_friend_suggestion_reason(current_user_id, other_user_id):
+    shared_activities = _shared_joined_activities(current_user_id, other_user_id)
+    if shared_activities:
+        title = shared_activities[0].title.strip()
+        if len(title) > 48:
+            title = f"{title[:45].rstrip()}..."
+        return {
+            "priority": 1000,
+            "icon": "event",
+            "text": f"Aynı {title} etkinliğine katıldınız",
+        }
+
+    today = datetime.now(TURKEY_TZ).date()
+    if _user_joined_in_month(current_user_id, today.year, today.month) and _user_joined_in_month(
+        other_user_id, today.year, today.month
+    ):
+        return {
+            "priority": 800,
+            "icon": "calendar",
+            "text": "Bu ay benzer etkinliklere katıldınız",
+        }
+
+    since = today - timedelta(days=30)
+    if _user_joined_since(current_user_id, since) and _user_joined_since(other_user_id, since):
+        return {
+            "priority": 750,
+            "icon": "spark",
+            "text": "Son zamanlarda benzer ilgi alanlarında aktifsiniz",
+        }
+
+    mutual_count = _count_mutual_friends(current_user_id, other_user_id)
+    if mutual_count > 0:
+        return {
+            "priority": 400 + min(mutual_count, 10),
+            "icon": "mutual",
+            "text": f"{mutual_count} ortak arkadaşınız var",
+        }
+
+    if _user_public_activity_count(other_user_id) > 0:
+        return {
+            "priority": 300,
+            "icon": "spark",
+            "text": "Herkese açık planlar paylaşıyor",
+        }
+
+    return {
+        "priority": 100,
+        "icon": "spark",
+        "text": "VESİLE topluluğunda tanışabileceğin biri",
+    }
+
+
+def _build_friend_suggestion_card(other, current_user, search_q="", list_source="discover"):
+    friendship = get_friendship(current_user.id, other.id)
+    state = friendship_ui_state(current_user.id, other.id, friendship)
+    reason = _pick_friend_suggestion_reason(current_user.id, other.id)
+    profile_kwargs = {"user_id": other.id, "source": list_source}
+    if search_q:
+        profile_kwargs["q"] = search_q
+    return {
+        "user_id": other.id,
+        "name": format_short_display_name(other.full_name),
+        "avatar": avatar_for_user(other),
+        "bio": "Henüz biyografi eklenmedi.",
+        "interests": [],
+        "reason_text": reason["text"],
+        "reason_icon": reason["icon"],
+        "reason_priority": reason["priority"],
+        "state": state,
+        "profile_url": url_for("user_profile", **profile_kwargs),
+    }
+
+
+def get_discover_friend_suggestions(current_user, search_q="", limit=None):
+    friend_ids = get_accepted_friend_ids(current_user.id)
+    query = User.query.filter(User.id != current_user.id)
+    if search_q:
+        query = query.filter(User.full_name.ilike(f"%{search_q}%"))
+    other_users = query.all()
+
+    cards = []
+    for other in other_users:
+        if other.id in friend_ids:
+            continue
+        friendship = get_friendship(current_user.id, other.id)
+        state = friendship_ui_state(current_user.id, other.id, friendship)
+        if state not in ("add", "sent"):
+            continue
+        cards.append(
+            _build_friend_suggestion_card(
+                other,
+                current_user,
+                search_q=search_q,
+                list_source="discover_people" if limit is None else "discover",
+            )
+        )
+
+    cards.sort(
+        key=lambda card: (-card["reason_priority"], card["name"].casefold()),
+    )
+    if limit is not None:
+        cards = cards[:limit]
+    return cards
+
+
+def _discover_upcoming_list_card(
+    activity,
+    search_q="",
+    time_filter="all",
+    category_filter="",
+    city_filter="",
+):
+    creator_avatar = avatar_for_user(activity.creator)
+    time_label, _time_is_today = format_activity_time_label(activity.date, activity.time)
+    when_parts = format_upcoming_when_parts(activity.date, activity.time)
+    joined = [p for p in activity.participants if p.status == "joined"]
+    joined_count = len(joined)
+    participant_avatars = [avatar_for_user(p.user) for p in joined[:3]]
+    category_key = _activity_category_key(activity.id)
+    comment_count = Comment.query.filter_by(activity_id=activity.id).count()
+    detail_url = build_detail_url(
+        activity.id,
+        "discover_upcoming",
+        q=search_q,
+        time_filter=time_filter,
+        category_filter=category_filter,
+        city_filter=city_filter,
+    )
+    return {
+        "id": activity.id,
+        "title": activity.title,
+        "time_label": time_label,
+        "day_label": when_parts["day_label"],
+        "clock_label": when_parts["clock_label"],
+        "date_label": when_parts["date_label"],
+        "time_is_today": when_parts["is_today"],
+        "location": activity.location or "",
+        "creator_name": format_short_display_name(activity.creator.full_name),
+        "creator_avatar": creator_avatar,
+        "joined_count": joined_count,
+        "participant_avatars": participant_avatars,
+        "comment_count": comment_count,
+        "category_key": category_key,
+        "category_label": ACTIVITY_CATEGORY_LABELS.get(category_key, "Diğer"),
+        "detail_url": detail_url,
+    }
+
+
+def _discover_recent_list_card(
+    activity,
+    search_q="",
+    category_filter="",
+    city_filter="",
+):
+    creator_avatar = avatar_for_user(activity.creator)
+    time_label, _time_is_today = format_activity_time_label(activity.date, activity.time)
+    joined = [p for p in activity.participants if p.status == "joined"]
+    joined_count = len(joined)
+    participant_avatars = [avatar_for_user(p.user) for p in joined[:3]]
+    category_key = _activity_category_key(activity.id)
+    comment_count = Comment.query.filter_by(activity_id=activity.id).count()
+    detail_url = build_detail_url(
+        activity.id,
+        "discover_recent",
+        q=search_q,
+        category_filter=category_filter,
+        city_filter=city_filter,
+    )
+    return {
+        "id": activity.id,
+        "title": activity.title,
+        "time_label": time_label,
+        "location": activity.location or "",
+        "creator_name": format_short_display_name(activity.creator.full_name),
+        "creator_avatar": creator_avatar,
+        "joined_count": joined_count,
+        "participant_avatars": participant_avatars,
+        "comment_count": comment_count,
+        "added_label": format_added_ago_label(activity.created_at),
+        "category_key": category_key,
+        "category_label": ACTIVITY_CATEGORY_LABELS.get(category_key, "Diğer"),
+        "detail_url": detail_url,
+    }
+
+
+def _build_upcoming_active_filters(
+    q="",
+    time_filter="all",
+    category_filter="",
+    city_filter="",
+):
+    filters = []
+
+    if city_filter:
+        filters.append(
+            {
+                "key": "city",
+                "label": city_filter,
+                "remove_url": build_discover_upcoming_url(
+                    q, time_filter, category_filter, ""
+                ),
+            }
+        )
+    if time_filter != "all":
+        filters.append(
+            {
+                "key": "time",
+                "label": UPCOMING_LIST_TIME_FILTER_LABELS.get(time_filter, time_filter),
+                "remove_url": build_discover_upcoming_url(
+                    q, "all", category_filter, city_filter
+                ),
+            }
+        )
+    if category_filter:
+        filters.append(
+            {
+                "key": "category",
+                "label": ACTIVITY_CATEGORY_LABELS.get(category_filter, category_filter),
+                "remove_url": build_discover_upcoming_url(
+                    q, time_filter, "", city_filter
+                ),
+            }
+        )
+    return filters
+
+
+def _build_recent_active_filters(
+    q="",
+    category_filter="",
+    city_filter="",
+):
+    filters = []
+
+    if city_filter:
+        filters.append(
+            {
+                "key": "city",
+                "label": city_filter,
+                "remove_url": build_discover_recent_url(
+                    q, category_filter, ""
+                ),
+            }
+        )
+    if category_filter:
+        filters.append(
+            {
+                "key": "category",
+                "label": ACTIVITY_CATEGORY_LABELS.get(category_filter, category_filter),
+                "remove_url": build_discover_recent_url(
+                    q, "", city_filter
+                ),
+            }
+        )
+    return filters
+
+
 @app.route("/discover")
 def discover():
     current_user = get_current_user()
@@ -1746,42 +2439,190 @@ def discover():
         query = query.filter(Activity.title.ilike(f"%{search_q}%"))
 
     activities_db = query.order_by(Activity.date.asc(), Activity.time.asc()).all()
-    activities = []
+    upcoming_source = []
     for activity in activities_db:
         if is_activity_datetime_in_past(activity.date, activity.time):
             continue
-        joined_count = sum(1 for p in activity.participants if p.status == "joined")
-        maybe_count = sum(1 for p in activity.participants if p.status == "maybe")
-        user_participation = next(
-            (p for p in activity.participants if p.user_id == current_user.id),
-            None,
-        )
-        creator_avatar = avatar_for_user(activity.creator)
-        activities.append(
-            {
-                "id": activity.id,
-                "creator_name": creator_avatar["name"],
-                "creator_avatar": creator_avatar,
-                "title": activity.title,
-                "description": activity.description,
-                "datetime": format_activity_datetime(activity.date, activity.time),
-                "location": activity.location,
-                "cover_image": COVER_IMAGES[activity.id % len(COVER_IMAGES)],
-                "joined_count": joined_count,
-                "maybe_count": maybe_count,
-                "user_status": user_participation.status if user_participation else None,
-                "comment_count": len(activity.comments),
-                "visibility": activity.visibility,
-                "visibility_label": VISIBILITY_LABELS.get(
-                    activity.visibility, "Herkese açık"
-                ),
-            }
-        )
+        upcoming_source.append(activity)
+
+    upcoming_events = [
+        _discover_activity_card(activity, search_q) for activity in upcoming_source[:8]
+    ]
+
+    recent_source = sorted(
+        upcoming_source,
+        key=lambda activity: activity.created_at or datetime.min,
+        reverse=True,
+    )
+    recent_events = [
+        _discover_activity_card(activity, search_q) for activity in recent_source[:8]
+    ]
+
+    today = datetime.now(TURKEY_TZ).date()
+
+    def suggestion_sort_key(activity):
+        try:
+            activity_date = datetime.strptime(activity.date, "%Y-%m-%d").date()
+        except ValueError:
+            activity_date = today + timedelta(days=365)
+        is_today = 0 if activity_date == today else 1
+        return (is_today, activity_sort_key(activity))
+
+    suggestion_source = sorted(upcoming_source, key=suggestion_sort_key)[:3]
+    today_picks = []
+    for activity in suggestion_source:
+        card = _discover_activity_card(activity, search_q)
+        card["reason"] = _discover_suggestion_reason(activity)
+        card["description"] = " ".join((activity.description or "").split())
+        today_picks.append(card)
+
+    friend_suggestions = get_discover_friend_suggestions(
+        current_user, search_q=search_q, limit=8
+    )
 
     return render_template(
         "discover.html",
-        activities=activities,
         q=search_q,
+        upcoming_events=upcoming_events,
+        friend_suggestions=friend_suggestions,
+        recent_events=recent_events,
+        today_picks=today_picks,
+    )
+
+
+@app.route("/discover/upcoming")
+def discover_upcoming():
+    current_user = get_current_user()
+    if current_user is None:
+        return redirect(url_for("login"))
+
+    search_q = request.args.get("q", "").strip()
+    time_filter = parse_upcoming_list_time_filter(request.args.get("time"))
+    category_filter = parse_category_filter(request.args.get("category"))
+    city_filter = parse_discover_city_filter(request.args.get("city"))
+
+    query = Activity.query.filter(Activity.visibility == "public")
+    if search_q:
+        query = query.filter(Activity.title.ilike(f"%{search_q}%"))
+    if city_filter:
+        query = query.filter(Activity.location.ilike(f"%{city_filter}%"))
+
+    activities_db = query.order_by(Activity.date.asc(), Activity.time.asc()).all()
+    events = []
+    for activity in activities_db:
+        if is_activity_datetime_in_past(activity.date, activity.time):
+            continue
+        if not activity_matches_upcoming_list_time_filter(activity, time_filter):
+            continue
+        activity_category = _activity_category_key(activity.id)
+        if category_filter and activity_category != category_filter:
+            continue
+        events.append(
+            _discover_upcoming_list_card(
+                activity,
+                search_q=search_q,
+                time_filter=time_filter,
+                category_filter=category_filter,
+                city_filter=city_filter,
+            )
+        )
+
+    active_filters = _build_upcoming_active_filters(
+        search_q, time_filter, category_filter, city_filter
+    )
+    has_active_filters = bool(active_filters)
+
+    return render_template(
+        "discover_upcoming.html",
+        q=search_q,
+        time_filter=time_filter,
+        category_filter=category_filter,
+        city_filter=city_filter,
+        selected_city=city_filter or DEFAULT_DISCOVER_CITY,
+        events=events,
+        event_count=len(events),
+        active_filters=active_filters,
+        has_active_filters=has_active_filters,
+        clear_filters_url=url_for("discover_upcoming", q=search_q or None),
+        turkey_cities=TURKEY_CITIES,
+        category_labels=ACTIVITY_CATEGORY_LABELS,
+        time_filter_labels=UPCOMING_LIST_TIME_FILTER_LABELS,
+        back_url=url_for("discover", q=search_q) if search_q else url_for("discover"),
+    )
+
+
+@app.route("/discover/recent")
+def discover_recent():
+    current_user = get_current_user()
+    if current_user is None:
+        return redirect(url_for("login"))
+
+    search_q = request.args.get("q", "").strip()
+    category_filter = parse_category_filter(request.args.get("category"))
+    city_filter = parse_discover_city_filter(request.args.get("city"))
+
+    query = Activity.query.filter(Activity.visibility == "public")
+    if search_q:
+        query = query.filter(Activity.title.ilike(f"%{search_q}%"))
+    if city_filter:
+        query = query.filter(Activity.location.ilike(f"%{city_filter}%"))
+
+    activities_db = query.all()
+    matched = []
+    for activity in activities_db:
+        activity_category = _activity_category_key(activity.id)
+        if category_filter and activity_category != category_filter:
+            continue
+        matched.append(activity)
+
+    matched.sort(key=lambda activity: activity.created_at or datetime.min, reverse=True)
+    events = [
+        _discover_recent_list_card(
+            activity,
+            search_q=search_q,
+            category_filter=category_filter,
+            city_filter=city_filter,
+        )
+        for activity in matched
+    ]
+
+    active_filters = _build_recent_active_filters(
+        search_q, category_filter, city_filter
+    )
+    has_active_filters = bool(active_filters)
+
+    return render_template(
+        "discover_recent.html",
+        q=search_q,
+        category_filter=category_filter,
+        city_filter=city_filter,
+        selected_city=city_filter or DEFAULT_DISCOVER_CITY,
+        events=events,
+        event_count=len(events),
+        active_filters=active_filters,
+        has_active_filters=has_active_filters,
+        clear_filters_url=url_for("discover_recent", q=search_q or None),
+        turkey_cities=TURKEY_CITIES,
+        category_labels=ACTIVITY_CATEGORY_LABELS,
+        back_url=url_for("discover", q=search_q) if search_q else url_for("discover"),
+    )
+
+
+@app.route("/discover/people")
+def discover_people():
+    current_user = get_current_user()
+    if current_user is None:
+        return redirect(url_for("login"))
+
+    search_q = request.args.get("q", "").strip()
+    suggestions = get_discover_friend_suggestions(current_user, search_q=search_q)
+
+    return render_template(
+        "discover_people.html",
+        q=search_q,
+        suggestions=suggestions,
+        person_count=len(suggestions),
+        back_url=url_for("discover", q=search_q) if search_q else url_for("discover"),
     )
 
 
@@ -2028,7 +2869,7 @@ def friends_request(user_id):
 
     other = db.session.get(User, user_id)
     next_page = request.form.get("next", "friends").strip()
-    if next_page != "user_profile":
+    if next_page not in ("user_profile", "discover", "discover_people"):
         next_page = "friends"
 
     def redirect_after_friend_request():
@@ -2036,6 +2877,16 @@ def friends_request(user_id):
             form_user_id = request.form.get("user_id", type=int)
             if form_user_id == user_id:
                 return redirect(user_profile_url_from_values(user_id, request.form))
+        if next_page == "discover_people":
+            search_q = (request.form.get("q") or "").strip()
+            if search_q:
+                return redirect(url_for("discover_people", q=search_q))
+            return redirect(url_for("discover_people"))
+        if next_page == "discover":
+            search_q = (request.form.get("q") or "").strip()
+            if search_q:
+                return redirect(url_for("discover", q=search_q))
+            return redirect(url_for("discover"))
         return redirect(url_for("friends"))
 
     if other is None:

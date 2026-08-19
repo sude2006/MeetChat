@@ -235,20 +235,18 @@
                     {% endif %}
 
                     <div class="plan-meta-row">
-                        <div class="plan-time-group">
-                            <svg class="plan-meta-icon" width="17" height="17" viewBox="0 0 24 24" aria-hidden="true">
-                                <circle cx="12" cy="12" r="7.6" fill="none" stroke="currentColor" stroke-width="2.25"/>
-                                <path d="M12 8.2v4.2l3 1.7" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/>
+                        <span class="plan-time-badge{% if plan.time_is_today %} is-today{% endif %}">
+                            <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+                                <circle cx="12" cy="12" r="7.6" fill="none" stroke="currentColor" stroke-width="2"/>
+                                <path d="M12 8.2v4.2l3 1.7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
-                            <span class="plan-time-badge{% if plan.time_is_today %} is-today{% endif %}">
-                                {{ plan.time_label }}
-                            </span>
-                        </div>
+                            <span>{{ plan.time_label }}</span>
+                        </span>
                         {% if plan.location %}
                         <div class="plan-location">
-                            <svg class="plan-meta-icon" width="17" height="17" viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M12 21s6.6-5.8 6.6-10.4a6.6 6.6 0 10-13.2 0c0 4.6 6.6 10.4 6.6 10.4z" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linejoin="round"/>
-                                <circle cx="12" cy="10.4" r="2.35" fill="none" stroke="currentColor" stroke-width="2.25"/>
+                            <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M12 21s6.6-5.8 6.6-10.4a6.6 6.6 0 10-13.2 0c0 4.6 6.6 10.4 6.6 10.4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                                <circle cx="12" cy="10.4" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/>
                             </svg>
                             <span>{{ plan.location }}</span>
                         </div>

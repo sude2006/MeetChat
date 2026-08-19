@@ -86,45 +86,31 @@
                 <p class="activity-description">{{ activity.description }}</p>
                 {% endif %}
 
-                <div class="detail-logistics">
-                    <div class="detail-time-group">
-                        <svg class="detail-meta-icon" width="17" height="17" viewBox="0 0 24 24" aria-hidden="true">
-                            <circle cx="12" cy="12" r="7.6" fill="none" stroke="currentColor" stroke-width="2.25"/>
-                            <path d="M12 8.2v4.2l3 1.7" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                        <span class="detail-time-badge">{{ time_label }}</span>
-                    </div>
-                    {% if activity.location %}
-                    <div class="detail-location">
-                        <svg class="detail-meta-icon" width="17" height="17" viewBox="0 0 24 24" aria-hidden="true">
-                            <path d="M12 21s6.6-5.8 6.6-10.4a6.6 6.6 0 10-13.2 0c0 4.6 6.6 10.4 6.6 10.4z" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linejoin="round"/>
-                            <circle cx="12" cy="10.4" r="2.35" fill="none" stroke="currentColor" stroke-width="2.25"/>
+                <div class="detail-time-group{% if category_key %} chip-{{ category_key }}{% endif %}">
+                    <svg class="detail-meta-icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="12" r="7.6" fill="none" stroke="currentColor" stroke-width="2.1"/>
+                        <path d="M12 8.2v4.2l3 1.7" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>{{ datetime_compact }}</span>
+                </div>
+
+                {% if activity.location %}
+                <div class="detail-location-bar">
+                    <p class="detail-location-name">
+                        <svg class="detail-meta-icon" width="15" height="15" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 21s6.6-5.8 6.6-10.4a6.6 6.6 0 10-13.2 0c0 4.6 6.6 10.4 6.6 10.4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                            <circle cx="12" cy="10.4" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/>
                         </svg>
                         <span>{{ activity.location }}</span>
-                    </div>
-                    {% endif %}
+                    </p>
+                    <a
+                        class="detail-map-link"
+                        href="https://www.google.com/maps/search/?api=1&query={{ activity.location|urlencode }}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >Haritada Gör ›</a>
                 </div>
-            </section>
-
-            <section class="detail-map-section" aria-label="Konum">
-                <div class="detail-map{% if not activity.location %} is-empty{% endif %}">
-                    <svg class="detail-map-art" viewBox="0 0 360 176" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-                        <rect width="360" height="176" fill="#EEF2EE"/>
-                        <rect x="18" y="22" width="86" height="58" rx="10" fill="#DCE8D8"/>
-                        <rect x="248" y="14" width="92" height="70" rx="10" fill="#E4EBDF"/>
-                        <rect x="40" y="108" width="120" height="48" rx="10" fill="#E7EEE4"/>
-                        <path d="M0 92h360M118 0v176M236 0v176M0 44h360" fill="none" stroke="#E2E6E1" stroke-width="10"/>
-                        <path d="M0 92h360M118 0v176M236 0v176" fill="none" stroke="#F7F8F6" stroke-width="2.5"/>
-                        <circle cx="180" cy="86" r="16" fill="rgba(232,146,156,0.22)"/>
-                        <circle cx="180" cy="86" r="8" fill="#E8929C"/>
-                        <circle cx="180" cy="86" r="3.2" fill="#FFFFFF"/>
-                    </svg>
-                    {% if activity.location %}
-                    <span class="detail-map-label">{{ activity.location }}</span>
-                    {% else %}
-                    <span class="detail-map-label is-muted">Konum eklenmedi</span>
-                    {% endif %}
-                </div>
+                {% endif %}
             </section>
 
             <section class="detail-block detail-social" aria-label="Katılımcılar">
@@ -134,28 +120,21 @@
                         Tümünü Gör
                     </button>
                 </div>
-                <p class="social-visibility">
+                <div class="social-row">
                     <span class="social-visibility-icon" aria-hidden="true">
                         {% if activity.visibility == "friends" %}
-                        <svg width="14" height="14" viewBox="0 0 24 24">
-                            <circle cx="9" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="2"/>
-                            <circle cx="16.2" cy="9" r="2.4" fill="none" stroke="currentColor" stroke-width="2"/>
-                            <path d="M3.6 19c.7-3 2.5-4.6 5.4-4.6s4.7 1.6 5.4 4.6M14.2 15.4c2.5-.3 4.6.9 5.5 3.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <svg width="16" height="16" viewBox="0 0 24 24">
+                            <circle cx="9" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                            <circle cx="16.2" cy="9" r="2.4" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                            <path d="M3.6 19c.7-3 2.5-4.6 5.4-4.6s4.7 1.6 5.4 4.6M14.2 15.4c2.5-.3 4.6.9 5.5 3.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
                         </svg>
                         {% else %}
-                        <svg width="14" height="14" viewBox="0 0 24 24">
-                            <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/>
-                            <path d="M4 12h16M12 4c2.4 2.6 3.6 5.2 3.6 8S14.4 17.4 12 20M12 4c-2.4 2.6-3.6 5.2-3.6 8S9.6 17.4 12 20" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                        <svg width="16" height="16" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                            <path d="M4 12h16M12 4c2.4 2.6 3.6 5.2 3.6 8S14.4 17.4 12 20M12 4c-2.4 2.6-3.6 5.2-3.6 8S9.6 17.4 12 20" fill="none" stroke="currentColor" stroke-width="1.7"/>
                         </svg>
                         {% endif %}
                     </span>
-                    {% if activity.visibility == "friends" %}
-                    Sadece Arkadaşlar
-                    {% else %}
-                    Herkese Açık
-                    {% endif %}
-                </p>
-                <div class="social-row">
                     {% if participant_avatars %}
                     <div class="social-avatars" aria-hidden="true">
                         {% for avatar in participant_avatars %}
@@ -167,6 +146,8 @@
                     </div>
                     {% endif %}
                     <p class="social-summary">
+                        {% if activity.visibility == "friends" %}Sadece Arkadaşlar{% else %}Herkese Açık{% endif %}
+                        ·
                         {% if participants_lead_name %}
                         <strong>{{ participants_lead_name }}</strong>{{ participants_summary[participants_lead_name|length:] }}
                         {% else %}
@@ -242,7 +223,8 @@
                         >{{ form_body }}</textarea>
                         <button type="submit" class="comment-send" aria-label="Yorumu gönder">
                             <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M4 12l16-8-6.5 16-2.2-6.6L4 12z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                                <path d="M22 2L11 13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                <path d="M22 2l-7 20-4-9-9-4 20-7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
                             </svg>
                         </button>
                     </div>
