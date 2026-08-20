@@ -6,11 +6,12 @@
 ========================= */
 
 :root {
-    --primary: #FF465B;
-    --coral: #E8929C;
-    --coral-hover: #E07E8A;
-    --coral-soft: rgba(232, 146, 156, 0.14);
-    --coral-text: #D36B78;
+    --primary: #17B5BF;
+    --coral: #17B5BF;
+    --coral-hover: #149EA8;
+    --coral-soft: #EAF8F9;
+    --coral-text: #17B5BF;
+    --info: #5FA8D3;
     --text: #2E2E2E;
     --text-muted: #8A8A8A;
     --text-soft: #666666;
@@ -323,7 +324,7 @@ a.rail-all:hover {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    color: #C98A94;
+    color: #5FA8D3;
     font-size: 11px;
     font-weight: 500;
     line-height: 1;
@@ -560,7 +561,7 @@ a.rail-all:hover {
 
 .recent-row-time,
 .recent-row-location {
-    color: #C98A94;
+    color: #5FA8D3;
 }
 
 .recent-row-people {
@@ -581,7 +582,7 @@ a.rail-all:hover {
     padding: 15px 16px 14px;
     border: 1px solid var(--border);
     border-radius: 22px;
-    background: #FBF8F8;
+    background: #EAF8F9;
     box-shadow: none;
 }
 
@@ -591,7 +592,7 @@ a.rail-all:hover {
     font-size: 12px;
     font-weight: 600;
     line-height: 1.35;
-    color: #8A6A70;
+    color: #17B5BF;
     transform: skewX(-6deg);
     transform-origin: left center;
 }
@@ -683,4 +684,8 @@ a.rail-all:hover {
     .pick-title {
         font-size: 20px;
     }
+}
+
+.create-btn {
+    box-shadow: 0 6px 18px rgba(23, 181, 191, 0.28);
 }

@@ -6,10 +6,11 @@
 ========================= */
 
 :root {
-    --primary: #FF465B;
-    --secondary: #61EAD5;
-    --accent: #FFA3A2;
-    --coral: #E8929C;
+    --primary: #17B5BF;
+    --secondary: #A5E7EA;
+    --info: #5FA8D3;
+    --accent: #A5E7EA;
+    --coral: #17B5BF;
     --background: #FFFFFF;
     --surface: #FFFFFF;
     --text: #2E2E2E;
@@ -116,9 +117,9 @@ main {
 
 .home-filters {
     margin: 0 0 14px;
-    --filter-coral: #E8929C;
-    --filter-coral-soft: rgba(232, 146, 156, 0.14);
-    --filter-coral-shadow: rgba(232, 146, 156, 0.22);
+    --filter-coral: #A5E7EA;
+    --filter-coral-soft: rgba(165, 231, 234, 0.28);
+    --filter-coral-shadow: rgba(165, 231, 234, 0.18);
 }
 
 .time-filters {
@@ -165,9 +166,9 @@ main {
 }
 
 .time-filter-chip:has(input:checked) span {
-    background: var(--filter-coral);
-    border-color: var(--filter-coral);
-    color: var(--white);
+    background: #EAF8F9;
+    border-color: #A5E7EA;
+    color: #17B5BF;
     box-shadow: 0 2px 6px var(--filter-coral-shadow);
 }
 
@@ -411,13 +412,13 @@ main {
     font-size: 12px;
     font-weight: 600;
     line-height: 1;
-    color: #4A73A8;
-    background: #E8F1FB;
+    color: #5FA8D3;
+    background: #E8F4FA;
 }
 
 .plan-time-badge svg {
     flex-shrink: 0;
-    color: #4A73A8;
+    color: #5FA8D3;
 }
 
 .plan-location span {
@@ -489,29 +490,29 @@ main {
 }
 
 .join-btn {
-    border: 1.5px solid #E8929C;
-    background: #E8929C;
+    border: 1.5px solid #17B5BF;
+    background: #17B5BF;
     color: #FFFFFF;
 }
 
 .join-btn:hover {
-    background: #E07E8A;
-    border-color: #E07E8A;
+    background: #149EA8;
+    border-color: #149EA8;
 }
 
 .join-btn.active,
 .plan-actions.is-joined .join-btn {
     background: #FFFFFF;
-    border-color: #E8929C;
-    color: #E8929C;
+    border-color: #17B5BF;
+    color: #17B5BF;
     box-shadow: none;
 }
 
 .join-btn.active:hover,
 .plan-actions.is-joined .join-btn:hover {
-    background: #FFF8F9;
-    border-color: #E07E8A;
-    color: #E07E8A;
+    background: #F3FBFB;
+    border-color: #149EA8;
+    color: #149EA8;
 }
 
 .maybe-btn {
@@ -551,16 +552,20 @@ main {
 
 .maybe-btn.active,
 .plan-actions.is-maybe .maybe-btn {
-    background: #FBE8EB;
-    border: 1.5px solid #E8929C;
-    color: #D36B78;
+    background: #E8F7F8;
+    border: 1.5px solid #A5E7EA;
+    color: #17B5BF;
 }
 
 .maybe-btn.active:hover,
 .plan-actions.is-maybe .maybe-btn:hover {
-    background: #F8DEE2;
-    border-color: #E07E8A;
-    color: #C96B76;
+    background: #DCF3F5;
+    border-color: #17B5BF;
+    color: #149EA8;
+}
+
+.create-btn {
+    box-shadow: 0 6px 18px rgba(23, 181, 191, 0.28);
 }
 
 /* =========================

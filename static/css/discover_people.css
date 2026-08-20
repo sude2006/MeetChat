@@ -68,7 +68,7 @@
     height: 22px;
     border-radius: 50%;
     background: var(--coral-soft);
-    color: var(--coral-text);
+    color: #5FA8D3;
 }
 
 .dp-reason-badge svg {
@@ -80,7 +80,7 @@
     font-weight: 500;
     line-height: 1.25;
     letter-spacing: -0.01em;
-    color: var(--coral-text);
+    color: #5FA8D3;
 }
 
 .dp-bio {

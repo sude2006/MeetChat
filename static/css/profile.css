@@ -6,11 +6,12 @@
 ========================= */
 
 :root {
-    --primary: #FF465B;
-    --secondary: #61EAD5;
-    --accent: #FFA3A2;
-    --coral: #E8929C;
-    --coral-hover: #E07E8A;
+    --primary: #17B5BF;
+    --secondary: #A5E7EA;
+    --info: #5FA8D3;
+    --accent: #A5E7EA;
+    --coral: #17B5BF;
+    --coral-hover: #149EA8;
     --background: #FFFFFF;
     --surface-soft: #F8F8F8;
     --text: #2E2E2E;
@@ -169,7 +170,7 @@ main {
 }
 
 .friend-status-btn:hover {
-    background: #FFF8F9;
+    background: #F3FBFB;
     border-color: var(--coral-hover);
     color: var(--coral-hover);
 }
@@ -514,7 +515,7 @@ main {
     font-size: 10px;
     font-weight: 400;
     letter-spacing: 0;
-    color: #C7A8AC;
+    color: #5FA8D3;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -900,6 +901,10 @@ main {
 
 svg {
     display: block;
+}
+
+.create-btn {
+    box-shadow: 0 6px 18px rgba(23, 181, 191, 0.28);
 }
 
 @media (max-width: 360px) {

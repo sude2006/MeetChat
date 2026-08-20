@@ -3,13 +3,14 @@
 ========================= */
 
 :root {
-    --coral: #E8929C;
-    --coral-hover: #E07E8A;
-    --coral-soft: #FBE8EB;
-    --coral-text: #D36B78;
-    --primary: #E8929C;
-    --primary-hover: #E07E8A;
-    --primary-soft: rgba(232, 146, 156, 0.14);
+    --coral: #17B5BF;
+    --coral-hover: #149EA8;
+    --coral-soft: #EAF8F9;
+    --coral-text: #17B5BF;
+    --primary: #17B5BF;
+    --primary-hover: #149EA8;
+    --primary-soft: #EAF8F9;
+    --info: #5FA8D3;
     --text: #2E2E2E;
     --text-muted: #8A8A8A;
     --text-soft: #5C5C5C;
@@ -286,7 +287,7 @@ button {
     font-weight: 700;
     line-height: 1.2;
     letter-spacing: -0.02em;
-    color: #4C8DDA;
+    color: #5FA8D3;
 }
 
 .detail-time-group .detail-meta-icon {
@@ -330,16 +331,20 @@ button {
     white-space: nowrap;
 }
 
+.detail-location-name .detail-meta-icon {
+    color: #5FA8D3;
+}
+
 .detail-map-link {
     flex-shrink: 0;
     font-size: 13px;
     font-weight: 500;
-    color: #9A9A9A;
+    color: #17B5BF;
     white-space: nowrap;
 }
 
 .detail-map-link:hover {
-    color: #6B6B6B;
+    color: #149EA8;
 }
 
 /* =========================
@@ -903,7 +908,7 @@ button {
 
 .join-btn.active,
 .sticky-actions.is-joined .join-btn {
-    background: #FFFFFF;
+    background: #EAF8F9;
     border-color: var(--coral);
     color: var(--coral);
     box-shadow: none;

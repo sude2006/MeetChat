@@ -530,7 +530,10 @@ body.ue-sheet-open {
     cursor: pointer;
 }
 
-.ue-city-option.is-selected,
+.ue-city-option.is-selected {
+    background: #EAF8F9;
+}
+
 .ue-city-option:hover {
     background: #F7F7F7;
 }
@@ -551,12 +554,12 @@ body.ue-sheet-open {
 }
 
 .ue-distance-value {
-    color: #4C8DDA;
+    color: #5FA8D3;
 }
 
 .ue-distance-slider {
     width: 100%;
-    accent-color: #4C8DDA;
+    accent-color: #5FA8D3;
 }
 
 .ue-distance-note {
@@ -600,9 +603,9 @@ body.ue-sheet-open {
 }
 
 .ue-pill input:checked + span {
-    border-color: var(--primary);
-    background: var(--primary);
-    color: var(--white);
+    border-color: #17B5BF;
+    background: #EAF8F9;
+    color: #17B5BF;
 }
 
 .ue-category-group {
@@ -659,9 +662,9 @@ body.ue-sheet-open {
 }
 
 .ue-category-option input:checked + .ue-category-icon {
-    border-color: var(--primary);
-    background: var(--primary);
-    color: var(--white);
+    border-color: #17B5BF;
+    background: #EAF8F9;
+    color: #17B5BF;
 }
 
 .ue-category-option.cat-kahve input:checked + .ue-category-icon {
@@ -855,12 +858,12 @@ body.ue-sheet-open {
     min-height: 88px;
     padding: 10px 6px 12px;
     border-radius: 14px;
-    background: rgba(232, 146, 156, 0.12);
+    background: #EAF8F9;
     text-align: center;
 }
 
 .ue-when-box.is-today {
-    background: rgba(255, 70, 91, 0.1);
+    background: rgba(23, 181, 191, 0.12);
 }
 
 .ue-when-day {

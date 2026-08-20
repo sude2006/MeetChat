@@ -3,27 +3,28 @@
 ========================= */
 
 :root {
-    --primary: #FF465B;
-    --secondary: #61EAD5;
+    --primary: #17B5BF;
+    --secondary: #EAF8F9;
+    --info: #5FA8D3;
     --text: #2E2E2E;
     --text-muted: #8A8A8A;
     --text-soft: #666666;
     --white: #FFFFFF;
     --app-max: 430px;
     --nav-height: 92px;
-    --page-mint: #F4FBFA;
-    --card-read: #E8F6F2;
-    --card-unread: #C5EBE3;
+    --page-mint: #FFFFFF;
+    --card-read: #FFFFFF;
+    --card-unread: #FFFFFF;
     --button-gray: #E6E6E6;
-    --dot-coral: #FF465B;
+    --dot-coral: #5FA8D3;
     --icon-friend: #8B6CC9;
     --icon-friend-bg: #F0E8FB;
-    --icon-join: #2BB59A;
-    --icon-join-bg: #D8F6EF;
+    --icon-join: #17B5BF;
+    --icon-join-bg: #EAF8F9;
     --icon-comment: #4A8DE0;
     --icon-comment-bg: #E4F0FF;
-    --icon-time: #FF465B;
-    --icon-time-bg: #FFE6E9;
+    --icon-time: #5FA8D3;
+    --icon-time-bg: #E8F4FA;
     --avatar-bg: #F3D5C4;
     --avatar-text: #8A5A44;
 }
@@ -82,6 +83,7 @@ body {
     padding: 16px 18px;
     border-radius: 22px;
     background: var(--card-read);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
 }
 
 .notification-card.is-clickable {
@@ -104,7 +106,6 @@ body {
 
 .notification-card.is-unread {
     background: var(--card-unread);
-    padding-right: 28px;
 }
 
 .notification-card-inner {
@@ -257,18 +258,19 @@ body {
 
 .notification-change strong {
     font-weight: 700;
-    color: var(--dot-coral);
+    color: var(--info);
 }
 
 .notification-dot {
     position: absolute;
-    top: 50%;
-    right: 14px;
+    top: calc(16px + 2px + 18px);
+    left: 8px;
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: var(--dot-coral);
+    background: #5FA8D3;
     transform: translateY(-50%);
+    pointer-events: none;
 }
 
 .empty-text {
@@ -292,8 +294,9 @@ body {
         border-radius: 18px;
     }
 
-    .notification-card.is-unread {
-        padding-right: 24px;
+    .notification-dot {
+        top: calc(14px + 2px + 16px);
+        left: 6px;
     }
 
     .notification-icon {
@@ -311,4 +314,8 @@ body {
         font-size: 12px;
         padding: 0 8px;
     }
+}
+
+.create-btn {
+    box-shadow: 0 6px 18px rgba(23, 181, 191, 0.28);
 }
