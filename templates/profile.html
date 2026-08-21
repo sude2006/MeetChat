@@ -7,6 +7,7 @@
     <title>Profil — MeetChat</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/letter_avatar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/activity_wheel.css') }}">
 </head>
 
 <body>
@@ -32,7 +33,32 @@
 
         <main>
             <section class="identity">
-                {{ letter_avatar(profile_user.avatar, size="xl") }}
+                <div class="activity-wheel">
+                    <span class="visually-hidden">Sosyal deneyim özeti (prototip)</span>
+                    <svg class="activity-wheel-svg" viewBox="0 0 100 100" focusable="false" aria-hidden="true">
+                        <circle class="activity-wheel-track" cx="50" cy="50" r="40"/>
+                        {# Statik demo: Kitap en yoğun, Kahve yüksek, Spor+Doğa orta — gerçek veri değil #}
+                        <path class="activity-wheel-arc is-kahve is-high" d="M 35.02 12.91 A 40 40 0 0 1 64.98 12.91"/>
+                        <path class="activity-wheel-arc is-spor is-mid" d="M 88.04 37.64 A 40 40 0 0 1 88.04 62.36"/>
+                        <path class="activity-wheel-arc is-kitap is-high" d="M 68.78 85.32 A 40 40 0 0 1 31.22 85.32"/>
+                        <path class="activity-wheel-arc is-doga is-mid" d="M 11.36 60.35 A 40 40 0 0 1 11.36 39.65"/>
+                    </svg>
+                    <div class="activity-wheel-center">
+                        {{ letter_avatar(profile_user.avatar, size="xl") }}
+                    </div>
+                    <span class="activity-wheel-slot is-kahve is-high" aria-hidden="true">
+                        {{ render_category_icon("kahve", 9) }}
+                    </span>
+                    <span class="activity-wheel-slot is-spor is-mid" aria-hidden="true">
+                        {{ render_category_icon("spor", 9) }}
+                    </span>
+                    <span class="activity-wheel-slot is-kitap is-high" aria-hidden="true">
+                        {{ render_category_icon("kitap", 9) }}
+                    </span>
+                    <span class="activity-wheel-slot is-doga is-mid" aria-hidden="true">
+                        {{ render_category_icon("doga", 9) }}
+                    </span>
+                </div>
                 <div class="profile-copy">
                     <h1 class="profile-handle">{{ profile_user.handle }}</h1>
                     <p class="profile-bio">{{ profile_user.bio }}</p>
