@@ -48,6 +48,7 @@ class Activity(db.Model):
         default="public",
         server_default="public",
     )
+    category = db.Column(db.String(20), nullable=True)
     creator_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -1003,6 +1004,7 @@ def parse_activity_form():
         "date": request.form.get("date", "").strip(),
         "time": request.form.get("time", "").strip(),
         "location": request.form.get("location", "").strip(),
+        "category": request.form.get("category", "").strip(),
         "visibility": request.form.get("visibility", "public").strip() or "public",
     }
 
@@ -1036,6 +1038,8 @@ def validate_activity_form(form_data, original_date=None, original_time=None):
         datetime.strptime(form_data["time"], "%H:%M")
     except ValueError:
         return "Saati 14:30 formatında girin."
+    if form_data["category"] not in ACTIVITY_CATEGORY_LABELS:
+        return "Lütfen geçerli bir kategori seçin."
     if form_data["visibility"] not in VALID_ACTIVITY_VISIBILITIES:
         return "Lütfen geçerli bir görünürlük seçin."
     datetime_unchanged = (
@@ -1360,7 +1364,7 @@ def serialize_profile_activity(activity, *, is_past, source="profile", user_id=N
         if profile_user_id is not None:
             detail_kwargs["user_id"] = profile_user_id
     creator = activity.creator
-    category_key = _activity_category_key(activity.id)
+    category_key = _activity_category_key(activity)
     time_label, _time_is_today = format_activity_time_label(activity.date, activity.time)
     return {
         "id": activity.id,
@@ -1577,9 +1581,8 @@ def render_activity_detail(
         current_user is not None and is_activity_owner(current_user, activity)
     )
     time_label, _time_is_today = format_activity_time_label(activity.date, activity.time)
-    category_key = session.get(f"created_plan_category_{activity.id}", "")
-    if category_key not in ACTIVITY_CATEGORY_LABELS:
-        category_key = ""
+
+    category_key = _activity_category_key(activity)
 
     return render_template(
         "activity_detail.html",
@@ -1648,9 +1651,7 @@ def home():
         participant_display = build_participant_display(
             activity, current_user.id, friend_ids
         )
-        category_key = session.get(f"created_plan_category_{activity.id}", "")
-        if category_key not in ACTIVITY_CATEGORY_LABELS:
-            category_key = ""
+        category_key = _activity_category_key(activity)
         joined_count = participant_display["joined_count"]
         maybe_count = participant_display["maybe_count"]
         user_participation = next(
@@ -1738,13 +1739,13 @@ def create_activity():
         time=form_data["time"],
         location=form_data["location"],
         visibility=form_data["visibility"],
+        category=form_data["category"],
         creator_id=current_user.id,
     )
     db.session.add(activity)
     db.session.commit()
 
-    category_key = request.form.get("category", "").strip()
-    session[f"created_plan_category_{activity.id}"] = category_key
+    category_key = _activity_category_key(activity)
     created = build_created_plan_view(activity, category_key)
     if wants_json:
         return jsonify({"ok": True, **created})
@@ -1761,7 +1762,7 @@ def activity_created(activity_id):
     if activity is None or activity.creator_id != current_user.id:
         return redirect(url_for("home"))
 
-    category_key = session.get(f"created_plan_category_{activity.id}", "")
+    category_key = _activity_category_key(activity)
     created = build_created_plan_view(activity, category_key)
     return render_template("activity_created.html", created=created)
 
@@ -1884,9 +1885,7 @@ def edit_activity(activity_id):
         return redirect(url_for("home"))
 
     if request.method == "GET":
-        category_key = session.get(f"created_plan_category_{activity.id}", "")
-        if category_key not in ACTIVITY_CATEGORY_LABELS:
-            category_key = ""
+        category_key = _activity_category_key(activity)
         form_data = {
             "title": activity.title,
             "description": activity.description,
@@ -1934,6 +1933,7 @@ def edit_activity(activity_id):
     activity.time = form_data["time"]
     activity.location = form_data["location"]
     activity.visibility = form_data["visibility"]
+    activity.category = form_data["category"]
 
     date_changed = form_data["date"] != old_date
     time_changed = form_data["time"] != old_time
@@ -1961,10 +1961,6 @@ def edit_activity(activity_id):
             )
 
     db.session.commit()
-    category_key = form_data.get("category", "").strip()
-    if category_key not in ACTIVITY_CATEGORY_LABELS:
-        category_key = ""
-    session[f"created_plan_category_{activity.id}"] = category_key
 
     return redirect(url_for("activity_detail", activity_id=activity_id))
 
@@ -2068,8 +2064,8 @@ def add_comment(activity_id):
         )
     )
 
-def _activity_category_key(activity_id):
-    key = session.get(f"created_plan_category_{activity_id}", "")
+def _activity_category_key(activity):
+    key = (activity.category or "").strip()
     return key if key in ACTIVITY_CATEGORY_LABELS else "diger"
 
 
@@ -2077,7 +2073,7 @@ def _discover_activity_card(activity, search_q=""):
     creator_avatar = avatar_for_user(activity.creator)
     time_label, _time_is_today = format_activity_time_label(activity.date, activity.time)
     joined_count = sum(1 for p in activity.participants if p.status == "joined")
-    category_key = _activity_category_key(activity.id)
+    category_key = _activity_category_key(activity)
     detail_kwargs = {"activity_id": activity.id, "source": "discover"}
     if search_q:
         detail_kwargs["q"] = search_q
@@ -2288,7 +2284,7 @@ def _discover_upcoming_list_card(
     joined = [p for p in activity.participants if p.status == "joined"]
     joined_count = len(joined)
     participant_avatars = [avatar_for_user(p.user) for p in joined[:3]]
-    category_key = _activity_category_key(activity.id)
+    category_key = _activity_category_key(activity)
     comment_count = Comment.query.filter_by(activity_id=activity.id).count()
     detail_url = build_detail_url(
         activity.id,
@@ -2329,7 +2325,7 @@ def _discover_recent_list_card(
     joined = [p for p in activity.participants if p.status == "joined"]
     joined_count = len(joined)
     participant_avatars = [avatar_for_user(p.user) for p in joined[:3]]
-    category_key = _activity_category_key(activity.id)
+    category_key = _activity_category_key(activity)
     comment_count = Comment.query.filter_by(activity_id=activity.id).count()
     detail_url = build_detail_url(
         activity.id,
@@ -2514,7 +2510,7 @@ def discover_upcoming():
             continue
         if not activity_matches_upcoming_list_time_filter(activity, time_filter):
             continue
-        activity_category = _activity_category_key(activity.id)
+        activity_category = _activity_category_key(activity)
         if category_filter and activity_category != category_filter:
             continue
         events.append(
@@ -2570,7 +2566,7 @@ def discover_recent():
     activities_db = query.all()
     matched = []
     for activity in activities_db:
-        activity_category = _activity_category_key(activity.id)
+        activity_category = _activity_category_key(activity)
         if category_filter and activity_category != category_filter:
             continue
         matched.append(activity)
