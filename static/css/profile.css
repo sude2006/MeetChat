@@ -133,6 +133,9 @@ main {
     font-weight: 600;
     letter-spacing: 0;
     color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .profile-bio {
@@ -143,25 +146,47 @@ main {
     line-height: 1.4;
 }
 
+.identity--viewed {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.identity--viewed > .letter-avatar {
+    flex-shrink: 0;
+}
+
+.identity--viewed .profile-copy {
+    flex: 1;
+    min-width: 0;
+}
+
+.friend-actions {
+    flex-shrink: 0;
+    align-self: center;
+}
+
+.friend-actions form {
+    margin: 0;
+}
+
 .friend-status {
     position: relative;
-    margin: 2px 2px 16px;
 }
 
 .friend-status-btn {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    width: 100%;
-    min-height: 44px;
-    padding: 8px 14px;
-    border-radius: 12px;
+    gap: 5px;
+    width: auto;
+    padding: 6px 11px;
+    border-radius: 999px;
     border: 1.5px solid var(--coral);
     background: #FFFFFF;
     color: var(--coral);
-    font-size: 14px;
-    font-weight: 700;
+    font-size: 12px;
+    font-weight: 600;
     line-height: 1;
     white-space: nowrap;
     appearance: none;
@@ -175,24 +200,110 @@ main {
     color: var(--coral-hover);
 }
 
+.friend-status-btn--add,
+.friend-status-btn--accept {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--white);
+}
+
+.friend-status-btn--add:hover,
+.friend-status-btn--accept:hover {
+    background: var(--coral-hover);
+    border-color: var(--coral-hover);
+    color: var(--white);
+}
+
+.friend-status-btn--reject {
+    background: #FFFFFF;
+    border-color: #E4E4E4;
+    color: var(--text-soft);
+}
+
+.friend-status-btn--reject:hover {
+    background: #FAFAFA;
+    border-color: #D8D8D8;
+    color: var(--text);
+}
+
 .friend-status-btn svg {
-    width: 16px;
-    height: 16px;
+    width: 12px;
+    height: 12px;
     flex-shrink: 0;
     transition: transform 0.15s ease;
 }
 
-.friend-status-btn[aria-expanded="true"] svg {
+.friend-status-btn svg:last-child {
+    width: 11px;
+    height: 11px;
+}
+
+.friend-status-btn[aria-expanded="true"] svg:last-child {
     transform: rotate(180deg);
+}
+
+.friend-actions--incoming {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.friend-actions--sent {
+    align-self: center;
+}
+
+.friend-sent-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 3px;
+}
+
+.friend-sent-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin: 0;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: #E5F7F8;
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.friend-sent-badge svg {
+    flex-shrink: 0;
+}
+
+.friend-withdraw-btn {
+    display: block;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.2;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    cursor: pointer;
+}
+
+.friend-withdraw-btn:hover {
+    color: var(--text-soft);
 }
 
 .owner-menu-panel {
     position: absolute;
     top: calc(100% + 6px);
-    left: 0;
     right: 0;
+    left: auto;
     z-index: 30;
-    min-width: 0;
+    min-width: 168px;
     padding: 6px;
     border-radius: 14px;
     background: #FFFFFF;
