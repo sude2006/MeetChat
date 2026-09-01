@@ -2632,6 +2632,15 @@ def profile():
     return render_template("profile.html", **context)
 
 
+@app.route("/settings")
+def settings():
+    current_user = get_current_user()
+    if current_user is None:
+        return redirect(url_for("login"))
+
+    return render_template("settings.html")
+
+
 @app.route("/users/<int:user_id>")
 def user_profile(user_id):
     current_user = get_current_user()

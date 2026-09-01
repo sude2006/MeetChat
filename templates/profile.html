@@ -16,19 +16,12 @@
     <div class="app-shell">
         <header class="profile-topbar">
             <h1 class="profile-page-title">Profil</h1>
-            <button
-                type="button"
-                class="icon-button"
-                aria-label="Ayarlar"
-                title="Yakında"
-                disabled
-                aria-disabled="true"
-            >
+            <a href="{{ url_for('settings') }}" class="icon-button" aria-label="Ayarlar">
                 <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
                     <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/>
                     <path d="M19 12a7 7 0 00-.1-1l2-1.5-2-3.4-2.4 1a8 8 0 00-1.8-1L14.4 3h-4.8l-.4 3.1a8 8 0 00-1.8 1L5 6.1 3 9.5 5.1 11a7 7 0 000 2L3 14.5l2 3.4 2.4-1a8 8 0 001.8 1l.4 3.1h4.8l.4-3.1a8 8 0 001.8-1l2.4 1 2-3.4-2.1-1.5c.1-.3.1-.7.1-1z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
                 </svg>
-            </button>
+            </a>
         </header>
 
         <main>
