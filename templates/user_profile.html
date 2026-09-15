@@ -7,10 +7,12 @@
     <title>{{ profile_user.handle }} — MeetChat</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/letter_avatar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/activity_wheel.css') }}">
 </head>
 
 <body>
     {% from "partials/letter_avatar.html" import letter_avatar %}
+    {% from "partials/category_icon.html" import render_category_icon %}
     <div class="app-shell">
         <header class="profile-topbar">
             <a href="{{ back_url }}" class="icon-button" data-profile-back aria-label="Geri">
@@ -22,10 +24,56 @@
 
         <main>
             <section class="identity identity--viewed">
-                {{ letter_avatar(profile_user.avatar, size="xl") }}
+                <div class="activity-wheel{% if experience.is_empty %} activity-wheel--empty{% endif %}">
+                    {% if not experience.is_empty %}
+                    <span class="visually-hidden">{{ experience.sr_summary }}</span>
+                    {% endif %}
+                    <svg class="activity-wheel-svg" viewBox="0 0 100 100" focusable="false" aria-hidden="true">
+                        <circle class="activity-wheel-track" cx="50" cy="50" r="40"/>
+                        {% for category in experience.categories %}
+                        <path
+                            class="activity-wheel-arc is-{{ category.key }} is-{{ category.intensity }}"
+                            d="{{ category.arc_d }}"
+                        />
+                        {% endfor %}
+                    </svg>
+                    <div class="activity-wheel-center">
+                        {{ letter_avatar(profile_user.avatar, size="xl") }}
+                    </div>
+                    {% for category in experience.categories %}
+                    <span
+                        class="activity-wheel-slot is-{{ category.key }} is-{{ category.intensity }}"
+                        style="--aw-angle: {{ category.angle }}deg"
+                        aria-hidden="true"
+                    >
+                        {{ render_category_icon(category.key, 9) }}
+                    </span>
+                    {% endfor %}
+                </div>
                 <div class="profile-copy">
+                    <p class="experience-heading">Sosyal Deneyim Çemberi</p>
                     <h1 class="profile-handle">{{ profile_user.handle }}</h1>
                     <p class="profile-bio">{{ profile_user.bio }}</p>
+                    {% if experience.is_empty %}
+                    <p class="experience-empty">{{ experience.empty_message }}</p>
+                    {% else %}
+                    <button
+                        type="button"
+                        class="experience-details-toggle"
+                        data-experience-toggle
+                        aria-expanded="false"
+                        aria-controls="experience-details"
+                    >
+                        <svg class="experience-details-icon" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2.2"/>
+                            <path d="M12 4a8 8 0 018 8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+                        </svg>
+                        <span data-experience-toggle-label>Deneyim özeti</span>
+                        <svg class="experience-details-chevron" width="10" height="10" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                    {% endif %}
                 </div>
 
                 {% if friendship_state == "add" %}
@@ -126,6 +174,25 @@
                 </div>
                 {% endif %}
             </section>
+
+            {% if not experience.is_empty %}
+            <div id="experience-details" class="experience-details" hidden>
+                <p class="experience-total">{% if experience.total == 1 %}1 tamamlanmış deneyim{% else %}{{ experience.total }} tamamlanmış deneyim{% endif %}</p>
+                <ul class="experience-legend" aria-label="Kategori özeti">
+                    {% for category in experience.categories %}
+                    <li class="experience-legend-item is-{{ category.key }}" style="--experience-percent: {{ category.percent }}%;">
+                        <span class="experience-legend-bar" aria-hidden="true"></span>
+                        <span class="experience-legend-swatch is-{{ category.key }}" aria-hidden="true"></span>
+                        <span class="experience-legend-name">{{ category.label }}</span>
+                        <span class="experience-legend-meta">
+                            {% if category.count == 1 %}1 deneyim{% else %}{{ category.count }} deneyim{% endif %}
+                            <span class="experience-legend-percent">· %{{ category.percent }}</span>
+                        </span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
 
             {% if friendship_state == "friends" and friendship %}
             <dialog class="confirm-modal" aria-labelledby="unfriend-modal-title" aria-describedby="unfriend-modal-copy">
@@ -379,6 +446,20 @@
                 activateTab(tab.dataset.tab);
             });
         });
+
+        const experienceToggle = document.querySelector("[data-experience-toggle]");
+        const experiencePanel = document.getElementById("experience-details");
+        if (experienceToggle && experiencePanel) {
+            function setExperienceDetailsOpen(open) {
+                experienceToggle.setAttribute("aria-expanded", open ? "true" : "false");
+                experiencePanel.hidden = !open;
+            }
+
+            experienceToggle.addEventListener("click", function () {
+                const expanded = experienceToggle.getAttribute("aria-expanded") === "true";
+                setExperienceDetailsOpen(!expanded);
+            });
+        }
 
         const friendStatus = document.querySelector(".friend-status");
         const friendStatusBtn = document.getElementById("friend-status-btn");

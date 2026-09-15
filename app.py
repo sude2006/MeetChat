@@ -6,6 +6,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 import hashlib
+import math
 import os
 
 TURKEY_TZ = ZoneInfo("Europe/Istanbul")
@@ -1395,7 +1396,10 @@ def partition_profile_activities(activities, source="profile", user_id=None):
     upcoming_raw = []
     past_raw = []
     for activity in activities:
-        if is_activity_datetime_in_past(activity.date, activity.time):
+        occurred = activity_has_occurred_or_skip(activity)
+        if occurred is None:
+            continue
+        if occurred:
             past_raw.append(activity)
         else:
             upcoming_raw.append(activity)
@@ -1414,6 +1418,225 @@ def partition_profile_activities(activities, source="profile", user_id=None):
             )
             for activity in past_raw
         ],
+    }
+
+
+EXPERIENCE_JOINED_STATUS = "joined"
+EXPERIENCE_EMPTY_MESSAGE = "Henüz tamamlanmış sosyal deneyimin yok."
+WHEEL_CX = 50
+WHEEL_CY = 50
+WHEEL_RADIUS = 40
+
+
+def participation_qualifies_as_experience(status):
+    return (status or "").strip() == EXPERIENCE_JOINED_STATUS
+
+
+def select_joined_experience_activities(participations):
+    selected = []
+    seen = set()
+    for item in participations or []:
+        if item is None:
+            continue
+        if isinstance(item, tuple):
+            activity = item[0] if item else None
+            status = item[1] if len(item) > 1 else None
+        else:
+            activity = getattr(item, "activity", None)
+            status = getattr(item, "status", None)
+        if not participation_qualifies_as_experience(status):
+            continue
+        activity_id = getattr(activity, "id", None)
+        if activity is None or activity_id is None or activity_id in seen:
+            continue
+        seen.add(activity_id)
+        selected.append(activity)
+    return selected
+
+
+def activity_has_occurred_or_skip(activity):
+    try:
+        date_str = getattr(activity, "date", None)
+        time_str = getattr(activity, "time", None)
+        if not isinstance(date_str, str) or not isinstance(time_str, str):
+            return None
+        if not date_str.strip() or not time_str.strip():
+            return None
+        return is_activity_datetime_in_past(date_str, time_str)
+    except (TypeError, ValueError, AttributeError, OverflowError):
+        return None
+
+
+def collect_completed_experience_activities(created_activities, joined_activities):
+    by_id = {}
+    for activity in list(created_activities or []) + list(joined_activities or []):
+        activity_id = getattr(activity, "id", None)
+        if activity is None or activity_id is None or activity_id in by_id:
+            continue
+        by_id[activity_id] = activity
+
+    completed = []
+    for activity in by_id.values():
+        if activity_has_occurred_or_skip(activity) is True:
+            completed.append(activity)
+    return completed
+
+
+def count_experiences_by_category(activities):
+    counts = {key: 0 for key in ACTIVITY_CATEGORY_LABELS}
+    for activity in activities or []:
+        key = _activity_category_key(activity)
+        if key not in counts:
+            key = "diger"
+        counts[key] += 1
+    return {key: count for key, count in counts.items() if count > 0}
+
+
+def allocate_display_percents(counts):
+    items = [(key, count) for key, count in (counts or {}).items() if count > 0]
+    if not items:
+        return {}
+    if len(items) == 1:
+        return {items[0][0]: 100}
+
+    total = sum(count for _, count in items)
+    ranked = []
+    percents = {}
+    for index, (key, count) in enumerate(items):
+        exact = count * 100 / total
+        floor_value = int(exact)
+        percents[key] = floor_value
+        ranked.append((key, floor_value, exact - floor_value, index))
+
+    remainder = 100 - sum(percents.values())
+    ranked.sort(key=lambda item: (-item[2], item[3]))
+    index = 0
+    while remainder > 0 and ranked:
+        percents[ranked[index][0]] += 1
+        remainder -= 1
+        index = (index + 1) % len(ranked)
+
+    for key, _count in items:
+        if percents[key] > 0:
+            continue
+        donor = max(
+            percents,
+            key=lambda candidate: percents[candidate] if candidate != key else -1,
+        )
+        if percents[donor] > 1:
+            percents[donor] -= 1
+            percents[key] = 1
+    return percents
+
+
+def experience_intensity(count, max_count):
+    if max_count <= 0 or count <= 0:
+        return "low"
+    if count == max_count or count / max_count >= 0.85:
+        return "high"
+    if count / max_count >= 0.45:
+        return "mid"
+    return "low"
+
+
+def wheel_point(deg, radius=WHEEL_RADIUS, cx=WHEEL_CX, cy=WHEEL_CY):
+    radians = math.radians(deg)
+    return (
+        cx + radius * math.sin(radians),
+        cy - radius * math.cos(radians),
+    )
+
+
+def wheel_sweep_degrees(category_count):
+    if category_count <= 0:
+        return 0
+    if category_count == 1:
+        return 332.0
+    slice_span = 360.0 / category_count
+    gap = min(28.0, max(14.0, slice_span * 0.32))
+    sweep = slice_span - gap
+    if sweep < 18.0:
+        sweep = min(max(18.0, slice_span * 0.55), max(slice_span - 8.0, 12.0))
+    return sweep
+
+
+def build_wheel_arc_path(
+    center_deg, sweep_deg, radius=WHEEL_RADIUS, cx=WHEEL_CX, cy=WHEEL_CY
+):
+    if sweep_deg <= 0:
+        return ""
+    start_deg = center_deg - (sweep_deg / 2)
+    end_deg = center_deg + (sweep_deg / 2)
+    x1, y1 = wheel_point(start_deg, radius, cx, cy)
+    x2, y2 = wheel_point(end_deg, radius, cx, cy)
+    large_arc = 1 if sweep_deg > 180 else 0
+    return (
+        f"M {x1:.2f} {y1:.2f} "
+        f"A {radius} {radius} 0 {large_arc} 1 {x2:.2f} {y2:.2f}"
+    )
+
+
+def build_experience_sr_summary(total, categories):
+    if total <= 0 or not categories:
+        return EXPERIENCE_EMPTY_MESSAGE
+    parts = [
+        f"{item['label']} {item['count']} (%{item['percent']})"
+        for item in categories
+    ]
+    return f"{total} tamamlanmış sosyal deneyim: " + ", ".join(parts) + "."
+
+
+def build_experience_presentation(
+    created_activities, joined_activities=None, participations=None
+):
+    joined = list(joined_activities or [])
+    if participations is not None:
+        joined.extend(select_joined_experience_activities(participations))
+
+    completed = collect_completed_experience_activities(
+        created_activities, joined
+    )
+    total = len(completed)
+    if total == 0:
+        return {
+            "total": 0,
+            "is_empty": True,
+            "empty_message": EXPERIENCE_EMPTY_MESSAGE,
+            "sr_summary": EXPERIENCE_EMPTY_MESSAGE,
+            "categories": [],
+        }
+
+    counts = count_experiences_by_category(completed)
+    percents = allocate_display_percents(counts)
+    keys = list(counts.keys())
+    category_count = len(keys)
+    sweep = wheel_sweep_degrees(category_count)
+    max_count = max(counts.values()) if counts else 0
+    slice_span = 360.0 / category_count if category_count else 0
+
+    categories = []
+    for index, key in enumerate(keys):
+        count = counts[key]
+        percent = percents.get(key, 0)
+        center_deg = slice_span * index
+        categories.append(
+            {
+                "key": key,
+                "label": ACTIVITY_CATEGORY_LABELS.get(key, "Diğer"),
+                "count": count,
+                "percent": percent,
+                "intensity": experience_intensity(count, max_count),
+                "angle": round(center_deg, 2),
+                "arc_d": build_wheel_arc_path(center_deg, sweep),
+            }
+        )
+
+    return {
+        "total": total,
+        "is_empty": False,
+        "empty_message": EXPERIENCE_EMPTY_MESSAGE,
+        "sr_summary": build_experience_sr_summary(total, categories),
+        "categories": categories,
     }
 
 
@@ -1464,6 +1687,9 @@ def get_profile_context(user, viewer=None):
         ),
         "joined": partition_profile_activities(
             joined_activities, source=detail_source, user_id=detail_user_id
+        ),
+        "experience": build_experience_presentation(
+            created_activities, joined_activities
         ),
     }
 

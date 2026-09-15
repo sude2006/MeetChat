@@ -1,22 +1,33 @@
 /* =========================
-   VESİLE — Activity Wheel (görsel prototip)
-   Yalnızca .activity-wheel* — .identity’ye dokunmaz
+   VESİLE — Activity Wheel
+   Çember, kimlik şeridi ve açılır kategori özeti
 ========================= */
+
+.activity-wheel,
+.experience-details {
+    --aw-kahve: #8B5E3C;
+    --aw-yeme: #D4A017;
+    --aw-spor: #FF465B;
+    --aw-sanat: #D990A8;
+    --aw-kitap: #4C8DDA;
+    --aw-doga: #3BA55D;
+    --aw-gezi: #2DB8B0;
+    --aw-hobi: #8B6BC9;
+    --aw-diger: #8A8A8A;
+}
 
 .activity-wheel {
     --aw-size: 88px;
     --aw-avatar: 58px;
     --aw-track: #D8D8D8;
-    --aw-kahve: #8B5E3C;
-    --aw-spor: #FF465B;
-    --aw-kitap: #4C8DDA;
-    --aw-doga: #3BA55D;
     --aw-slot: 16px;
     --aw-ring-r: 35px;
 
     position: relative;
     width: var(--aw-size);
     height: var(--aw-size);
+    min-width: var(--aw-size);
+    min-height: var(--aw-size);
     flex-shrink: 0;
     display: grid;
     place-items: center;
@@ -46,8 +57,16 @@
     stroke: var(--aw-kahve);
 }
 
+.activity-wheel-arc.is-yeme {
+    stroke: var(--aw-yeme);
+}
+
 .activity-wheel-arc.is-spor {
     stroke: var(--aw-spor);
+}
+
+.activity-wheel-arc.is-sanat {
+    stroke: var(--aw-sanat);
 }
 
 .activity-wheel-arc.is-kitap {
@@ -56,6 +75,18 @@
 
 .activity-wheel-arc.is-doga {
     stroke: var(--aw-doga);
+}
+
+.activity-wheel-arc.is-gezi {
+    stroke: var(--aw-gezi);
+}
+
+.activity-wheel-arc.is-hobi {
+    stroke: var(--aw-hobi);
+}
+
+.activity-wheel-arc.is-diger {
+    stroke: var(--aw-diger);
 }
 
 .activity-wheel-arc.is-high {
@@ -70,7 +101,6 @@
     stroke-width: 2.2;
 }
 
-/* Demo yoğunluk: Kahve mevcut kalınlığını korur (eskiden high=5.5) */
 .activity-wheel-arc.is-kahve.is-high {
     stroke-width: 5.5;
 }
@@ -117,43 +147,339 @@
 }
 
 .activity-wheel-slot.is-kahve {
-    --aw-angle: 0deg;
     background: var(--aw-kahve);
 }
 
 .activity-wheel-slot.is-yeme {
-    --aw-angle: 45deg;
+    background: var(--aw-yeme);
 }
 
 .activity-wheel-slot.is-spor {
-    --aw-angle: 90deg;
     background: var(--aw-spor);
 }
 
 .activity-wheel-slot.is-sanat {
-    --aw-angle: 135deg;
+    background: var(--aw-sanat);
 }
 
 .activity-wheel-slot.is-kitap {
-    --aw-angle: 180deg;
     background: var(--aw-kitap);
 }
 
 .activity-wheel-slot.is-doga {
-    --aw-angle: 270deg;
     background: var(--aw-doga);
 }
 
 .activity-wheel-slot.is-gezi {
-    --aw-angle: 225deg;
+    background: var(--aw-gezi);
 }
 
 .activity-wheel-slot.is-hobi {
-    --aw-angle: 315deg;
+    background: var(--aw-hobi);
 }
 
-/* Senaryo 1: tamamen nötr halka */
+.activity-wheel-slot.is-diger {
+    background: var(--aw-diger);
+}
+
 .activity-wheel--empty .activity-wheel-arc,
 .activity-wheel--empty .activity-wheel-slot {
     display: none;
+}
+
+.identity {
+    min-width: 0;
+    grid-template-columns: var(--aw-size, 88px) minmax(0, 1fr);
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.identity .profile-copy {
+    min-width: 0;
+    overflow-wrap: break-word;
+}
+
+.identity .experience-heading {
+    margin: 0 0 3px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    line-height: 1.3;
+    color: var(--text-muted);
+}
+
+.identity .profile-handle {
+    margin: 0;
+    max-width: 100%;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.25;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.identity .profile-bio {
+    margin: 4px 0 0;
+    font-size: 13px;
+    font-weight: 400;
+    line-height: 1.4;
+    color: var(--text-soft);
+}
+
+.experience-details-toggle {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    width: fit-content;
+    max-width: 100%;
+    min-height: 26px;
+    margin: 10px 0 0;
+    padding: 5px 8px 5px 7px;
+    border: none;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--secondary) 40%, #EAF8F4);
+    color: var(--coral-hover);
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0.01em;
+    text-align: left;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.experience-details-toggle::before {
+    content: "";
+    position: absolute;
+    inset: -4px;
+}
+
+.experience-details-toggle [data-experience-toggle-label] {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.experience-details-icon {
+    flex-shrink: 0;
+    width: 12px;
+    height: 12px;
+    display: block;
+}
+
+.experience-details-toggle[aria-expanded="true"] {
+    background: color-mix(in srgb, var(--secondary) 42%, var(--primary) 14%);
+}
+
+.experience-details-toggle:hover,
+.experience-details-toggle:focus-visible {
+    background: color-mix(in srgb, var(--secondary) 42%, var(--primary) 18%);
+}
+
+.experience-details-toggle:hover {
+    transform: translateY(-1px);
+}
+
+.experience-details-toggle:active {
+    transform: translateY(0);
+    background: color-mix(in srgb, var(--secondary) 36%, var(--primary) 22%);
+}
+
+.experience-details-toggle:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.experience-details-chevron {
+    flex-shrink: 0;
+    width: 10px;
+    height: 10px;
+    display: block;
+    opacity: 0.9;
+    transition: transform 220ms ease-out;
+}
+
+.experience-details-toggle[aria-expanded="true"] .experience-details-chevron {
+    transform: rotate(90deg);
+}
+
+.experience-details {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    margin: 0 0 12px;
+    padding: 10px 0 0;
+    border-top: 1px solid var(--border);
+    background: var(--background);
+    container-type: inline-size;
+    container-name: experience-panel;
+}
+
+.experience-details[hidden] {
+    display: none;
+}
+
+.experience-total {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.3;
+    color: var(--text-muted);
+}
+
+.experience-empty {
+    margin: 11px 0 0;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.4;
+    color: var(--text-muted);
+}
+
+.experience-legend {
+    list-style: none;
+    margin: 8px 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 6px;
+    max-width: 100%;
+    align-items: stretch;
+}
+
+.experience-legend-item {
+    position: relative;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    column-gap: 8px;
+    min-width: 0;
+    max-width: 100%;
+    min-height: 40px;
+    height: 40px;
+    padding: 0 12px 0 10px;
+    background: transparent;
+    box-shadow: none;
+}
+
+.experience-legend-item.is-kahve { --aw-bar-color: var(--aw-kahve); }
+.experience-legend-item.is-yeme { --aw-bar-color: var(--aw-yeme); }
+.experience-legend-item.is-spor { --aw-bar-color: var(--aw-spor); }
+.experience-legend-item.is-sanat { --aw-bar-color: var(--aw-sanat); }
+.experience-legend-item.is-kitap { --aw-bar-color: var(--aw-kitap); }
+.experience-legend-item.is-doga { --aw-bar-color: var(--aw-doga); }
+.experience-legend-item.is-gezi { --aw-bar-color: var(--aw-gezi); }
+.experience-legend-item.is-hobi { --aw-bar-color: var(--aw-hobi); }
+.experience-legend-item.is-diger { --aw-bar-color: var(--aw-diger); }
+
+.experience-legend-bar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 0;
+    width: var(--experience-percent);
+    max-width: 100%;
+    border-radius: 10px;
+    background: var(--aw-bar-color);
+    opacity: 0.07;
+    pointer-events: none;
+}
+
+.experience-legend-swatch,
+.experience-legend-name,
+.experience-legend-meta {
+    position: relative;
+    z-index: 1;
+}
+
+.experience-legend-swatch {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex: 0 0 8px;
+}
+
+.experience-legend-swatch.is-kahve { background: var(--aw-kahve); }
+.experience-legend-swatch.is-yeme { background: var(--aw-yeme); }
+.experience-legend-swatch.is-spor { background: var(--aw-spor); }
+.experience-legend-swatch.is-sanat { background: var(--aw-sanat); }
+.experience-legend-swatch.is-kitap { background: var(--aw-kitap); }
+.experience-legend-swatch.is-doga { background: var(--aw-doga); }
+.experience-legend-swatch.is-gezi { background: var(--aw-gezi); }
+.experience-legend-swatch.is-hobi { background: var(--aw-hobi); }
+.experience-legend-swatch.is-diger { background: var(--aw-diger); }
+
+.experience-legend-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.experience-legend-meta {
+    flex: 0 0 auto;
+    flex-shrink: 0;
+    margin-left: auto;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.3;
+    white-space: nowrap;
+}
+
+.experience-legend-percent {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--text-muted);
+}
+
+@container experience-panel (min-width: 720px) {
+    .experience-legend:has(> .experience-legend-item:nth-child(5)) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        column-gap: 16px;
+    }
+}
+
+@media (max-width: 390px) {
+    .identity {
+        grid-template-columns: var(--aw-size, 88px) minmax(0, 1fr);
+        gap: 16px;
+    }
+
+    .experience-heading,
+    .experience-total,
+    .experience-empty,
+    .experience-details-toggle,
+    .experience-details {
+        max-width: 100%;
+    }
+
+    .experience-details-toggle {
+        white-space: nowrap;
+        gap: 4px;
+        padding: 5px 7px 5px 6px;
+        font-size: 11px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .experience-details-toggle,
+    .experience-details-chevron {
+        transition: none;
+    }
+
+    .experience-details-toggle:hover,
+    .experience-details-toggle:active {
+        transform: none;
+    }
 }
