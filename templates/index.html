@@ -6,70 +6,200 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MeetChat</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/letter_avatar.css') }}">
 </head>
 
 <body>
+    {% from "partials/letter_avatar.html" import letter_avatar %}
+    {% from "partials/category_icon.html" import render_category_icon %}
     <div class="app-shell">
         <header class="topbar">
             <div class="welcome-area">
-                <h1>Merhaba, <span>{{ user.name }}</span> 👋</h1>
-                <p>Bugün ne yapmak istersin?</p>
+                <h1>Yakın Çevrenden</h1>
+                <p>Arkadaşların bugünlerde neler planlamış?</p>
             </div>
-            <img
-                class="profile-avatar"
-                src="{{ url_for('static', filename=user.avatar) }}"
-                alt="{{ user.name }}"
-            >
+            {{ letter_avatar(user.avatar, size="lg", extra_class="profile-avatar") }}
         </header>
 
         <main>
-            <div class="section-header">
-                <h2>Arkadaşlarının Planları</h2>
-            </div>
-
-            <form class="activity-search-form" method="GET" action="{{ url_for('home') }}">
-                <div class="search-row">
-                    <input
-                        type="search"
-                        name="q"
-                        class="search-input"
-                        value="{{ q }}"
-                        placeholder="Etkinlik ara..."
-                        aria-label="Etkinlik ara"
-                    >
-                    <button type="submit" class="search-submit">Ara</button>
-                </div>
-                <div class="filter-row" role="group" aria-label="Etkinlik filtresi">
-                    <label class="filter-option">
+            <form class="home-filters" method="GET" action="{{ url_for('home') }}">
+                <div class="time-filters" role="group" aria-label="Zaman filtresi">
+                    <label class="time-filter-chip">
                         <input
                             type="radio"
-                            name="filter"
+                            name="time"
                             value="all"
                             onchange="this.form.submit()"
-                            {% if activity_filter == 'all' %}checked{% endif %}
+                            {% if time_filter == 'all' %}checked{% endif %}
                         >
-                        <span>Tüm etkinlikler</span>
+                        <span>Tümü</span>
                     </label>
-                    <label class="filter-option">
+                    <label class="time-filter-chip">
                         <input
                             type="radio"
-                            name="filter"
-                            value="mine"
+                            name="time"
+                            value="today"
                             onchange="this.form.submit()"
-                            {% if activity_filter == 'mine' %}checked{% endif %}
+                            {% if time_filter == 'today' %}checked{% endif %}
                         >
-                        <span>Oluşturduklarım</span>
+                        <span>Bugün</span>
                     </label>
-                    <label class="filter-option">
+                    <label class="time-filter-chip">
                         <input
                             type="radio"
-                            name="filter"
-                            value="joined"
+                            name="time"
+                            value="tomorrow"
                             onchange="this.form.submit()"
-                            {% if activity_filter == 'joined' %}checked{% endif %}
+                            {% if time_filter == 'tomorrow' %}checked{% endif %}
                         >
-                        <span>Katıldıklarım</span>
+                        <span>Yarın</span>
                     </label>
+                    <label class="time-filter-chip">
+                        <input
+                            type="radio"
+                            name="time"
+                            value="week"
+                            onchange="this.form.submit()"
+                            {% if time_filter == 'week' %}checked{% endif %}
+                        >
+                        <span>Bu Hafta</span>
+                    </label>
+                </div>
+
+                <input type="hidden" name="category" id="home-category-input" value="{{ category_filter }}">
+
+                <div class="category-filters" role="group" aria-label="Kategori filtresi">
+                    <div class="category-filters-track">
+                        <button
+                            type="button"
+                            class="category-icon-filter{% if category_filter == 'kahve' %} is-selected{% endif %}"
+                            data-category="kahve"
+                            aria-label="Kahve"
+                            aria-pressed="{{ 'true' if category_filter == 'kahve' else 'false' }}"
+                        >
+                            <span class="chip-icon chip-kahve" aria-hidden="true">
+                                <svg width="22" height="22" viewBox="0 0 24 24">
+                                    <path d="M5 8h11v6a4 4 0 01-4 4H9a4 4 0 01-4-4V8z" fill="none" stroke="currentColor" stroke-width="2"/>
+                                    <path d="M16 9h2.2A2.8 2.8 0 0119 14h-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    <path d="M8 4.5c.4.8.4 1.6 0 2.4M11 4.5c.4.8.4 1.6 0 2.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </span>
+                        </button>
+                        <button
+                            type="button"
+                            class="category-icon-filter{% if category_filter == 'yeme' %} is-selected{% endif %}"
+                            data-category="yeme"
+                            aria-label="Yeme &amp; İçme"
+                            aria-pressed="{{ 'true' if category_filter == 'yeme' else 'false' }}"
+                        >
+                            <span class="chip-icon chip-yeme" aria-hidden="true">
+                                <svg width="22" height="22" viewBox="0 0 24 24">
+                                    <path d="M7 4v7M5 4v4.5a2 2 0 002 2V20M9 4v7M17 4v4c0 2-1.5 3-3 3v9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </span>
+                        </button>
+                        <button
+                            type="button"
+                            class="category-icon-filter{% if category_filter == 'spor' %} is-selected{% endif %}"
+                            data-category="spor"
+                            aria-label="Spor"
+                            aria-pressed="{{ 'true' if category_filter == 'spor' else 'false' }}"
+                        >
+                            <span class="chip-icon chip-spor" aria-hidden="true">
+                                <svg width="22" height="22" viewBox="0 0 24 24">
+                                    <circle cx="14.2" cy="5.2" r="2" fill="none" stroke="currentColor" stroke-width="2.25"/>
+                                    <path d="M7.5 21l2.6-5.2 3.2-2 2.2 3.8H20" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M10.1 15.8L8.2 12.2l4.4-2.4 3.2 2.2" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                        </button>
+                        <button
+                            type="button"
+                            class="category-icon-filter{% if category_filter == 'sanat' %} is-selected{% endif %}"
+                            data-category="sanat"
+                            aria-label="Sanat"
+                            aria-pressed="{{ 'true' if category_filter == 'sanat' else 'false' }}"
+                        >
+                            <span class="chip-icon chip-sanat" aria-hidden="true">
+                                <svg width="22" height="22" viewBox="0 0 24 24">
+                                    <path d="M12 4.2a7.8 7.8 0 107.2 10.4c0-1.3-1.1-1.8-2.2-1.8h-1.1c-1.2 0-2.1.9-2.1 2.1 0 .6.2 1.2.2 1.7a2.6 2.6 0 01-2 2.5A7.8 7.8 0 0112 4.2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                                    <circle cx="8.6" cy="11.2" r="1" fill="currentColor"/>
+                                    <circle cx="12" cy="8.6" r="1" fill="currentColor"/>
+                                    <circle cx="15.6" cy="10.4" r="1" fill="currentColor"/>
+                                </svg>
+                            </span>
+                        </button>
+                        <button
+                            type="button"
+                            class="category-icon-filter{% if category_filter == 'kitap' %} is-selected{% endif %}"
+                            data-category="kitap"
+                            aria-label="Kitap"
+                            aria-pressed="{{ 'true' if category_filter == 'kitap' else 'false' }}"
+                        >
+                            <span class="chip-icon chip-kitap" aria-hidden="true">
+                                <svg width="22" height="22" viewBox="0 0 24 24">
+                                    <path d="M5 5.5A2.5 2.5 0 017.5 3H20v15H7.5A2.5 2.5 0 005 15.5v-10z" fill="none" stroke="currentColor" stroke-width="2"/>
+                                    <path d="M5 18.5A2.5 2.5 0 017.5 21H20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </span>
+                        </button>
+                        <button
+                            type="button"
+                            class="category-icon-filter{% if category_filter == 'doga' %} is-selected{% endif %}"
+                            data-category="doga"
+                            aria-label="Doğa"
+                            aria-pressed="{{ 'true' if category_filter == 'doga' else 'false' }}"
+                        >
+                            <span class="chip-icon chip-doga" aria-hidden="true">
+                                <svg width="22" height="22" viewBox="0 0 24 24">
+                                    <path d="M12 21V11M7 21h10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    <path d="M12 14c-4-1-6-4.2-6-7.2C6 5 8.5 4 12 7c3.5-3 6-2 6-.2C18 9.8 16 13 12 14z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                        </button>
+                        <button
+                            type="button"
+                            class="category-icon-filter{% if category_filter == 'gezi' %} is-selected{% endif %}"
+                            data-category="gezi"
+                            aria-label="Gezi"
+                            aria-pressed="{{ 'true' if category_filter == 'gezi' else 'false' }}"
+                        >
+                            <span class="chip-icon chip-gezi" aria-hidden="true">
+                                <svg width="22" height="22" viewBox="0 0 24 24">
+                                    <path d="M3 11.5L21 4l-6.5 17-2.8-6.7L3 11.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                        </button>
+                        <button
+                            type="button"
+                            class="category-icon-filter{% if category_filter == 'hobi' %} is-selected{% endif %}"
+                            data-category="hobi"
+                            aria-label="Hobi"
+                            aria-pressed="{{ 'true' if category_filter == 'hobi' else 'false' }}"
+                        >
+                            <span class="chip-icon chip-hobi" aria-hidden="true">
+                                <svg width="22" height="22" viewBox="0 0 24 24">
+                                    <path d="M4 9h3.2l1.5-2.2h6.6L16.8 9H20v10H4V9z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                                    <circle cx="12" cy="14" r="3.1" fill="none" stroke="currentColor" stroke-width="2"/>
+                                </svg>
+                            </span>
+                        </button>
+                        <button
+                            type="button"
+                            class="category-icon-filter{% if category_filter == 'diger' %} is-selected{% endif %}"
+                            data-category="diger"
+                            aria-label="Diğer"
+                            aria-pressed="{{ 'true' if category_filter == 'diger' else 'false' }}"
+                        >
+                            <span class="chip-icon chip-diger" aria-hidden="true">
+                                <svg width="22" height="22" viewBox="0 0 24 24">
+                                    <circle cx="6" cy="12" r="1.6" fill="currentColor"/>
+                                    <circle cx="12" cy="12" r="1.6" fill="currentColor"/>
+                                    <circle cx="18" cy="12" r="1.6" fill="currentColor"/>
+                                </svg>
+                            </span>
+                        </button>
+                    </div>
                 </div>
             </form>
 
@@ -77,117 +207,98 @@
                 {% if activities %}
                 {% for plan in activities %}
                 <article class="plan-card">
-                    <div class="plan-media">
-                        <a
-                            href="{{ url_for('activity_detail', activity_id=plan.id, source='home', q=q, filter=activity_filter) }}"
-                            class="plan-cover-link"
-                            aria-label="{{ plan.title }} detayına git"
-                        >
-                            <img
-                                class="plan-cover"
-                                src="{{ url_for('static', filename=plan.cover_image) }}"
-                                alt=""
-                            >
-                        </a>
-                        <img
-                            class="creator-avatar"
-                            src="{{ url_for('static', filename=plan.creator_avatar) }}"
-                            alt="{{ plan.creator_name }}"
-                        >
-                    </div>
+                    <a
+                        href="{{ url_for('activity_detail', activity_id=plan.id, source='home', q=q, filter=activity_filter) }}"
+                        class="plan-card-link"
+                    >
+                        <span class="visually-hidden">{{ plan.title }} detayına git</span>
+                    </a>
 
-                    <div class="plan-body">
-                        <p class="creator-name">{{ plan.creator_name }}</p>
-                        <a
-                            href="{{ url_for('activity_detail', activity_id=plan.id, source='home', q=q, filter=activity_filter) }}"
-                            class="plan-title-link"
-                        >
-                            <h3 class="plan-title">{{ plan.title }}</h3>
-                        </a>
-                        <a
-                            href="{{ url_for('activity_detail', activity_id=plan.id, source='home', q=q, filter=activity_filter) }}"
-                            class="plan-description-link"
-                        >
-                            <p class="plan-description">{{ plan.description }}</p>
-                        </a>
-                        <span class="visibility-badge">{{ plan.visibility_label }}</span>
-
-                        <div class="plan-meta">
-                            <div class="meta-row">
-                                <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
-                                    <rect x="3" y="5" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/>
-                                    <path d="M3 10h18M8 3v4M16 3v4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-                                </svg>
-                                <span>{{ plan.datetime }}</span>
-                            </div>
-                            {% if plan.location %}
-                            <div class="meta-row">
-                                <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
-                                    <path d="M12 21s7-6.2 7-11a7 7 0 10-14 0c0 4.8 7 11 7 11z" fill="none" stroke="currentColor" stroke-width="1.8"/>
-                                    <circle cx="12" cy="10" r="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
-                                </svg>
-                                <span>{{ plan.location }}</span>
-                            </div>
+                    <div class="plan-card-top">
+                        <div class="plan-creator">
+                            {{ letter_avatar(plan.creator_avatar, size="sm", extra_class="plan-creator-avatar") }}
+                            <span class="plan-creator-name">{{ plan.creator_name }}</span>
+                        </div>
+                        <div class="plan-card-meta">
+                            {% if plan.category_key %}
+                            <span class="plan-category-icon chip-{{ plan.category_key }}" aria-hidden="true">
+                                {{ render_category_icon(plan.category_key, 18) }}
+                            </span>
                             {% endif %}
                         </div>
+                    </div>
 
-                        <div class="participants">
-                            <span>{{ plan.joined_count }} kişi katılıyor</span>
-                            <span class="maybe-count">{{ plan.maybe_count }} belki</span>
+                    <h3 class="plan-title">{{ plan.title }}</h3>
+
+                    {% if plan.description %}
+                    <p class="plan-description">{{ plan.description }}</p>
+                    {% endif %}
+
+                    <div class="plan-meta-row">
+                        <span class="plan-time-badge{% if plan.time_is_today %} is-today{% endif %}">
+                            <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+                                <circle cx="12" cy="12" r="7.6" fill="none" stroke="currentColor" stroke-width="2"/>
+                                <path d="M12 8.2v4.2l3 1.7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>{{ plan.time_label }}</span>
+                        </span>
+                        {% if plan.location %}
+                        <div class="plan-location">
+                            <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M12 21s6.6-5.8 6.6-10.4a6.6 6.6 0 10-13.2 0c0 4.6 6.6 10.4 6.6 10.4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                                <circle cx="12" cy="10.4" r="2.2" fill="none" stroke="currentColor" stroke-width="2"/>
+                            </svg>
+                            <span>{{ plan.location }}</span>
                         </div>
+                        {% endif %}
+                    </div>
 
-                        <div class="plan-actions">
-                            <form action="{{ url_for('respond_activity', activity_id=plan.id) }}" method="post" class="respond-form">
-                                <input type="hidden" name="origin" value="home">
-                                {% if q %}
-                                <input type="hidden" name="return_q" value="{{ q }}">
-                                {% endif %}
-                                <input type="hidden" name="return_filter" value="{{ activity_filter }}">
-                                <input type="hidden" name="status" value="joined">
-                                <button
-                                    type="submit"
-                                    class="join-btn{% if plan.user_status == 'joined' %} active{% endif %}"
-                                >Katıl</button>
-                            </form>
-                            <form action="{{ url_for('respond_activity', activity_id=plan.id) }}" method="post" class="respond-form">
-                                <input type="hidden" name="origin" value="home">
-                                {% if q %}
-                                <input type="hidden" name="return_q" value="{{ q }}">
-                                {% endif %}
-                                <input type="hidden" name="return_filter" value="{{ activity_filter }}">
-                                <input type="hidden" name="status" value="maybe">
-                                <button
-                                    type="submit"
-                                    class="maybe-btn{% if plan.user_status == 'maybe' %} active{% endif %}"
-                                >Belki</button>
-                            </form>
-                            <a
-                                href="{{ url_for('activity_detail', activity_id=plan.id, source='home', q=q, filter=activity_filter) }}"
-                                class="detail-link"
-                            >Detay ›</a>
-                            <a
-                                href="{{ url_for('activity_detail', activity_id=plan.id, source='home', q=q, filter=activity_filter) }}"
-                                class="comment-btn"
-                                aria-label="{{ plan.comment_count }} yorum"
+                    <div class="plan-participants-row">
+                        <div class="plan-participants-main">
+                            {% if plan.participant_avatars %}
+                            <div class="plan-avatar-stack" aria-hidden="true">
+                                {% for avatar in plan.participant_avatars %}
+                                {{ letter_avatar(avatar, size="xs", extra_class="letter-avatar-overlap") }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            <p class="plan-participants-summary">{{ plan.participants_summary }}</p>
+                        </div>
+                    </div>
+
+                    <div class="plan-actions{% if plan.user_status == 'joined' %} is-joined{% elif plan.user_status == 'maybe' %} is-maybe{% endif %}">
+                        <form action="{{ url_for('respond_activity', activity_id=plan.id) }}" method="post" class="respond-form">
+                            <input type="hidden" name="origin" value="home">
+                            {% if q %}
+                            <input type="hidden" name="return_q" value="{{ q }}">
+                            {% endif %}
+                            <input type="hidden" name="return_filter" value="{{ activity_filter }}">
+                            <input type="hidden" name="status" value="joined">
+                            <button
+                                type="submit"
+                                class="join-btn{% if plan.user_status == 'joined' %} active{% endif %}"
                             >
-                                <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-                                    <path d="M4 5h16a2 2 0 012 2v8a2 2 0 01-2 2H9l-5 4v-4H4a2 2 0 01-2-2V7a2 2 0 012-2z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-                                </svg>
-                                <span>{{ plan.comment_count }}</span>
-                            </a>
-                        </div>
+                                {% if plan.user_status == 'joined' %}✓ Katılıyorsun{% else %}Katıl{% endif %}
+                            </button>
+                        </form>
+                        <form action="{{ url_for('respond_activity', activity_id=plan.id) }}" method="post" class="respond-form">
+                            <input type="hidden" name="origin" value="home">
+                            {% if q %}
+                            <input type="hidden" name="return_q" value="{{ q }}">
+                            {% endif %}
+                            <input type="hidden" name="return_filter" value="{{ activity_filter }}">
+                            <input type="hidden" name="status" value="maybe">
+                            <button
+                                type="submit"
+                                class="maybe-btn{% if plan.user_status == 'maybe' %} active{% endif %}"
+                            >{% if plan.user_status == 'maybe' %}✓ Belki{% else %}Belki{% endif %}</button>
+                        </form>
                     </div>
                 </article>
                 {% endfor %}
                 {% else %}
                 {% if has_active_search %}
-                    {% if q and activity_filter != 'all' %}
-                <p class="empty-plans">Seçtiğiniz filtre ve arama ile eşleşen etkinlik bulunamadı.</p>
-                    {% elif q %}
-                <p class="empty-plans">Aramanızla eşleşen etkinlik bulunamadı.</p>
-                    {% else %}
-                <p class="empty-plans">Bu filtrede görüntülenecek etkinlik yok.</p>
-                    {% endif %}
+                <p class="empty-plans">Seçtiğiniz filtrelerle eşleşen etkinlik bulunamadı.</p>
                 {% else %}
                 <p class="empty-plans">Henüz plan yok. İlk planı sen oluştur!</p>
                 {% endif %}
@@ -217,13 +328,15 @@
                     </svg>
                 </span>
             </a>
-            <a href="#" class="nav-item">
+            <a href="{{ url_for('notifications') }}" class="nav-item">
                 <span class="nav-icon-wrap">
                     <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
                         <path d="M6 8a6 6 0 1112 0c0 7 3 7 3 9H3c0-2 3-2 3-9z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
                         <path d="M10 20a2 2 0 004 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
                     </svg>
-                    <span class="badge">3</span>
+                    {% if unread_notification_count %}
+                    <span class="badge">{{ unread_notification_count }}</span>
+                    {% endif %}
                 </span>
                 <span>Bildirimler</span>
             </a>
@@ -237,23 +350,33 @@
         </nav>
     </div>
     <script>
-        const searchInput = document.querySelector(".search-input");
-        let searchTimer;
-    
-        searchInput.addEventListener("input", function () {
-            clearTimeout(searchTimer);
-    
-            searchTimer = setTimeout(function () {
-                searchInput.form.requestSubmit();
-            }, 500);
+        const homeFiltersForm = document.querySelector(".home-filters");
+        const categoryInput = document.getElementById("home-category-input");
+
+        document.querySelectorAll(".category-icon-filter").forEach(function (button) {
+            button.addEventListener("click", function () {
+                const category = button.getAttribute("data-category") || "";
+                const isSelected = button.classList.contains("is-selected");
+
+                document.querySelectorAll(".category-icon-filter").forEach(function (item) {
+                    item.classList.remove("is-selected");
+                    item.setAttribute("aria-pressed", "false");
+                });
+
+                if (categoryInput) {
+                    categoryInput.value = isSelected ? "" : category;
+                }
+
+                if (!isSelected) {
+                    button.classList.add("is-selected");
+                    button.setAttribute("aria-pressed", "true");
+                }
+
+                if (homeFiltersForm) {
+                    homeFiltersForm.requestSubmit();
+                }
+            });
         });
-    
-        if (searchInput.value.trim() !== "") {
-            searchInput.focus();
-    
-            const textLength = searchInput.value.length;
-            searchInput.setSelectionRange(textLength, textLength);
-        }
     </script>
 </body>
 

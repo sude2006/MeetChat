@@ -6,8 +6,10 @@
     <title>Arkadaşlar — MeetChat</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/friends.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/friend_list.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/letter_avatar.css') }}">
 </head>
 <body>
+    {% from "partials/letter_avatar.html" import letter_avatar %}
     <div class="friends-shell">
         <header class="friends-header">
             <a href="{{ url_for('profile') }}" class="back-btn" aria-label="Geri">
@@ -23,9 +25,7 @@
                 {% for friend in friends %}
                     <li class="user-row friend-card">
                         <div class="user-info">
-                            <div class="user-avatar" aria-hidden="true">
-                                {{ friend.user.full_name[0].upper() if friend.user.full_name else "?" }}
-                            </div>
+                            {{ letter_avatar(avatar_for_user(friend.user), size="md") }}
                             <div>
                                 <div class="user-name">{{ friend.user.full_name }}</div>
                                 <div class="user-handle">@{{ friend.user.email.split('@')[0].lower() }}</div>

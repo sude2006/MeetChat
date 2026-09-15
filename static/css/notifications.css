@@ -1,0 +1,321 @@
+/* =========================
+   MeetChat — Bildirimler
+========================= */
+
+:root {
+    --primary: #17B5BF;
+    --secondary: #EAF8F9;
+    --info: #5FA8D3;
+    --text: #2E2E2E;
+    --text-muted: #8A8A8A;
+    --text-soft: #666666;
+    --white: #FFFFFF;
+    --app-max: 430px;
+    --nav-height: 92px;
+    --page-mint: #FFFFFF;
+    --card-read: #FFFFFF;
+    --card-unread: #FFFFFF;
+    --button-gray: #E6E6E6;
+    --dot-coral: #5FA8D3;
+    --icon-friend: #8B6CC9;
+    --icon-friend-bg: #F0E8FB;
+    --icon-join: #17B5BF;
+    --icon-join-bg: #EAF8F9;
+    --icon-comment: #4A8DE0;
+    --icon-comment-bg: #E4F0FF;
+    --icon-time: #5FA8D3;
+    --icon-time-bg: #E8F4FA;
+    --avatar-bg: #F3D5C4;
+    --avatar-text: #8A5A44;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100%;
+}
+
+body {
+    min-height: 100%;
+    background: #EDEDED;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--text);
+    overflow: hidden;
+}
+
+.notifications-page {
+    max-width: var(--app-max);
+    height: 100%;
+    margin: 0 auto;
+    background: var(--page-mint);
+    padding: 24px 20px calc(var(--nav-height) + 24px + env(safe-area-inset-bottom, 0px));
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.notifications-header {
+    margin-bottom: 20px;
+}
+
+.notifications-header h1 {
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 32px;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    line-height: 1.08;
+    color: #1A1A1A;
+}
+
+.notification-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.notification-card {
+    position: relative;
+    padding: 16px 18px;
+    border-radius: 22px;
+    background: var(--card-read);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+}
+
+.notification-card.is-clickable {
+    cursor: pointer;
+}
+
+.notification-card-link {
+    position: static;
+    color: inherit;
+    text-decoration: none;
+}
+
+.notification-card-link::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+}
+
+.notification-card.is-unread {
+    background: var(--card-unread);
+}
+
+.notification-card-inner {
+    display: flex;
+    align-items: flex-start;
+}
+
+.notification-main {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    flex: 1 1 auto;
+    min-width: 0;
+    color: inherit;
+    text-decoration: none;
+}
+
+.notification-media {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    padding-top: 2px;
+}
+
+.notification-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.notification-icon-symbol {
+    width: 16px;
+    height: 16px;
+    display: block;
+}
+
+.notification-icon--friend-request {
+    background: var(--icon-friend-bg);
+    color: var(--icon-friend);
+}
+
+.notification-icon--activity-join {
+    background: var(--icon-join-bg);
+    color: var(--icon-join);
+}
+
+.notification-icon--activity-comment {
+    background: var(--icon-comment-bg);
+    color: var(--icon-comment);
+}
+
+.notification-icon--activity-time-change {
+    background: var(--icon-time-bg);
+    color: var(--icon-time);
+}
+
+.notification-icon--unknown {
+    background: rgba(46, 46, 46, 0.06);
+    color: var(--text-muted);
+}
+
+.notification-avatar {
+    margin-left: -8px;
+    position: relative;
+    z-index: 1;
+}
+
+.notification-content {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.notification-time {
+    display: block;
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.notification-body {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.45;
+    color: var(--text);
+}
+
+.notification-body strong {
+    font-weight: 700;
+    color: var(--text);
+}
+
+.notification-activity-pill {
+    display: inline;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: rgba(46, 46, 46, 0.07);
+    font-weight: 600;
+    color: var(--text);
+}
+
+.notification-actions {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.notification-actions form {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.notification-actions button {
+    width: 100%;
+    height: 34px;
+    padding: 0 10px;
+    border: none;
+    border-radius: 12px;
+    background: var(--button-gray);
+    color: var(--text-soft);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.notification-change {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px 14px;
+    margin-top: 10px;
+    font-size: 14px;
+    color: var(--text-soft);
+}
+
+.notification-change del {
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.notification-change strong {
+    font-weight: 700;
+    color: var(--info);
+}
+
+.notification-dot {
+    position: absolute;
+    top: calc(16px + 2px + 18px);
+    left: 8px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #5FA8D3;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.empty-text {
+    margin-top: 28vh;
+    text-align: center;
+    font-size: 15px;
+    color: var(--text-muted);
+}
+
+@media (max-width: 360px) {
+    .notifications-page {
+        padding: 20px 14px calc(var(--nav-height) + 24px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .notifications-header h1 {
+        font-size: 22px;
+    }
+
+    .notification-card {
+        padding: 14px 14px;
+        border-radius: 18px;
+    }
+
+    .notification-dot {
+        top: calc(14px + 2px + 16px);
+        left: 6px;
+    }
+
+    .notification-icon {
+        width: 32px;
+        height: 32px;
+    }
+
+    .notification-icon-symbol {
+        width: 14px;
+        height: 14px;
+    }
+
+    .notification-actions button {
+        height: 32px;
+        font-size: 12px;
+        padding: 0 8px;
+    }
+}
+
+.create-btn {
+    box-shadow: 0 6px 18px rgba(23, 181, 191, 0.28);
+}

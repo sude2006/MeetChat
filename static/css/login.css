@@ -1,18 +1,25 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,700&display=swap");
+
 /* =========================
-   MeetChat — Giriş Ekranı
+   VESİLE — Giriş ve Kayıt
 ========================= */
 
 :root {
-    --primary: #FF465B;
-    --secondary: #61EAD5;
-    --accent: #FFA3A2;
-    --text: #2E2E2E;
-    --text-muted: #9A9A9A;
+    --primary: #17B5BF;
+    --primary-hover: #149EA8;
+    --primary-active: #128C95;
+    --secondary: #A5E7EA;
+    --mint: #D8F3F0;
+    --powder: #F6E4E7;
+    --forgot: #E8A3A8;
+    --forgot-hover: #D98B92;
+    --text: #1A1A1A;
     --text-soft: #6B6B6B;
-    --border: #E4E4E4;
+    --text-muted: #9A9A9A;
+    --icon: #B0B0B0;
+    --border: #E6E6E6;
     --white: #FFFFFF;
-    --mint: #C8F0E8;
-    --cream: #F8E9B8;
+    --error: #C45C66;
     --app-max: 430px;
 }
 
@@ -22,8 +29,17 @@
     box-sizing: border-box;
 }
 
+html,
+body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
 body {
     min-height: 100vh;
+    min-height: 100dvh;
+    margin: 0;
     background: #EDEDED;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     color: var(--text);
@@ -39,105 +55,56 @@ a:hover {
     text-decoration: underline;
 }
 
+a:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 3px;
+    border-radius: 4px;
+}
+
 .login-shell {
     position: relative;
+    width: 100%;
     max-width: var(--app-max);
+    min-width: 0;
     min-height: 100vh;
+    min-height: 100dvh;
     margin: 0 auto;
     background: var(--white);
     overflow: hidden;
+    isolation: isolate;
     box-shadow: 0 0 40px rgba(0, 0, 0, 0.06);
 }
 
-/* Dekoratif pastel şekiller */
-.decor {
+.decor-layer {
     position: absolute;
+    inset: 0;
+    overflow: hidden;
     pointer-events: none;
     z-index: 0;
 }
 
+.decor {
+    position: absolute;
+    pointer-events: none;
+    border-radius: 50%;
+}
+
 .decor-tl {
-    top: -40px;
-    left: -50px;
-    width: 180px;
-    height: 160px;
+    top: -96px;
+    left: -88px;
+    width: 240px;
+    height: 240px;
     background: var(--mint);
-    border-radius: 60% 40% 55% 45%;
-    opacity: 0.85;
+    opacity: 0.95;
 }
 
 .decor-tr {
-    top: -30px;
-    right: -40px;
-    width: 140px;
-    height: 140px;
-    background: var(--cream);
-    border-radius: 50%;
+    top: -80px;
+    right: -96px;
+    width: 220px;
+    height: 220px;
+    background: var(--powder);
     opacity: 0.9;
-}
-
-.decor-bl {
-    bottom: -50px;
-    left: -40px;
-    width: 160px;
-    height: 160px;
-    background: var(--cream);
-    border-radius: 50%;
-    opacity: 0.85;
-}
-
-.decor-bl::after {
-    content: "";
-    position: absolute;
-    top: 30px;
-    right: 20px;
-    width: 70px;
-    height: 90px;
-    background:
-        radial-gradient(ellipse 18px 28px at 30% 40%, #7BC9A8 0 70%, transparent 71%),
-        radial-gradient(ellipse 16px 26px at 60% 55%, #61EAD5 0 70%, transparent 71%),
-        radial-gradient(ellipse 14px 22px at 45% 70%, #8FD4B8 0 70%, transparent 71%);
-    opacity: 0.7;
-}
-
-.decor-br {
-    bottom: -30px;
-    right: -50px;
-    width: 190px;
-    height: 170px;
-    background: var(--mint);
-    border-radius: 45% 55% 40% 60%;
-    opacity: 0.85;
-}
-
-.decor-br::before {
-    content: "";
-    position: absolute;
-    top: 36px;
-    left: 40px;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--secondary);
-    box-shadow:
-        14px 8px 0 var(--secondary),
-        7px 18px 0 var(--secondary),
-        22px 20px 0 var(--secondary),
-        28px 6px 0 var(--secondary);
-    opacity: 0.7;
-}
-
-.decor-br::after {
-    content: "";
-    position: absolute;
-    top: 50px;
-    left: 55px;
-    width: 60px;
-    height: 70px;
-    background:
-        radial-gradient(ellipse 16px 24px at 40% 35%, #5FCFB8 0 70%, transparent 71%),
-        radial-gradient(ellipse 14px 22px at 65% 55%, #61EAD5 0 70%, transparent 71%);
-    opacity: 0.65;
 }
 
 .login-content {
@@ -145,8 +112,15 @@ a:hover {
     z-index: 1;
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
-    padding: 56px 28px 48px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    padding: calc(64px + env(safe-area-inset-top, 0px)) 28px calc(40px + env(safe-area-inset-bottom, 0px));
+}
+
+.login-content--register {
+    padding-top: calc(48px + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
 }
 
 .brand {
@@ -154,25 +128,28 @@ a:hover {
     align-items: center;
     justify-content: center;
     gap: 10px;
-    margin-bottom: 48px;
+    margin: 0 0 40px;
+}
+
+.login-content--register .brand {
+    margin-bottom: 28px;
 }
 
 .brand-logo {
+    display: block;
     flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    color: var(--primary);
 }
 
 .brand-name {
-    font-size: 28px;
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 30px;
     font-weight: 700;
     letter-spacing: -0.03em;
-}
-
-.brand-meet {
-    color: var(--secondary);
-}
-
-.brand-chat {
-    color: var(--text);
+    line-height: 1;
+    color: #111111;
 }
 
 .login-header {
@@ -180,16 +157,31 @@ a:hover {
     margin-bottom: 36px;
 }
 
+.login-content--register .login-header {
+    margin-bottom: 26px;
+}
+
 .login-header h1 {
-    font-size: 32px;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    margin-bottom: 10px;
+    margin: 0 0 10px;
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 40px;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    line-height: 1.08;
+    color: #111111;
 }
 
 .login-header p {
-    font-size: 14px;
+    margin: 0;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.4;
     color: var(--text-soft);
+}
+
+.login-header a {
+    color: var(--primary);
+    font-weight: 600;
 }
 
 .login-form {
@@ -197,128 +189,202 @@ a:hover {
     flex-direction: column;
     gap: 14px;
     width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.login-content--register .login-form {
+    gap: 12px;
 }
 
 .field {
     position: relative;
     display: block;
+    width: 100%;
+    min-width: 0;
 }
 
 .field-icon {
     position: absolute;
-    left: 16px;
+    left: 18px;
     top: 50%;
     transform: translateY(-50%);
-    color: var(--text-muted);
+    color: var(--icon);
     display: flex;
     pointer-events: none;
 }
 
 .field input {
     width: 100%;
-    height: 54px;
-    padding: 0 48px 0 48px;
+    max-width: 100%;
+    height: 56px;
+    padding: 0 48px 0 50px;
     border: 1.5px solid var(--border);
-    border-radius: 16px;
+    border-radius: 999px;
     background: var(--white);
-    font-size: 15px;
+    font-size: 16px;
     font-family: inherit;
     color: var(--text);
     outline: none;
-    transition: border-color 0.2s;
+    transition: border-color 160ms ease, box-shadow 160ms ease;
 }
 
 .field input::placeholder {
     color: var(--text-muted);
 }
 
-.field input:focus {
-    border-color: var(--secondary);
+.field input:hover {
+    border-color: #D8D8D8;
+}
+
+.field input:focus,
+.field input:focus-visible {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(23, 181, 191, 0.16);
 }
 
 .toggle-password {
     position: absolute;
-    right: 12px;
+    right: 10px;
     top: 50%;
     transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
     border: none;
+    border-radius: 50%;
     background: transparent;
-    color: var(--text-muted);
+    color: var(--icon);
     cursor: pointer;
-    padding: 6px;
+    padding: 0;
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.toggle-password:hover {
+    color: var(--text-soft);
+}
+
+.toggle-password:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
 }
 
 .form-meta {
     display: flex;
     justify-content: flex-end;
     margin-top: 2px;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
 }
 
 .forgot-link {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
-    color: var(--primary);
+    color: var(--forgot);
+}
+
+.forgot-link:hover,
+.forgot-link:focus-visible {
+    color: var(--forgot-hover);
 }
 
 .form-error {
-    margin: 0 0 4px;
+    margin: 0 0 2px;
     padding: 12px 14px;
-    border-radius: 12px;
-    background: rgba(255, 70, 91, 0.1);
-    color: var(--primary);
+    border-radius: 14px;
+    background: rgba(196, 92, 102, 0.1);
+    color: var(--error);
     font-size: 13px;
     font-weight: 600;
     line-height: 1.4;
     text-align: center;
+    overflow-wrap: anywhere;
 }
 
 .password-hint {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 2px 0 4px;
+    margin: 2px 2px 6px;
     font-size: 13px;
-    color: var(--text-muted);
+    font-weight: 400;
     line-height: 1.4;
-}
-
-.password-hint svg {
-    flex-shrink: 0;
+    color: var(--text-muted);
 }
 
 .login-btn {
     width: 100%;
-    height: 54px;
+    height: 56px;
     margin-top: 8px;
     border: none;
-    border-radius: 16px;
+    border-radius: 999px;
     background: var(--primary);
     color: var(--white);
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 700;
     font-family: inherit;
     cursor: pointer;
-    transition: background 0.2s;
+    box-shadow: 0 14px 28px rgba(23, 181, 191, 0.28);
+    transition: background 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.login-content--register .login-btn {
+    margin-top: 10px;
 }
 
 .login-btn:hover {
-    background: #e53950;
+    background: var(--primary-hover);
 }
 
-@media (max-width: 360px) {
-    .login-content {
-        padding: 48px 20px 40px;
+.login-btn:active {
+    background: var(--primary-active);
+    transform: translateY(1px);
+    box-shadow: 0 8px 18px rgba(23, 181, 191, 0.22);
+}
+
+.login-btn:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 3px;
+}
+
+@media (max-width: 390px) {
+    .login-content,
+    .login-content--register {
+        padding-left: 22px;
+        padding-right: 22px;
     }
 
     .login-header h1 {
-        font-size: 28px;
+        font-size: 36px;
     }
 
     .brand-name {
-        font-size: 24px;
+        font-size: 26px;
+    }
+}
+
+@media (max-height: 720px) {
+    .login-content {
+        padding-top: calc(40px + env(safe-area-inset-top, 0px));
+    }
+
+    .brand {
+        margin-bottom: 28px;
+    }
+
+    .login-header {
+        margin-bottom: 24px;
+    }
+
+    .login-header h1 {
+        font-size: 36px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .field input,
+    .login-btn {
+        transition: none;
+    }
+
+    .login-btn:active {
+        transform: none;
     }
 }

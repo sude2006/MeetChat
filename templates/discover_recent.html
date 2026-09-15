@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Son Eklenenler — MeetChat</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/discover.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/discover_upcoming.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/discover_recent.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/letter_avatar.css') }}">
+</head>
+
+<body>
+    {% from "partials/letter_avatar.html" import letter_avatar %}
+    {% from "partials/category_icon.html" import render_category_icon %}
+    <div class="discover-shell ue-shell">
+        <main class="ue-page">
+            <header class="ue-header">
+                <a class="ue-back" href="{{ back_url }}" aria-label="Keşfet sayfasına dön">
+                    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </a>
+                <div class="ue-header-copy">
+                    <h1>Son Eklenenler</h1>
+                    <p>Yakın zamanda paylaşılan herkese açık planlar</p>
+                </div>
+            </header>
+
+            <form class="ue-search-form" method="GET" action="{{ url_for('discover_recent') }}">
+                <div class="ue-search-row">
+                    <label class="ue-search-field">
+                        <svg class="ue-search-icon" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                            <path d="M20 20l-3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                        <input
+                            type="search"
+                            name="q"
+                            class="ue-search-input"
+                            value="{{ q }}"
+                            placeholder="Etkinlik ara"
+                            aria-label="Etkinlik ara"
+                        >
+                    </label>
+                    <button type="button" class="ue-filter-btn" id="ue-filter-open" aria-label="Filtreleri aç">
+                        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M4 6h16M7 12h10M10 18h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+                {% if category_filter %}
+                <input type="hidden" name="category" value="{{ category_filter }}">
+                {% endif %}
+                {% if city_filter %}
+                <input type="hidden" name="city" value="{{ city_filter }}">
+                {% endif %}
+            </form>
+
+            {% if has_active_filters %}
+            <div class="ue-active-filters" aria-label="Aktif filtreler">
+                <div class="ue-active-filters-track">
+                    {% for chip in active_filters %}
+                    <a class="ue-filter-chip" href="{{ chip.remove_url }}">
+                        <span>{{ chip.label }}</span>
+                        <span class="ue-filter-chip-x" aria-hidden="true">×</span>
+                    </a>
+                    {% endfor %}
+                </div>
+                <a class="ue-clear-all" href="{{ clear_filters_url }}">Tümünü Temizle</a>
+            </div>
+            {% endif %}
+
+            <div class="ue-list-meta">
+                <span class="ue-count">{{ event_count }} etkinlik</span>
+            </div>
+
+            {% if events %}
+            <div class="ue-list" aria-label="Son eklenen etkinlikler">
+                {% for plan in events %}
+                <article class="re-card cat-{{ plan.category_key }}">
+                    <a class="card-link" href="{{ plan.detail_url }}">
+                        <span class="visually-hidden">{{ plan.title }} detayına git</span>
+                    </a>
+                    <div class="re-top">
+                        <p class="re-added">{{ plan.added_label }}</p>
+                        <span class="re-cat">
+                            {{ render_category_icon(plan.category_key, 13) }}
+                            <span>{{ plan.category_label }}</span>
+                        </span>
+                    </div>
+                    <h2 class="re-title">{{ plan.title }}</h2>
+                    <div class="re-logistics">
+                        <span class="re-logistics-item">
+                            <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+                                <circle cx="12" cy="12" r="7.6" fill="none" stroke="currentColor" stroke-width="2"/>
+                                <path d="M12 8.2v4.2l3 1.7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>{{ plan.time_label }}</span>
+                        </span>
+                        {% if plan.location %}
+                        <span class="re-logistics-item">
+                            <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M12 21s6.6-5.8 6.6-10.4a6.6 6.6 0 10-13.2 0c0 4.6 6.6 10.4 6.6 10.4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                                <circle cx="12" cy="10.4" r="2.2" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                            </svg>
+                            <span>{{ plan.location }}</span>
+                        </span>
+                        {% endif %}
+                    </div>
+                    <div class="re-footer">
+                        <div class="re-organizer">
+                            {{ letter_avatar(plan.creator_avatar, size="xs", extra_class="re-organizer-avatar") }}
+                            <p class="re-organizer-text">
+                                <strong>{{ plan.creator_name }}</strong> oluşturdu
+                            </p>
+                        </div>
+                        <div class="re-proof">
+                            <div class="re-proof-join">
+                                {% if plan.participant_avatars %}
+                                <div class="re-avatar-stack" aria-hidden="true">
+                                    {% for avatar in plan.participant_avatars %}
+                                    {{ letter_avatar(avatar, size="xs", extra_class="letter-avatar-overlap re-proof-avatar") }}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                                <span class="re-join">{{ plan.joined_count }} katılıyor</span>
+                            </div>
+                            <span class="re-proof-divider" aria-hidden="true"></span>
+                            <span class="re-comments" aria-label="{{ plan.comment_count }} yorum">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                <span>{{ plan.comment_count }}</span>
+                            </span>
+                        </div>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="ue-empty">
+                {% if q or has_active_filters %}
+                Seçtiğiniz kriterlerle eşleşen etkinlik bulunamadı.
+                {% else %}
+                Henüz taze plan yok.
+                {% endif %}
+            </p>
+            {% endif %}
+        </main>
+
+        <div class="ue-sheet-backdrop" id="ue-sheet-backdrop" hidden></div>
+        <aside class="ue-sheet" id="ue-filter-sheet" hidden aria-hidden="true" aria-labelledby="ue-sheet-title">
+            <div class="ue-sheet-handle" aria-hidden="true"></div>
+            <div class="ue-sheet-head">
+                <h2 id="ue-sheet-title">Filtreler</h2>
+                <button type="button" class="ue-sheet-close" id="ue-filter-close" aria-label="Filtreleri kapat">×</button>
+            </div>
+
+            <form class="ue-sheet-form" method="GET" action="{{ url_for('discover_recent') }}" id="ue-filter-form">
+                {% if q %}
+                <input type="hidden" name="q" value="{{ q }}">
+                {% endif %}
+
+                <section class="ue-sheet-section">
+                    <h3>
+                        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 21s6.6-5.8 6.6-10.4a6.6 6.6 0 10-13.2 0c0 4.6 6.6 10.4 6.6 10.4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                            <circle cx="12" cy="10.4" r="2.2" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                        </svg>
+                        Konum
+                    </h3>
+                    <div class="ue-city-picker">
+                        <button type="button" class="ue-city-toggle" id="ue-city-toggle" aria-expanded="false">
+                            <span id="ue-city-label">{{ selected_city }}</span>
+                            <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                            </svg>
+                        </button>
+                        <input type="hidden" name="city" id="ue-city-input" value="{{ city_filter }}">
+                        <div class="ue-city-panel" id="ue-city-panel" hidden aria-hidden="true">
+                            <label class="visually-hidden" for="ue-city-search">Şehir ara</label>
+                            <input type="search" id="ue-city-search" class="ue-city-search" placeholder="Şehir ara">
+                            <button type="button" class="ue-use-location" id="ue-use-location">
+                                Şu anki konumumu kullan
+                            </button>
+                            <ul class="ue-city-list" id="ue-city-list">
+                                {% for city in turkey_cities %}
+                                <li>
+                                    <button
+                                        type="button"
+                                        class="ue-city-option{% if city == selected_city %} is-selected{% endif %}"
+                                        data-city="{{ city }}"
+                                    >{{ city }}</button>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="ue-distance-block ue-visual-only" aria-disabled="true">
+                        <div class="ue-distance-head">
+                            <span>Mesafe</span>
+                            <span class="ue-distance-value" id="ue-distance-label">25 km içinde</span>
+                        </div>
+                        <input
+                            type="range"
+                            class="ue-distance-slider"
+                            id="ue-distance-slider"
+                            min="5"
+                            max="50"
+                            step="5"
+                            value="25"
+                            disabled
+                            aria-label="Mesafe (görsel)"
+                        >
+                        <p class="ue-distance-note">Belirlediğin mesafe içinde gerçekleşen etkinlikleri göster.</p>
+                    </div>
+                </section>
+
+                <section class="ue-sheet-section">
+                    <h3>
+                        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M4 7h16M7 12h10M10 17h4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                        Kategori
+                    </h3>
+                    <div class="ue-category-group" role="radiogroup" aria-label="Kategori filtresi">
+                        <label class="ue-category-option">
+                            <input type="radio" name="category" value=""{% if not category_filter %} checked{% endif %}>
+                            <span class="ue-category-icon ue-category-all">Tümü</span>
+                        </label>
+                        {% for key, label in category_labels.items() %}
+                        <label class="ue-category-option cat-{{ key }}">
+                            <input type="radio" name="category" value="{{ key }}"{% if category_filter == key %} checked{% endif %}>
+                            <span class="ue-category-icon">
+                                {{ render_category_icon(key, 18) }}
+                            </span>
+                            <span class="ue-category-label">{{ label }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </section>
+
+                <div class="ue-sheet-actions">
+                    <a class="ue-sheet-clear" href="{{ clear_filters_url }}">Temizle</a>
+                    <button type="submit" class="ue-sheet-apply">Uygula</button>
+                </div>
+            </form>
+        </aside>
+
+        <nav class="bottom-nav" aria-label="Ana navigasyon">
+            <a href="{{ url_for('home') }}" class="nav-item">
+                <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                </svg>
+                <span>Ana Sayfa</span>
+            </a>
+            <a href="{{ url_for('discover') }}" class="nav-item active" aria-current="page">
+                <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M20 20l-3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+                <span>Keşfet</span>
+            </a>
+            <a href="{{ url_for('create_activity') }}" class="nav-item nav-create" aria-label="Plan Oluştur">
+                <span class="create-btn">
+                    <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">
+                        <rect x="4" y="5" width="16" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                        <path d="M4 10h16M8 3v4M16 3v4M12 13v5M9.5 15.5h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                </span>
+            </a>
+            <a href="{{ url_for('notifications') }}" class="nav-item">
+                <span class="nav-icon-wrap">
+                    <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M6 8a6 6 0 1112 0c0 7 3 7 3 9H3c0-2 3-2 3-9z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                        <path d="M10 20a2 2 0 004 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                    {% if unread_notification_count %}
+                    <span class="badge">{{ unread_notification_count }}</span>
+                    {% endif %}
+                </span>
+                <span>Bildirimler</span>
+            </a>
+            <a href="{{ url_for('profile') }}" class="nav-item">
+                <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M4 20c1.5-3.5 4-5 8-5s6.5 1.5 8 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+                <span>Profil</span>
+            </a>
+        </nav>
+    </div>
+
+    <script>
+        (function () {
+            const searchForm = document.querySelector(".ue-search-form");
+            const searchInput = searchForm ? searchForm.querySelector(".ue-search-input") : null;
+            const filterOpen = document.getElementById("ue-filter-open");
+            const filterClose = document.getElementById("ue-filter-close");
+            const sheet = document.getElementById("ue-filter-sheet");
+            const backdrop = document.getElementById("ue-sheet-backdrop");
+            const cityToggle = document.getElementById("ue-city-toggle");
+            const cityPanel = document.getElementById("ue-city-panel");
+            const cityInput = document.getElementById("ue-city-input");
+            const cityLabel = document.getElementById("ue-city-label");
+            const citySearch = document.getElementById("ue-city-search");
+            const cityList = document.getElementById("ue-city-list");
+            const useLocationBtn = document.getElementById("ue-use-location");
+            const distanceSlider = document.getElementById("ue-distance-slider");
+            const distanceLabel = document.getElementById("ue-distance-label");
+            const defaultCity = {{ selected_city|tojson }};
+
+            function closeCityPanel() {
+                if (!cityPanel || !cityToggle) return;
+                cityPanel.classList.remove("is-open");
+                cityPanel.hidden = true;
+                cityPanel.setAttribute("aria-hidden", "true");
+                cityToggle.setAttribute("aria-expanded", "false");
+                if (citySearch) {
+                    citySearch.value = "";
+                }
+                if (cityList) {
+                    cityList.querySelectorAll("li").forEach(function (item) {
+                        item.hidden = false;
+                    });
+                }
+            }
+
+            function openCityPanel() {
+                if (!cityPanel || !cityToggle) return;
+                cityPanel.hidden = false;
+                cityPanel.classList.add("is-open");
+                cityPanel.setAttribute("aria-hidden", "false");
+                cityToggle.setAttribute("aria-expanded", "true");
+                if (citySearch) {
+                    citySearch.focus();
+                }
+            }
+
+            function openSheet() {
+                if (!sheet || !backdrop) return;
+                sheet.hidden = false;
+                sheet.classList.add("is-open");
+                sheet.setAttribute("aria-hidden", "false");
+                backdrop.hidden = false;
+                document.body.classList.add("ue-sheet-open");
+            }
+
+            function closeSheet() {
+                if (!sheet || !backdrop) return;
+                sheet.classList.remove("is-open");
+                sheet.setAttribute("aria-hidden", "true");
+                backdrop.hidden = true;
+                document.body.classList.remove("ue-sheet-open");
+                window.setTimeout(function () {
+                    sheet.hidden = true;
+                }, 220);
+                if (cityPanel && cityToggle) {
+                    closeCityPanel();
+                }
+            }
+
+            closeSheet();
+
+            window.addEventListener("pageshow", function () {
+                closeSheet();
+            });
+
+            if (filterOpen) filterOpen.addEventListener("click", openSheet);
+            if (filterClose) filterClose.addEventListener("click", closeSheet);
+            if (backdrop) backdrop.addEventListener("click", closeSheet);
+
+            if (searchInput && searchForm) {
+                let searchTimer;
+                searchInput.addEventListener("input", function () {
+                    clearTimeout(searchTimer);
+                    searchTimer = setTimeout(function () {
+                        searchForm.requestSubmit();
+                    }, 500);
+                });
+            }
+
+            if (cityToggle && cityPanel) {
+                cityToggle.addEventListener("click", function (event) {
+                    event.stopPropagation();
+                    if (cityPanel.classList.contains("is-open")) {
+                        closeCityPanel();
+                    } else {
+                        openCityPanel();
+                    }
+                });
+            }
+
+            if (cityList) {
+                cityList.addEventListener("click", function (event) {
+                    const option = event.target.closest(".ue-city-option");
+                    if (!option) return;
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const city = option.dataset.city || "";
+                    cityInput.value = city;
+                    cityLabel.textContent = city;
+                    cityList.querySelectorAll(".ue-city-option").forEach(function (btn) {
+                        btn.classList.toggle("is-selected", btn.dataset.city === city);
+                    });
+                    closeCityPanel();
+                });
+            }
+
+            if (citySearch && cityList) {
+                citySearch.addEventListener("input", function () {
+                    const query = citySearch.value.trim().toLocaleLowerCase("tr-TR");
+                    cityList.querySelectorAll("li").forEach(function (item) {
+                        const text = item.textContent.trim().toLocaleLowerCase("tr-TR");
+                        item.hidden = query && !text.includes(query);
+                    });
+                });
+            }
+
+            if (useLocationBtn) {
+                useLocationBtn.addEventListener("click", function (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    cityInput.value = "";
+                    cityLabel.textContent = "Şu anki konumum";
+                    cityList.querySelectorAll(".ue-city-option").forEach(function (btn) {
+                        btn.classList.remove("is-selected");
+                    });
+                    closeCityPanel();
+                });
+            }
+
+            if (distanceSlider && distanceLabel) {
+                distanceSlider.addEventListener("input", function () {
+                    distanceLabel.textContent = distanceSlider.value + " km içinde";
+                });
+            }
+
+            document.getElementById("ue-filter-form").addEventListener("submit", function () {
+                if (cityLabel.textContent === "Şu anki konumum") {
+                    cityInput.value = "";
+                } else if (!cityInput.value && cityLabel.textContent !== defaultCity) {
+                    cityInput.value = cityLabel.textContent;
+                }
+            });
+        })();
+    </script>
+</body>
+
+</html>

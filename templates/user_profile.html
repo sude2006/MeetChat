@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ profile_user.handle }} — MeetChat</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/letter_avatar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/activity_wheel.css') }}">
+</head>
+
+<body>
+    {% from "partials/letter_avatar.html" import letter_avatar %}
+    {% from "partials/category_icon.html" import render_category_icon %}
+    <div class="app-shell">
+        <header class="profile-topbar">
+            <a href="{{ back_url }}" class="icon-button" data-profile-back aria-label="Geri">
+                <svg width="21" height="21" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </a>
+        </header>
+
+        <main>
+            <section class="identity identity--viewed">
+                <div class="activity-wheel{% if experience.is_empty %} activity-wheel--empty{% endif %}">
+                    {% if not experience.is_empty %}
+                    <span class="visually-hidden">{{ experience.sr_summary }}</span>
+                    {% endif %}
+                    <svg class="activity-wheel-svg" viewBox="0 0 100 100" focusable="false" aria-hidden="true">
+                        <circle class="activity-wheel-track" cx="50" cy="50" r="40"/>
+                        {% for category in experience.categories %}
+                        <path
+                            class="activity-wheel-arc is-{{ category.key }} is-{{ category.intensity }}"
+                            d="{{ category.arc_d }}"
+                        />
+                        {% endfor %}
+                    </svg>
+                    <div class="activity-wheel-center">
+                        {{ letter_avatar(profile_user.avatar, size="xl") }}
+                    </div>
+                    {% for category in experience.categories %}
+                    <span
+                        class="activity-wheel-slot is-{{ category.key }} is-{{ category.intensity }}"
+                        style="--aw-angle: {{ category.angle }}deg"
+                        aria-hidden="true"
+                    >
+                        {{ render_category_icon(category.key, 9) }}
+                    </span>
+                    {% endfor %}
+                </div>
+                <div class="profile-copy">
+                    <p class="experience-heading">Sosyal Deneyim Çemberi</p>
+                    <h1 class="profile-handle">{{ profile_user.handle }}</h1>
+                    <p class="profile-bio">{{ profile_user.bio }}</p>
+                    {% if experience.is_empty %}
+                    <p class="experience-empty">{{ experience.empty_message }}</p>
+                    {% else %}
+                    <button
+                        type="button"
+                        class="experience-details-toggle"
+                        data-experience-toggle
+                        aria-expanded="false"
+                        aria-controls="experience-details"
+                    >
+                        <svg class="experience-details-icon" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2.2"/>
+                            <path d="M12 4a8 8 0 018 8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+                        </svg>
+                        <span data-experience-toggle-label>Deneyim özeti</span>
+                        <svg class="experience-details-chevron" width="10" height="10" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                    {% endif %}
+                </div>
+
+                {% if friendship_state == "add" %}
+                <div class="friend-actions">
+                    <form action="{{ url_for('friends_request', user_id=viewed_user.id) }}" method="post">
+                        <input type="hidden" name="next" value="user_profile">
+                        <input type="hidden" name="user_id" value="{{ viewed_user.id }}">
+                        {% if from_activity %}
+                        <input type="hidden" name="from_activity" value="{{ from_activity }}">
+                        <input type="hidden" name="source" value="{{ detail_from }}">
+                        <input type="hidden" name="q" value="{{ detail_q }}">
+                        <input type="hidden" name="filter" value="{{ detail_filter }}">
+                        <input type="hidden" name="detail_user_id" value="{{ detail_user_id }}">
+                        {% endif %}
+                        <button type="submit" class="friend-status-btn friend-status-btn--add">
+                            <svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/>
+                                <circle cx="9" cy="7" r="3.5" fill="none" stroke="currentColor" stroke-width="2.1"/>
+                                <path d="M19 8v6M16 11h6" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/>
+                            </svg>
+                            <span>Arkadaş Ekle</span>
+                        </button>
+                    </form>
+                </div>
+                {% elif friendship_state == "sent" and friendship %}
+                <div class="friend-actions friend-actions--sent">
+                    <div class="friend-sent-stack">
+                        <p class="friend-sent-badge" aria-live="polite">
+                            <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M6 12l4 4 8-9" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>İstek Gönderildi</span>
+                        </p>
+                        <form action="{{ url_for('friends_cancel', friendship_id=friendship.id) }}" method="post">
+                            <input type="hidden" name="next" value="user_profile">
+                            <input type="hidden" name="user_id" value="{{ viewed_user.id }}">
+                            {% if from_activity %}
+                            <input type="hidden" name="from_activity" value="{{ from_activity }}">
+                            <input type="hidden" name="source" value="{{ detail_from }}">
+                            <input type="hidden" name="q" value="{{ detail_q }}">
+                            <input type="hidden" name="filter" value="{{ detail_filter }}">
+                            <input type="hidden" name="detail_user_id" value="{{ detail_user_id }}">
+                            {% endif %}
+                            <button type="submit" class="friend-withdraw-btn">Geri Çek</button>
+                        </form>
+                    </div>
+                </div>
+                {% elif friendship_state == "incoming" and friendship %}
+                <div class="friend-actions friend-actions--incoming">
+                    <form action="{{ url_for('friends_accept', friendship_id=friendship.id) }}" method="post">
+                        <input type="hidden" name="next" value="user_profile">
+                        <input type="hidden" name="user_id" value="{{ viewed_user.id }}">
+                        {% if from_activity %}
+                        <input type="hidden" name="from_activity" value="{{ from_activity }}">
+                        <input type="hidden" name="source" value="{{ detail_from }}">
+                        <input type="hidden" name="q" value="{{ detail_q }}">
+                        <input type="hidden" name="filter" value="{{ detail_filter }}">
+                        <input type="hidden" name="detail_user_id" value="{{ detail_user_id }}">
+                        {% endif %}
+                        <button type="submit" class="friend-status-btn friend-status-btn--accept">Kabul Et</button>
+                    </form>
+                    <form action="{{ url_for('friends_reject', friendship_id=friendship.id) }}" method="post">
+                        <input type="hidden" name="next" value="user_profile">
+                        <input type="hidden" name="user_id" value="{{ viewed_user.id }}">
+                        {% if from_activity %}
+                        <input type="hidden" name="from_activity" value="{{ from_activity }}">
+                        <input type="hidden" name="source" value="{{ detail_from }}">
+                        <input type="hidden" name="q" value="{{ detail_q }}">
+                        <input type="hidden" name="filter" value="{{ detail_filter }}">
+                        <input type="hidden" name="detail_user_id" value="{{ detail_user_id }}">
+                        {% endif %}
+                        <button type="submit" class="friend-status-btn friend-status-btn--reject">Reddet</button>
+                    </form>
+                </div>
+                {% elif friendship_state == "friends" and friendship %}
+                <div class="friend-actions">
+                    <div class="friend-status owner-menu">
+                        <button
+                            type="button"
+                            class="friend-status-btn"
+                            id="friend-status-btn"
+                            aria-expanded="false"
+                            aria-haspopup="true"
+                            aria-controls="friend-status-menu"
+                        >
+                            <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M6 12l4 4 8-9" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>Arkadaşsınız</span>
+                            <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                        <div class="owner-menu-panel" id="friend-status-menu" hidden>
+                            <button type="button" class="owner-menu-delete" data-unfriend-open>Arkadaşlıktan Çıkar</button>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </section>
+
+            {% if not experience.is_empty %}
+            <div id="experience-details" class="experience-details" hidden>
+                <p class="experience-total">{% if experience.total == 1 %}1 tamamlanmış deneyim{% else %}{{ experience.total }} tamamlanmış deneyim{% endif %}</p>
+                <ul class="experience-legend" aria-label="Kategori özeti">
+                    {% for category in experience.categories %}
+                    <li class="experience-legend-item is-{{ category.key }}" style="--experience-percent: {{ category.percent }}%;">
+                        <span class="experience-legend-bar" aria-hidden="true"></span>
+                        <span class="experience-legend-swatch is-{{ category.key }}" aria-hidden="true"></span>
+                        <span class="experience-legend-name">{{ category.label }}</span>
+                        <span class="experience-legend-meta">
+                            {% if category.count == 1 %}1 deneyim{% else %}{{ category.count }} deneyim{% endif %}
+                            <span class="experience-legend-percent">· %{{ category.percent }}</span>
+                        </span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% if friendship_state == "friends" and friendship %}
+            <dialog class="confirm-modal" aria-labelledby="unfriend-modal-title" aria-describedby="unfriend-modal-copy">
+                <form
+                    class="confirm-modal-card"
+                    action="{{ url_for('friends_remove', friendship_id=friendship.id) }}"
+                    method="post"
+                >
+                    <input type="hidden" name="next" value="user_profile">
+                    <input type="hidden" name="user_id" value="{{ viewed_user.id }}">
+                    {% if from_activity %}
+                    <input type="hidden" name="from_activity" value="{{ from_activity }}">
+                    <input type="hidden" name="source" value="{{ detail_from }}">
+                    <input type="hidden" name="q" value="{{ detail_q }}">
+                    <input type="hidden" name="filter" value="{{ detail_filter }}">
+                    <input type="hidden" name="detail_user_id" value="{{ detail_user_id }}">
+                    {% endif %}
+                    <h2 id="unfriend-modal-title">Arkadaşlıktan çıkarılsın mı?</h2>
+                    <p id="unfriend-modal-copy">Bu kişi arkadaş listenizden kaldırılacak. Daha sonra tekrar arkadaşlık isteği gönderebilirsiniz.</p>
+                    <div class="confirm-modal-actions">
+                        <button type="button" class="confirm-cancel" data-unfriend-close>Vazgeç</button>
+                        <button type="submit" class="confirm-danger">Arkadaşlıktan Çıkar</button>
+                    </div>
+                </form>
+            </dialog>
+            {% endif %}
+
+            <h2 class="plans-title">
+                <span class="plans-title-name">{{ profile_user.possessive_first_name }}</span>
+                <span class="plans-title-plans">Planları</span>
+            </h2>
+
+            <section class="stats" role="tablist" aria-label="{{ profile_user.first_name }} profil bölümleri">
+                <button
+                    class="stat active"
+                    type="button"
+                    role="tab"
+                    aria-selected="true"
+                    data-tab="created"
+                >
+                    <span class="stat-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24">
+                            <rect x="4" y="5" width="16" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                            <path d="M4 10h16M8 3v4M16 3v4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                        </svg>
+                    </span>
+                    <strong>{{ stats.created_count }}</strong>
+                    <span>Planları</span>
+                </button>
+                <button
+                    class="stat"
+                    type="button"
+                    role="tab"
+                    aria-selected="false"
+                    data-tab="joined"
+                >
+                    <span class="stat-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24">
+                            <circle cx="9" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                            <circle cx="16.5" cy="9" r="2.4" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                            <path d="M3.5 19c.7-3 2.5-4.5 5.5-4.5s4.8 1.5 5.5 4.5M14 15.2c2.6-.4 4.8.8 5.8 3.3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                        </svg>
+                    </span>
+                    <strong>{{ stats.joined_count }}</strong>
+                    <span>Katılım</span>
+                </button>
+                <div class="stat">
+                    <span class="stat-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24">
+                            <path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                    <strong>{{ stats.friends_count }}</strong>
+                    <span>Arkadaşlar</span>
+                </div>
+            </section>
+
+            {% macro render_event_card(event) %}
+            <article class="event-card cat-{{ event.category_key }}{% if event.is_past %} completed{% endif %}">
+                <div class="event-body">
+                    <div class="event-title-row">
+                        <h3 class="event-title">{{ event.title }}</h3>
+                        {% if event.is_past %}
+                        <span class="completed-badge">
+                            <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true">
+                                <circle cx="12" cy="12" r="8.2" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                                <path d="M8.4 12.2l2.3 2.3 4.9-5.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Tamamlandı
+                        </span>
+                        {% endif %}
+                    </div>
+                    <p class="event-logistics">
+                        <span class="event-logistics-item">
+                            <svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true">
+                                <circle cx="12" cy="12" r="8.2" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                                <path d="M12 8v4.2l2.6 1.6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>{{ event.datetime }}</span>
+                        </span>
+                        {% if event.location %}
+                        <span class="event-dot" aria-hidden="true"></span>
+                        <span class="event-logistics-item">
+                            <svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M12 21s6.6-5.8 6.6-10.4a6.6 6.6 0 10-13.2 0c0 4.6 6.6 10.4 6.6 10.4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                                <circle cx="12" cy="10.4" r="2.1" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                            </svg>
+                            <span>{{ event.location }}</span>
+                        </span>
+                        {% endif %}
+                    </p>
+                    <div class="event-organizer-row">
+                        {{ letter_avatar(event.creator_avatar, size="xs", extra_class="event-organizer-avatar") }}
+                        <span class="event-organizer-text">{{ event.creator_name }} düzenledi</span>
+                        <span class="event-dot" aria-hidden="true"></span>
+                        <span class="event-participants">
+                            <svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true">
+                                <circle cx="12" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                                <path d="M5 19c1.2-3.2 3.6-4.8 7-4.8s5.8 1.6 7 4.8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                            </svg>
+                            <span>
+                                {% if event.is_past %}
+                                {{ event.joined_count }} katıldı
+                                {% else %}
+                                {{ event.joined_count }} katılıyor
+                                {% endif %}
+                            </span>
+                        </span>
+                    </div>
+                </div>
+                <div class="event-footer">
+                    <span class="visibility{% if event.visibility == 'public' %} public{% endif %}">
+                        {% if event.visibility == 'public' %}
+                        <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                            <path d="M3 12h18M12 3c3 3 4 6 4 9s-1 6-4 9M12 3c-3 3-4 6-4 9s1 6 4 9" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                        </svg>
+                        {% else %}
+                        <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle cx="9" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                            <circle cx="16.5" cy="9" r="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                            <path d="M3.5 19c.7-3 2.5-4.5 5.5-4.5s4.8 1.5 5.5 4.5M14 15c2.8-.5 5 .8 6 3.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                        </svg>
+                        {% endif %}
+                        <span>{{ event.visibility_label }}</span>
+                    </span>
+                    <a href="{{ event.detail_url }}" class="detail-link">Detay &#8250;</a>
+                </div>
+            </article>
+            {% endmacro %}
+
+            {% macro render_event_sections(sections, prefix) %}
+            <div class="event-list" id="{{ prefix }}-list"{% if prefix == 'joined' %} hidden{% endif %}>
+                <section class="event-section" aria-labelledby="{{ prefix }}-upcoming">
+                    <h3 class="section-heading" id="{{ prefix }}-upcoming">
+                        Yaklaşan Planlar
+                        <span>{{ sections.upcoming|length }} etkinlik</span>
+                    </h3>
+                    {% if sections.upcoming %}
+                        {% for event in sections.upcoming %}
+                            {{ render_event_card(event) }}
+                        {% endfor %}
+                    {% else %}
+                        <p class="empty-state">Yaklaşan plan yok.</p>
+                    {% endif %}
+                </section>
+
+                <section class="event-section" aria-labelledby="{{ prefix }}-past">
+                    <h3 class="section-heading" id="{{ prefix }}-past">
+                        Geçmiş Planlar
+                        <span>{{ sections.past|length }} etkinlik</span>
+                    </h3>
+                    {% if sections.past %}
+                        {% for event in sections.past %}
+                            {{ render_event_card(event) }}
+                        {% endfor %}
+                    {% else %}
+                        <p class="empty-state">Geçmiş plan yok.</p>
+                    {% endif %}
+                </section>
+            </div>
+            {% endmacro %}
+
+            <section>
+                {{ render_event_sections(created, "created") }}
+                {{ render_event_sections(joined, "joined") }}
+            </section>
+        </main>
+
+        <nav class="bottom-nav" aria-label="Ana navigasyon">
+            <a href="{{ url_for('home') }}" class="nav-item">
+                <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                </svg>
+                <span>Ana Sayfa</span>
+            </a>
+            <a href="{{ url_for('discover') }}" class="nav-item">
+                <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M20 20l-3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+                <span>Keşfet</span>
+            </a>
+            <a href="{{ url_for('create_activity') }}" class="nav-item nav-create" aria-label="Plan Oluştur">
+                <span class="create-btn">
+                    <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">
+                        <rect x="4" y="5" width="16" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                        <path d="M4 10h16M8 3v4M16 3v4M12 13v5M9.5 15.5h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                </span>
+            </a>
+            <a href="{{ url_for('notifications') }}" class="nav-item">
+                <span class="nav-icon-wrap">
+                    <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M6 8a6 6 0 1112 0c0 7 3 7 3 9H3c0-2 3-2 3-9z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                        <path d="M10 20a2 2 0 004 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                    </svg>
+                    {% if unread_notification_count %}
+                    <span class="badge">{{ unread_notification_count }}</span>
+                    {% endif %}
+                </span>
+                <span>Bildirimler</span>
+            </a>
+            <a href="{{ url_for('profile') }}" class="nav-item">
+                <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M4 20c1.5-3.5 4-5 8-5s6.5 1.5 8 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+                <span>Profil</span>
+            </a>
+        </nav>
+    </div>
+
+    <script>
+        const tabs = document.querySelectorAll("[data-tab]");
+        const createdList = document.getElementById("created-list");
+        const joinedList = document.getElementById("joined-list");
+
+        function activateTab(name) {
+            tabs.forEach(function (tab) {
+                const active = tab.dataset.tab === name;
+                tab.classList.toggle("active", active);
+                tab.setAttribute("aria-selected", active ? "true" : "false");
+            });
+            createdList.hidden = name !== "created";
+            joinedList.hidden = name !== "joined";
+        }
+
+        tabs.forEach(function (tab) {
+            tab.addEventListener("click", function () {
+                activateTab(tab.dataset.tab);
+            });
+        });
+
+        const experienceToggle = document.querySelector("[data-experience-toggle]");
+        const experiencePanel = document.getElementById("experience-details");
+        if (experienceToggle && experiencePanel) {
+            function setExperienceDetailsOpen(open) {
+                experienceToggle.setAttribute("aria-expanded", open ? "true" : "false");
+                experiencePanel.hidden = !open;
+            }
+
+            experienceToggle.addEventListener("click", function () {
+                const expanded = experienceToggle.getAttribute("aria-expanded") === "true";
+                setExperienceDetailsOpen(!expanded);
+            });
+        }
+
+        const friendStatus = document.querySelector(".friend-status");
+        const friendStatusBtn = document.getElementById("friend-status-btn");
+        const friendStatusMenu = document.getElementById("friend-status-menu");
+        const unfriendModal = document.querySelector(".confirm-modal");
+        const openUnfriendBtn = document.querySelector("[data-unfriend-open]");
+        const closeUnfriendBtns = document.querySelectorAll("[data-unfriend-close]");
+
+        function closeFriendMenu() {
+            if (!friendStatusBtn || !friendStatusMenu) return;
+            friendStatusMenu.hidden = true;
+            friendStatusBtn.setAttribute("aria-expanded", "false");
+        }
+
+        function openUnfriendModal() {
+            closeFriendMenu();
+            if (!unfriendModal || typeof unfriendModal.showModal !== "function") return;
+            unfriendModal.showModal();
+        }
+
+        function closeUnfriendModal() {
+            if (!unfriendModal || !unfriendModal.open) return;
+            unfriendModal.close();
+        }
+
+        if (friendStatus && friendStatusBtn && friendStatusMenu) {
+            friendStatusBtn.addEventListener("click", function (event) {
+                event.stopPropagation();
+                if (friendStatusMenu.hidden === false) {
+                    closeFriendMenu();
+                    return;
+                }
+                friendStatusMenu.hidden = false;
+                friendStatusBtn.setAttribute("aria-expanded", "true");
+            });
+
+            document.addEventListener("click", function (event) {
+                if (!friendStatus.contains(event.target)) {
+                    closeFriendMenu();
+                }
+            });
+
+            document.addEventListener("keydown", function (event) {
+                if (event.key === "Escape") {
+                    closeFriendMenu();
+                }
+            });
+        }
+
+        if (openUnfriendBtn) {
+            openUnfriendBtn.addEventListener("click", function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                openUnfriendModal();
+            });
+        }
+
+        closeUnfriendBtns.forEach(function (button) {
+            button.addEventListener("click", closeUnfriendModal);
+        });
+
+        if (unfriendModal) {
+            unfriendModal.addEventListener("click", function (event) {
+                if (event.target === unfriendModal) {
+                    closeUnfriendModal();
+                }
+            });
+        }
+
+        (function () {
+            var backLink = document.querySelector("[data-profile-back]");
+            if (!backLink) return;
+
+            function referrerUrl() {
+                if (!document.referrer) return null;
+                try {
+                    return new URL(document.referrer);
+                } catch (error) {
+                    return null;
+                }
+            }
+
+            function canGoBack() {
+                if (window.history.length <= 1) return false;
+                var referrer = referrerUrl();
+                if (!referrer || referrer.origin !== window.location.origin) return false;
+                if (referrer.pathname === "/login" || referrer.pathname === "/register") {
+                    return false;
+                }
+                if (/\/notifications\/\d+\/open\/?$/.test(referrer.pathname)) {
+                    return false;
+                }
+                if (
+                    referrer.pathname === window.location.pathname &&
+                    referrer.search === window.location.search
+                ) {
+                    return false;
+                }
+                return true;
+            }
+
+            backLink.addEventListener("click", function (event) {
+                if (!canGoBack()) return;
+                event.preventDefault();
+                history.back();
+            });
+        })();
+    </script>
+</body>
+
+</html>

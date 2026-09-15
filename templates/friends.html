@@ -6,9 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Arkadaşlar — MeetChat</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/friends.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/letter_avatar.css') }}">
 </head>
 
 <body>
+    {% from "partials/letter_avatar.html" import letter_avatar %}
     <div class="friends-shell">
         <header class="friends-header">
             <a href="{{ url_for('home') }}" class="back-btn" aria-label="Ana sayfa">
@@ -29,7 +31,7 @@
                 {% for item in incoming_requests %}
                 <li class="user-row">
                     <div class="user-info">
-                        <span class="user-avatar">{{ item.user.full_name[0] }}</span>
+                        {{ letter_avatar(avatar_for_user(item.user), size="md") }}
                         <span class="user-name">{{ item.user.full_name }}</span>
                     </div>
                     <div class="user-actions">
@@ -55,7 +57,7 @@
                 {% for item in friends %}
                 <li class="user-row">
                     <div class="user-info">
-                        <span class="user-avatar">{{ item.user.full_name[0] }}</span>
+                        {{ letter_avatar(avatar_for_user(item.user), size="md") }}
                         <span class="user-name">{{ item.user.full_name }}</span>
                     </div>
                     <div class="user-actions">
@@ -84,7 +86,7 @@
                 {% for item in users %}
                 <li class="user-row">
                     <div class="user-info">
-                        <span class="user-avatar">{{ item.user.full_name[0] }}</span>
+                        {{ letter_avatar(avatar_for_user(item.user), size="md") }}
                     
                         <div class="user-details">
                             <span class="user-name">{{ item.user.full_name }}</span>
